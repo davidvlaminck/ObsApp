@@ -13,6 +13,7 @@ Om dat te bereiken werken we stap per stap, met telkens duidelijke deliverables.
 - Maak kleine, controleerbare wijzigingen.
 - Verander geen publieke API-contracten zonder voorstel.
 - Voeg tests toe voor nieuwe businesslogica.
+- Maak gebruik van de door uv beheerde .venv en pyproject.toml voor dependencies.
 
 ## Backend
 - Gebruik FastAPI routers alleen voor HTTP-laag.
