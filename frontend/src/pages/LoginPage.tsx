@@ -16,7 +16,7 @@ export default function LoginPage() {
     try {
       const data = await login({ email, password })
       setToken(data.access_token)
-      navigate('/landing')
+      navigate('/dashboard')
     } catch {
       setError('Inloggen mislukt. Controleer je gegevens.')
     } finally {

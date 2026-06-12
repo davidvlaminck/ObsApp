@@ -14,10 +14,31 @@ export interface TokenResponse {
   token_type: string
 }
 
+export interface SchoolResponse {
+  id: number
+  name: string
+  slug: string
+  is_active: boolean
+  created_at: string | null
+}
+
+export interface UserCreate {
+  email: string
+  password?: string
+  name: string
+  is_active?: boolean
+  is_superuser?: boolean
+  school_id?: number | null
+}
+
 export interface UserResponse {
   id: number
   email: string
   name: string
+  is_active: boolean
+  is_superuser: boolean
+  is_pending: boolean
+  school_id: number | null
 }
 
 export async function login(data: LoginRequest): Promise<TokenResponse> {
@@ -29,6 +50,31 @@ export async function getMe(): Promise<UserResponse> {
   const response = await api.get<UserResponse>('/auth/me')
   return response.data
 }
+
+export async function getSchools(): Promise<SchoolResponse[]> {
+  const response = await api.get<SchoolResponse[]>('/schools')
+  return response.data
+}
+
+export async function getUsers(): Promise<UserResponse[]> {
+  const response = await api.get<UserResponse[]>('/users')
+  return response.data
+}
+export async function createUser(data: UserCreate): Promise<UserResponse> {
+  const response = await api.post<UserResponse>('/users', data)
+  return response.data
+}
+
+export interface SetPasswordRequest {
+  token: string
+  password: string
+}
+
+export async function setPassword(data: SetPasswordRequest): Promise<UserResponse> {
+  const response = await api.post<UserResponse>('/auth/set-password', data)
+  return response.data
+}
+
 
 export function setToken(token: string) {
   localStorage.setItem('access_token', token)

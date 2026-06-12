@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
+from app.models.school import School
 from app.models.user import User
 from app.core.security import get_password_hash
 
@@ -16,24 +17,32 @@ def reset_database():
     print("Database reset complete.")
 
 
-def seed_admin_user():
-    """Create default admin user if it doesn't exist."""
+def seed_school_and_admin():
+    """Create default school and admin user."""
     db = SessionLocal()
     try:
-        existing = db.query(User).filter(User.email == "admin@example.com").first()
-        if existing:
-            print("Admin user already exists.")
-            return
+        # Create default school
+        school = School(
+            name="Demo School",
+            slug="demo-school",
+            is_active=True,
+        )
+        db.add(school)
+        db.commit()
+        db.refresh(school)
 
+        # Create admin user linked to school
         admin = User(
             email="admin@example.com",
             hashed_password=get_password_hash("admin"),
             name="Admin",
             is_superuser=True,
             is_active=True,
+            school_id=school.id,
         )
         db.add(admin)
         db.commit()
+        print(f"School created: {school.name}")
         print("Admin user created: admin@example.com / admin")
     finally:
         db.close()
@@ -41,4 +50,4 @@ def seed_admin_user():
 
 if __name__ == "__main__":
     reset_database()
-    seed_admin_user()
+    seed_school_and_admin()

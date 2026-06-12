@@ -28,6 +28,11 @@ env/
 .coverage
 htmlcov/
 
+# Environment
+.env
+.env.*
+!.env.example
+
 # Frontend
 node_modules/
 dist/

@@ -1,12 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getMe, clearToken } from '../services/auth'
-
-export interface UserResponse {
-  id: number
-  email: string
-  name: string
-}
+import { Link, useNavigate } from 'react-router-dom'
+import { getMe, clearToken, UserResponse } from '../services/auth'
 
 export default function LandingPage() {
   const [user, setUser] = useState<UserResponse | null>(null)
@@ -56,6 +50,15 @@ export default function LandingPage() {
         </div>
         <h1>Welkom, {user.name}!</h1>
         <p>Je bent succesvol ingelogd als {user.email}.</p>
+        {user.school_id && (
+          <p className="text-sm text-muted">School ID: {user.school_id}</p>
+        )}
+        {user.is_superuser && (
+          <div className="admin-links">
+            <Link to="/schools">Schoolbeheer</Link>
+            <Link to="/users">Gebruikersbeheer</Link>
+          </div>
+        )}
         <button className="btn btn-outline" onClick={handleLogout}>
           Uitloggen
         </button>
