@@ -16,3 +16,4 @@ class School(Base):
 
     users = relationship("User", back_populates="school")
     observations = relationship("Observation", back_populates="school")
+    school_years = relationship("SchoolYear", back_populates="school", cascade="all, delete-orphan")

@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
 import SuperuserRoute from './components/SuperuserRoute'
+import SchoolAccessRoute from './components/SchoolAccessRoute'
 import LoginPage from './pages/LoginPage'
 import LandingPage from './pages/LandingPage'
 import SchoolsPage from './pages/SchoolsPage'
@@ -36,9 +37,9 @@ function App() {
         path="/schools"
         element={
           <AppLayout>
-            <SuperuserRoute>
+            <SchoolAccessRoute>
               <SchoolsPage />
-            </SuperuserRoute>
+            </SchoolAccessRoute>
           </AppLayout>
         }
       />

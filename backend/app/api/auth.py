@@ -50,6 +50,12 @@ async def get_current_superuser(current_user: UserResponse = Depends(get_current
     return current_user
 
 
+async def get_current_school_user(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
+    if not current_user.school_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Niet bevoegd")
+    return current_user
+
+
 @router.get("/me", response_model=UserResponse)
 async def get_me(current_user: UserResponse = Depends(get_current_user)):
     return current_user

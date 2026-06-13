@@ -414,4 +414,4 @@ Implementatie:
 
 ### 4. Te kiezen volgende implementatiestap
 
-Nog niet geïmplementeerd. Wacht op keuze van product/eigenaar welke requirement eerst wordt uitgewerkt.
+PWA
