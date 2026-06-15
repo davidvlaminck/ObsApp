@@ -75,6 +75,92 @@ def seed_school_and_admin():
         db.close()
 
 
+def _clean_text(value) -> str | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    # Strip leading apostrophe (from Excel vocabulary fields)
+    if text.startswith("'"):
+        text = text[1:]
+    lines = text.split("\n")
+    cleaned_lines = []
+    for line in lines:
+        line = line.strip()
+        if line:
+            line = line.lstrip("•").strip()
+            if line:
+                cleaned_lines.append(line)
+    return "\n".join(cleaned_lines) if cleaned_lines else None
+
+
+def seed_vo_goals():
+    """Import VO-doelen from Excel."""
+    from openpyxl import load_workbook
+    from app.models.goal import Goal
+
+    db = SessionLocal()
+    try:
+        excel_path = Path(__file__).resolve().parent.parent.parent / "AnalysisDev" / "Onderwijsdoelen (3).xlsx"
+        wb = load_workbook(excel_path, read_only=True)
+        ws = wb["Versie 2.0"]
+
+        count = 0
+        for row in ws.iter_rows(min_row=2, values_only=True):
+            if not row[8]:  # Code column
+                continue
+            code = str(row[8]).strip()
+            title = _clean_text(row[9]) or str(row[9]).strip() if row[9] else ""
+            description = _clean_text(row[10])
+            subject = str(row[4]).strip() if row[4] else ""
+            level = "K-"
+            goal_type = "VO"
+            doel_soort = None
+            # Column 5 (index 5) = Type doel: "Na te streven" of "Te bereiken"
+            target_type_raw = str(row[5]).strip().lower() if row[5] else ""
+            if "na te streven" in target_type_raw:
+                target_type = "NA_TE_STREVEN"
+            elif "te bereiken" in target_type_raw:
+                target_type = "TE_BEREIKEN"
+            else:
+                target_type = None
+            parent_goal_id = None
+            vo_code = code
+            vocabulary = _clean_text(row[12]) if len(row) > 12 else None
+            valid_from = row[13] if len(row) > 13 and row[13] else None
+            if hasattr(valid_from, "replace"):
+                valid_from = valid_from.replace(tzinfo=None)
+
+            existing = db.query(Goal).filter(Goal.code == code).first()
+            if existing:
+                continue
+
+            goal = Goal(
+                code=code,
+                title=title,
+                description=description,
+                subject=subject,
+                level=level,
+                goal_type=goal_type,
+                doel_soort=doel_soort,
+                target_type=target_type,
+                parent_goal_id=parent_goal_id,
+                vo_code=vo_code,
+                vocabulary=vocabulary,
+                valid_from=valid_from,
+            )
+            db.add(goal)
+            count += 1
+
+        db.commit()
+        wb.close()
+        print(f"VO-doelen imported: {count}")
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     reset_database()
     seed_school_and_admin()
+    seed_vo_goals()
