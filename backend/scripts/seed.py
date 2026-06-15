@@ -51,6 +51,7 @@ def seed_school_and_admin():
         class_model = ClassModel(
             school_year_id=school_year.id,
             name="3K",
+            class_type="K3",
         )
         db.add(class_model)
         db.commit()

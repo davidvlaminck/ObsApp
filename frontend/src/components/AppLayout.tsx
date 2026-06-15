@@ -157,6 +157,21 @@ export default function AppLayout({ children }: AppLayoutProps) {
       </header>
 
       <main className="app-content">{children}</main>
+
+      {visibleItems.length > 0 && (
+        <nav className="bottom-nav" aria-label="Snelle navigatie">
+          {visibleItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              className={({ isActive }) => `bottom-nav-link ${isActive ? 'bottom-nav-link-active' : ''}`}
+            >
+              <MenuIcon icon={item.icon} />
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+        </nav>
+      )}
     </div>
   )
 }

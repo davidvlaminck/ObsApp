@@ -36,6 +36,7 @@ export interface ClassResponse {
   id: number
   school_year_id: number
   name: string
+  class_type: string
   created_at: string | null
 }
 
@@ -98,8 +99,123 @@ export async function getClasses(schoolYearId: number): Promise<ClassResponse[]>
   return response.data
 }
 
-export async function createClass(schoolYearId: number, data: { name: string }): Promise<ClassResponse> {
+export async function createClass(schoolYearId: number, data: { name: string; class_type: string }): Promise<ClassResponse> {
   const response = await api.post<ClassResponse>(`/schools/school-years/${schoolYearId}/classes`, data)
+  return response.data
+}
+
+export async function getClassTeachers(classId: number): Promise<UserResponse[]> {
+  const response = await api.get<UserResponse[]>(`/schools/classes/${classId}/teachers`)
+  return response.data
+}
+
+export async function addTeacherToClass(classId: number, teacherId: number): Promise<UserResponse[]> {
+  const response = await api.post<UserResponse[]>(`/schools/classes/${classId}/teachers`, { teacher_id: teacherId })
+  return response.data
+}
+
+export async function removeTeacherFromClass(classId: number, teacherId: number): Promise<UserResponse[]> {
+  const response = await api.delete<UserResponse[]>(`/schools/classes/${classId}/teachers/${teacherId}`)
+  return response.data
+}
+
+export interface StudentResponse {
+  id: number
+  class_id: number
+  name: string
+  image_path: string | null
+  created_at: string | null
+}
+
+export async function getStudents(classId: number): Promise<StudentResponse[]> {
+  const response = await api.get<StudentResponse[]>(`/schools/classes/${classId}/students`)
+  return response.data
+}
+
+export async function uploadStudentImage(
+  studentId: number,
+  file: File,
+): Promise<StudentResponse> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await api.post<StudentResponse>(
+    `/schools/students/${studentId}/image`,
+    formData,
+  )
+  return response.data
+}
+
+export async function deleteStudent(studentId: number): Promise<StudentResponse> {
+  const response = await api.delete<StudentResponse>(`/schools/students/${studentId}`)
+  return response.data
+}
+
+export interface StudentPreviewItem {
+  class_name: string
+  student_name: string
+  row_number: number
+  is_valid: boolean
+  error: string | null
+}
+
+export interface StudentPreviewResult {
+  items: StudentPreviewItem[]
+  valid_count: number
+  invalid_count: number
+}
+
+export interface StudentConfirmItem {
+  class_name: string
+  student_name: string
+}
+
+export interface StudentBulkUploadResult {
+  total: number
+  created: number
+  errors: string[]
+}
+
+export async function downloadStudentTemplate(schoolYearId: number): Promise<Blob> {
+  const response = await api.get(`/schools/school-years/${schoolYearId}/classes/template`, {
+    responseType: 'blob',
+  })
+  return response.data
+}
+
+export async function previewStudents(
+  schoolYearId: number,
+  file: File,
+): Promise<StudentPreviewResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await api.post<StudentPreviewResult>(
+    `/schools/school-years/${schoolYearId}/students/preview`,
+    formData,
+  )
+  return response.data
+}
+
+export async function confirmStudentImport(
+  schoolYearId: number,
+  items: { class_name: string; student_name: string }[],
+): Promise<StudentBulkUploadResult> {
+  const response = await api.post<StudentBulkUploadResult>(
+    `/schools/school-years/${schoolYearId}/students/confirm`,
+    { items },
+  )
+  return response.data
+}
+
+export async function uploadStudents(
+  schoolYearId: number,
+  file: File,
+): Promise<StudentBulkUploadResult> {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await api.post<StudentBulkUploadResult>(
+    `/schools/school-years/${schoolYearId}/students/bulk`,
+    formData,
+  )
   return response.data
 }
 

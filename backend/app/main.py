@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 
 from app.api import auth, observations, schools, users
 
@@ -22,6 +24,11 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(observations.router, prefix="/api")
 app.include_router(schools.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
+
+# Mount static files for student images
+UPLOAD_DIR = Path(__file__).parent.parent / "uploads" / "students"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads/students", StaticFiles(directory=str(UPLOAD_DIR)), name="student-images")
 
 
 @app.get("/auth/login")

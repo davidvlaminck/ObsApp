@@ -3,8 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.models.school import School
 from app.models.school_year import SchoolYear
-from app.schemas.school import ClassResponse, SchoolYearResponse
-
+from app.schemas.school import ClassResponse, SchoolYearResponse, StudentResponse
 
 
 class SchoolYearRepository:
@@ -59,10 +58,10 @@ class ClassRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create_class(self, school_year_id: int, name: str):
+    def create_class(self, school_year_id: int, name: str, class_type: str = "JK"):
         from app.models.school_year import Class as ClassModel
 
-        class_model = ClassModel(school_year_id=school_year_id, name=name)
+        class_model = ClassModel(school_year_id=school_year_id, name=name, class_type=class_type)
         self.db.add(class_model)
         self.db.commit()
         self.db.refresh(class_model)
@@ -83,5 +82,86 @@ class ClassRepository:
             id=class_model.id,
             school_year_id=class_model.school_year_id,
             name=class_model.name,
+            class_type=class_model.class_type,
             created_at=class_model.created_at,
+        )
+
+    def add_teacher_to_class(self, class_id: int, teacher_id: int):
+        from app.models.school_year import Class as ClassModel
+        from app.models.user import User as UserModel
+
+        class_model = self.db.query(ClassModel).filter(ClassModel.id == class_id).first()
+        teacher = self.db.query(UserModel).filter(UserModel.id == teacher_id).first()
+        if not class_model or not teacher:
+            return None
+        if teacher not in class_model.teachers:
+            class_model.teachers.append(teacher)
+            self.db.commit()
+            self.db.refresh(class_model)
+        return class_model
+
+    def remove_teacher_from_class(self, class_id: int, teacher_id: int):
+        from app.models.school_year import Class as ClassModel
+        from app.models.user import User as UserModel
+
+        class_model = self.db.query(ClassModel).filter(ClassModel.id == class_id).first()
+        teacher = self.db.query(UserModel).filter(UserModel.id == teacher_id).first()
+        if not class_model or not teacher:
+            return None
+        if teacher in class_model.teachers:
+            class_model.teachers.remove(teacher)
+            self.db.commit()
+            self.db.refresh(class_model)
+        return class_model
+
+
+class StudentRepository:
+    def __init__(self, db: Session):
+        self.db = db
+
+    def create(self, class_id: int, name: str, image_path: str | None = None):
+        from app.models.school_year import Student as StudentModel
+
+        student = StudentModel(class_id=class_id, name=name, image_path=image_path)
+        self.db.add(student)
+        self.db.commit()
+        self.db.refresh(student)
+        return student
+
+    def get_by_id(self, student_id: int):
+        from app.models.school_year import Student as StudentModel
+
+        return self.db.query(StudentModel).filter(StudentModel.id == student_id).first()
+
+    def get_by_class(self, class_id: int):
+        from app.models.school_year import Student as StudentModel
+
+        return self.db.query(StudentModel).filter(StudentModel.class_id == class_id).order_by(StudentModel.name).all()
+
+    def update_image(self, student_id: int, image_path: str):
+        from app.models.school_year import Student as StudentModel
+
+        student = self.get_by_id(student_id)
+        if student:
+            student.image_path = image_path
+            self.db.commit()
+            self.db.refresh(student)
+        return student
+
+    def delete(self, student_id: int):
+        from app.models.school_year import Student as StudentModel
+
+        student = self.db.query(StudentModel).filter(StudentModel.id == student_id).first()
+        if student:
+            self.db.delete(student)
+            self.db.commit()
+        return student
+
+    def to_response(self, student) -> StudentResponse:
+        return StudentResponse(
+            id=student.id,
+            class_id=student.class_id,
+            name=student.name,
+            image_path=student.image_path,
+            created_at=student.created_at,
         )
