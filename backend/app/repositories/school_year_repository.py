@@ -1,7 +1,6 @@
 from datetime import date
 from sqlalchemy.orm import Session
 
-from app.models.school import School
 from app.models.school_year import SchoolYear
 from app.schemas.school import ClassResponse, SchoolYearResponse, StudentResponse
 
@@ -139,8 +138,6 @@ class StudentRepository:
         return self.db.query(StudentModel).filter(StudentModel.class_id == class_id).order_by(StudentModel.name).all()
 
     def update_image(self, student_id: int, image_path: str):
-        from app.models.school_year import Student as StudentModel
-
         student = self.get_by_id(student_id)
         if student:
             student.image_path = image_path

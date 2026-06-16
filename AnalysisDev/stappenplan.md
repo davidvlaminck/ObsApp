@@ -169,6 +169,117 @@ class ObservationRepository:
 
 ---
 
+### Stap 2.6: Oude observatiescherm onder Beheer plaatsen
+**Doel:** Het bestaande scherm voor het aanmaken en beheren van observatiedoelen is een beheerfunctie en hoort niet op de hoofdworkflow van de leerkracht.
+
+**Frontend:**
+- Verplaats de bestaande `/observations` managementpagina naar `/management/observations` of een equivalente `/beheer/observatiedoelen` route.
+- Voeg onder het hoofdmenu-item **Beheer** een submenu-item **Observatiedoelen** toe.
+- Houd de functionaliteit gelijk: observatiedoelen aanmaken, filters gebruiken, Op Stap doelen zoeken/koppelen en doelen verwijderen.
+- Zorg dat het nieuwe observeren-scherm een duidelijke hoofdmenu-entry krijgt, bijvoorbeeld **Observeren**.
+
+**Test:** Navigatiecontrole:
+- Leerkracht ziet **Observeren** als hoofdactie.
+- **Beheer > Observatiedoelen** opent het oude beheerscherm.
+- Superuser blijft beheer kunnen gebruiken, maar ziet op het observeren-scherm een melding dat die zich eerst als leerkracht moet identificeren.
+
+---
+
+### Stap 2.7: Nieuw observeren-scherm
+**Frontend:**
+- Nieuwe pagina `/observeren` voor het effectief uitvoeren van observaties.
+- De pagina laadt bestaande observatiedoelen en toont filters voor:
+  - klas
+  - vak
+  - domein
+- Bij het kiezen van een klas toont de pagina:
+  - mogelijke observatiedoelen voor die klas
+  - leerlingen van die klas binnen de school van de gebruiker
+- Een superuser zonder leerkrachtidentificatie ziet geen observatiegegevens, maar een duidelijke instructie.
+
+**UX-flow:**
+1. Leerkracht kiest klas.
+2. De pagina toont de leerlingen van die klas en de bij die klas passende doelen.
+3. Leerkracht kiest één observatiedoel.
+4. Leerkracht klikt op een leerling.
+5. Een modal/formulier opent om de observatie in te voeren.
+
+**Test:** UI-test met mock/API-data:
+- Zonder klas zijn er geen leerlingen en geen observatieactie mogelijk.
+- Met klas worden leerlingen geladen.
+- Met vak/domein worden doelen gefilterd.
+- Superuser krijgt een blokkerende uitleg.
+
+---
+
+### Stap 2.8: Backend voor observatie-uitvoering
+**Backend model:**
+- Maak een nieuw model voor uitgevoerde observaties van een leerling op een observatiedoel.
+- Velden:
+  - `school_id` (FK naar schools)
+  - `observation_goal_id` (FK naar observation_goals)
+  - `student_id` (FK naar students)
+  - `observed_by` (FK naar users)
+  - `status` (rood/oranje/groen/blauw)
+  - `observation_date` (date)
+  - `comment` (text, optioneel)
+  - `created_at`, `updated_at`
+
+**Statuswaarden:**
+- `onvoldoende` = rood
+- `in_ontwikkeling` = oranje
+- `zelfstandig` = groen
+- `voorsprong` = blauw
+
+**Backend endpoints:**
+- `GET /api/observation-goals/observe/context?class_id=&subject=&domain=`
+  - retourneert observatiedoelen en leerlingen voor de gekozen klas.
+  - filtert doelen op vak/domein.
+  - filtert doelen op klasniveau via `Goal.level` of, voor handmatige doelen zonder gekoppeld Op Stap doel, via `ObservationGoal.subdomain`.
+- `POST /api/student-observations`
+  - slaat een observatie van een leerling op een gekozen doel op.
+  - valideert dat status en datum verplicht zijn.
+  - controleert schoolscope en klasniveau.
+
+**Test:** API-testen:
+- Leerkracht kan context ophalen voor een klas binnen eigen school.
+- Superuser krijgt 403 op observeren-endpoints.
+- `POST /api/student-observations` slaat een geldige observatie op.
+- Verkeerde status, ontbrekende datum of leerling/doel buiten schoolscope geven een fout.
+
+---
+
+### Stap 2.9: Observatieformulier per leerling
+**Frontend:**
+- Klik op een leerling opent een modal/formulier.
+- Het gekozen observatiedoel en de doelcode zijn zichtbaar.
+- De doelcode is klikbaar en opent extra doelinfo.
+- Verplichte statuskeuze met exact één van de vier opties:
+  - rood: onvoldoende
+  - oranje: in ontwikkeling
+  - groen: zelfstandig
+  - blauw: voorsprong in ontwikkeling
+- Verplicht datumveld met datepicker, standaard ingesteld op vandaag.
+- Vrij commentaarveld als multiline textarea.
+- Knoppen:
+  - **Annuleren**: modal sluiten zonder op te slaan.
+  - **Opslaan**: POST naar backend.
+
+**Validatie:**
+- Doel moet gekozen zijn.
+- Leerling moet gekozen zijn.
+- Status moet gekozen zijn.
+- Datum moet ingevuld zijn.
+- Opslaan is geblokkeerd tijdens het versturen.
+
+**Test:** UI-test:
+- Modal opent vanaf een leerlingkaart.
+- Datum is standaard vandaag.
+- Zonder status of datum kan niet worden opgeslagen.
+- Na succesvolle POST sluit de modal en wordt een succesmelding getoond.
+
+---
+
 ## Fase 3: Observatie Details & Bewerken
 
 ### Stap 3.1: Observatie Detail Scherm

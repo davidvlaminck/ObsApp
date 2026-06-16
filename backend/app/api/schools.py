@@ -16,7 +16,6 @@ from app.schemas.school import (
     SchoolYearResponse,
     StudentBulkUploadResult,
     StudentConfirmImport,
-    StudentConfirmItem,
     StudentPreviewItem,
     StudentPreviewResult,
     StudentResponse,

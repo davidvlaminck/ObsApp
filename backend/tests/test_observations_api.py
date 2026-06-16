@@ -124,7 +124,7 @@ def test_list_observations_endpoint_only_returns_current_school_observations(
         is_superuser=False,
         school_id=1,
     )
-    first_response = observation_client.post(
+    observation_client.post(
         "/api/observations",
         json={
             "title": "School 1 observation",

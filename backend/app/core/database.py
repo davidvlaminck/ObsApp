@@ -24,6 +24,7 @@ def initialize_database():
 
         Base.metadata.create_all(bind=engine)
         ensure_user_columns()
+        ensure_goal_columns()
         seed_default_data()
         _initialized = True
 
@@ -41,6 +42,51 @@ def ensure_user_columns():
             connection.execute(text("ALTER TABLE users ADD COLUMN password_reset_expires_at TIMESTAMP"))
         if "school_id" not in columns:
             connection.execute(text("ALTER TABLE users ADD COLUMN school_id INTEGER"))
+
+
+def ensure_goal_columns():
+    columns = {column["name"] for column in inspect(engine).get_columns("goals")}
+    with engine.begin() as connection:
+        if "domain" not in columns:
+            connection.execute(text("ALTER TABLE goals ADD COLUMN domain VARCHAR"))
+        if "subdomain" not in columns:
+            connection.execute(text("ALTER TABLE goals ADD COLUMN subdomain VARCHAR"))
+        if "cluster" not in columns:
+            connection.execute(text("ALTER TABLE goals ADD COLUMN cluster VARCHAR"))
+        if "minimum_goal_code" not in columns:
+            connection.execute(text("ALTER TABLE goals ADD COLUMN minimum_goal_code VARCHAR"))
+        if "voorbeelden" not in columns:
+            connection.execute(text("ALTER TABLE goals ADD COLUMN voorbeelden TEXT"))
+
+        connection.execute(
+            text(
+                """
+                UPDATE goals
+                SET subject = CASE
+                    WHEN lower(subject) IN ('ned', 'ned_com') THEN 'Nederlands'
+                    WHEN lower(subject) IN ('wiskunde', 'w_t') THEN 'Wiskunde'
+                    WHEN lower(subject) IN ('aardr') THEN 'Aardrijkskunde'
+                    WHEN lower(subject) IN ('gesch') THEN 'Geschiedenis'
+                    WHEN lower(subject) IN ('v_g') THEN 'Vormgeving'
+                    WHEN lower(subject) IN ('lele') THEN 'Levensleer'
+                    WHEN lower(subject) IN ('muvo') THEN 'Muziek en visuele opvoeding'
+                    WHEN lower(subject) IN ('rkg') THEN 'Religie en levensbeschouwing'
+                    ELSE subject
+                END
+                WHERE subject IS NOT NULL
+                """
+            )
+        )
+        connection.execute(
+            text(
+                """
+                UPDATE goals
+                SET subdomain = level
+                WHERE subdomain IS NULL
+                  AND level IS NOT NULL
+                """
+            )
+        )
 
 
 def seed_default_data():

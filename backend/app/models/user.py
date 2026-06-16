@@ -20,4 +20,6 @@ class User(Base):
 
     school = relationship("School", back_populates="users")
     observations = relationship("Observation", back_populates="creator")
+    student_observations = relationship("StudentObservation", back_populates="observer")
+    observation_goals = relationship("ObservationGoal", back_populates="creator")
     classes = relationship("Class", secondary="teacher_classes", back_populates="teachers")

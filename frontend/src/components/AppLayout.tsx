@@ -2,6 +2,28 @@ import { AxiosError } from 'axios'
 import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { clearToken, getMe, UserResponse } from '../services/auth'
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Divider,
+  Box,
+  Typography,
+  IconButton,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material'
+import DashboardIcon from '@mui/icons-material/Dashboard'
+import AssignmentIcon from '@mui/icons-material/Assignment'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import SchoolIcon from '@mui/icons-material/School'
+import PeopleIcon from '@mui/icons-material/People'
+import MenuIcon from '@mui/icons-material/Menu'
+import ExpandLess from '@mui/icons-material/ExpandLess'
+import ExpandMore from '@mui/icons-material/ExpandMore'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -10,66 +32,53 @@ interface AppLayoutProps {
 interface MenuItem {
   label: string
   to: string
-  icon: string
+  icon: React.ElementType
   adminOnly?: boolean
+  children?: MenuItem[]
 }
 
 const menuItems: MenuItem[] = [
-  { label: 'Dashboard', to: '/dashboard', icon: 'dashboard' },
-  { label: 'Observaties', to: '/observations', icon: 'assignment' },
-  { label: 'Scholen', to: '/schools', icon: 'school', adminOnly: true },
-  { label: 'Gebruikers', to: '/users', icon: 'people', adminOnly: true },
+  { label: 'Dashboard', to: '/dashboard', icon: DashboardIcon },
+  { label: 'Overzicht per klas', to: '/overzicht', icon: AssignmentIcon },
+  { label: 'Overzicht per leerling', to: '/overzicht/leerling', icon: AssignmentIcon },
+  { label: 'Observeren', to: '/observeren', icon: VisibilityIcon },
+  {
+    label: 'Beheer',
+    to: '/management',
+    icon: AssignmentIcon,
+    children: [
+      { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
+      { label: 'Scholen', to: '/schools', icon: SchoolIcon, adminOnly: true },
+      { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
+    ],
+  },
 ]
 
-function MenuIcon({ icon }: { icon: string }) {
-  if (icon === 'dashboard') {
-    return (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="3" y="3" width="7" height="7" rx="1" />
-        <rect x="14" y="3" width="7" height="7" rx="1" />
-        <rect x="3" y="14" width="7" height="7" rx="1" />
-        <rect x="14" y="14" width="7" height="7" rx="1" />
-      </svg>
-    )
-  }
-
-  if (icon === 'assignment') {
-    return (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M9 5h10" />
-        <path d="M9 9h10" />
-        <path d="M9 13h6" />
-        <path d="M5 3v18" />
-        <path d="M9 17h8" />
-      </svg>
-    )
-  }
-
-  if (icon === 'school') {
-    return (
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M3 21h18" />
-        <path d="M5 21V7l7-4 7 4v14" />
-        <path d="M9 21v-6h6v6" />
-      </svg>
-    )
-  }
-
-  return (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-      <circle cx="9" cy="7" r="4" />
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-    </svg>
-  )
-}
+const filterMenuItems = (items: MenuItem[], user: UserResponse | null): MenuItem[] =>
+  items
+    .map((item) => {
+      const children = item.children ? filterMenuItems(item.children, user) : []
+      return {
+        ...item,
+        children,
+      }
+    })
+    .filter((item) => {
+      // If item has children, only show if at least one child is visible
+      if (item.children && item.children.length > 0) {
+        return true
+      }
+      return !item.adminOnly || user?.is_superuser
+    })
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<UserResponse | null>(null)
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({})
   const location = useLocation()
   const navigate = useNavigate()
+  const theme = useTheme()
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'))
 
   useEffect(() => {
     const loadCurrentUser = async () => {
@@ -90,88 +99,261 @@ export default function AppLayout({ children }: AppLayoutProps) {
     loadCurrentUser()
   }, [navigate])
 
-  const visibleItems = menuItems.filter((item) => !item.adminOnly || user?.is_superuser)
+  const visibleItems = filterMenuItems(menuItems, user)
+
+  const handleNavigate = () => setDrawerOpen(false)
 
   const handleLogout = () => {
     clearToken()
     navigate('/login')
   }
 
-  return (
-    <div className="app-shell">
-      <aside className={`sidebar ${drawerOpen ? 'sidebar-open' : ''}`}>
-        <div className="sidebar-header">
-          <div className="sidebar-logo">O</div>
-          <div>
-            <strong>ObsApp</strong>
-            <span>{user?.school_id ? 'Schoolomgeving' : 'Beheer'}</span>
-          </div>
-        </div>
+  const toggleExpanded = (label: string) => {
+    setExpandedItems((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }))
+  }
 
-        <nav className="sidebar-nav" aria-label="Hoofdmenu">
-          {visibleItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => `sidebar-link ${isActive ? 'sidebar-link-active' : ''}`}
-              onClick={() => setDrawerOpen(false)}
+  const isItemActive = (item: MenuItem, pathname: string): boolean => {
+    if (item.children) {
+      return item.children.some((child) => pathname.startsWith(child.to))
+    }
+    return pathname === item.to
+  }
+
+  const renderMenuItem = (item: MenuItem, pathname: string, onNavigate: () => void) => {
+    const hasChildren = item.children && item.children.length > 0
+    const isExpanded = expandedItems[item.label]
+    const isActive = isItemActive(item, pathname)
+
+    if (hasChildren) {
+      return (
+        <div key={item.to}>
+          <ListItem disablePadding>
+            <ListItemButton
+              selected={isActive}
+              onClick={() => toggleExpanded(item.label)}
+              sx={{
+                mx: 1,
+                mb: 0.5,
+                borderRadius: 1,
+                '&.Mui-selected': {
+                  bgcolor: 'rgba(25, 118, 210, 0.12)',
+                },
+                '&.Mui-selected:hover': {
+                  bgcolor: 'rgba(25, 118, 210, 0.16)',
+                },
+              }}
             >
-              <MenuIcon icon={item.icon} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+              <ListItemIcon sx={{ minWidth: 40 }}>
+                <item.icon color={isActive ? 'primary' : 'inherit'} />
+              </ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                sx={{
+                  '& .MuiListItemText-primary': {
+                    fontWeight: isActive ? 600 : 400,
+                    color: isActive ? 'primary.main' : 'text.primary',
+                  },
+                }}
+              />
+              {isExpanded ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          {isExpanded && (
+            <List component="div" disablePadding>
+              {item.children!.map((child) => (
+                <ListItem key={child.to} disablePadding>
+                  <ListItemButton
+                    component={NavLink}
+                    to={child.to}
+                    onClick={onNavigate}
+                    selected={pathname === child.to}
+                    sx={{
+                      mx: 1,
+                      mb: 0.5,
+                      ml: 3,
+                      borderRadius: 1,
+                      '&.Mui-selected': {
+                        bgcolor: 'rgba(25, 118, 210, 0.12)',
+                      },
+                      '&.Mui-selected:hover': {
+                        bgcolor: 'rgba(25, 118, 210, 0.16)',
+                      },
+                    }}
+                  >
+                    <ListItemIcon sx={{ minWidth: 40 }}>
+                      <child.icon color={pathname === child.to ? 'primary' : 'action'} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={child.label}
+                      sx={{
+                        '& .MuiListItemText-primary': {
+                          fontSize: 14,
+                          fontWeight: pathname === child.to ? 500 : 400,
+                          color: pathname === child.to ? 'primary.main' : 'text.secondary',
+                        },
+                      }}
+                    />
+                  </ListItemButton>
+                </ListItem>
+              ))}
+            </List>
+          )}
+        </div>
+      )
+    }
 
-        <div className="sidebar-footer">
-          <div className="user-chip">
-            <div className="user-avatar">{user?.name?.charAt(0) ?? 'U'}</div>
-            <div>
-              <strong>{user?.name ?? 'Gebruiker'}</strong>
-              <span>{user?.is_superuser ? 'Admin' : 'Leerkracht'}</span>
-            </div>
-          </div>
+    return (
+      <ListItem key={item.to} disablePadding>
+        <ListItemButton
+          component={NavLink}
+          to={item.to}
+          onClick={onNavigate}
+          selected={isActive}
+          sx={{
+            mx: 1,
+            mb: 0.5,
+            borderRadius: 1,
+            '&.Mui-selected': {
+              bgcolor: 'rgba(25, 118, 210, 0.12)',
+            },
+            '&.Mui-selected:hover': {
+              bgcolor: 'rgba(25, 118, 210, 0.16)',
+            },
+          }}
+        >
+          <ListItemIcon sx={{ minWidth: 40 }}>
+            <item.icon color={isActive ? 'primary' : 'inherit'} />
+          </ListItemIcon>
+          <ListItemText
+            primary={item.label}
+            sx={{
+              '& .MuiListItemText-primary': {
+                fontWeight: isActive ? 600 : 400,
+                color: isActive ? 'primary.main' : 'text.primary',
+              },
+            }}
+          />
+        </ListItemButton>
+      </ListItem>
+    )
+  }
+
+  return (
+    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Drawer
+        variant={isMobile ? 'temporary' : 'permanent'}
+        open={isMobile ? drawerOpen : true}
+        onClose={() => setDrawerOpen(false)}
+        sx={{
+          width: 280,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: 280,
+            boxSizing: 'border-box',
+            borderRight: '1px solid',
+            borderColor: 'divider',
+          },
+        }}
+      >
+        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 42,
+              height: 42,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              bgcolor: 'primary.main',
+              color: 'white',
+              fontSize: 22,
+              fontWeight: 700,
+              boxShadow: '0 4px 12px rgba(25, 118, 210, 0.25)',
+            }}
+          >
+            O
+          </Box>
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+              ObsApp
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {user?.school_id ? 'Schoolomgeving' : 'Beheer'}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Divider />
+
+        <List sx={{ flexGrow: 1, py: 1 }} aria-label="Hoofdmenu">
+          {visibleItems.map((item) => renderMenuItem(item, location.pathname, handleNavigate))}
+        </List>
+
+        <Divider />
+
+        <Box sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+            <Box
+              sx={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                bgcolor: 'primary.main',
+                color: 'white',
+                fontWeight: 500,
+              }}
+            >
+              {user?.name?.charAt(0) ?? 'U'}
+            </Box>
+            <Box>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                {user?.name ?? 'Gebruiker'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {user?.is_superuser ? 'Admin' : 'Leerkracht'}
+              </Typography>
+            </Box>
+          </Box>
           <button className="btn btn-outline btn-full" type="button" onClick={handleLogout}>
             Uitloggen
           </button>
-        </div>
-      </aside>
+        </Box>
+      </Drawer>
 
-      <div className={`drawer-backdrop ${drawerOpen ? 'drawer-backdrop-open' : ''}`} onClick={() => setDrawerOpen(false)} />
-
-      <header className="mobile-topbar">
-        <button className="icon-button" type="button" onClick={() => setDrawerOpen(true)} aria-label="Menu openen">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 6h18" />
-            <path d="M3 12h18" />
-            <path d="M3 18h18" />
-          </svg>
-        </button>
-        <strong>{location.pathname === '/dashboard' ? 'Dashboard' : 'ObsApp'}</strong>
-        <button className="icon-button" type="button" onClick={handleLogout} aria-label="Uitloggen">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-            <path d="M16 17l5-5-5-5" />
-            <path d="M21 12H9" />
-          </svg>
-        </button>
-      </header>
-
-      <main className="app-content">{children}</main>
-
-      {visibleItems.length > 0 && (
-        <nav className="bottom-nav" aria-label="Snelle navigatie">
-          {visibleItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) => `bottom-nav-link ${isActive ? 'bottom-nav-link-active' : ''}`}
-            >
-              <MenuIcon icon={item.icon} />
-              <span>{item.label}</span>
-            </NavLink>
-          ))}
-        </nav>
+      {isMobile && (
+        <IconButton
+          onClick={() => setDrawerOpen(true)}
+          aria-label="Menu openen"
+          sx={{
+            position: 'fixed',
+            top: 8,
+            left: 8,
+            zIndex: 10,
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
       )}
-    </div>
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          p: 2,
+          width: { md: `calc(100% - 280px)` },
+          ml: { md: '280px' },
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
   )
 }

@@ -9,6 +9,9 @@ import UsersPage from './pages/UsersPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
 import ObservationsPage from './pages/ObservationsPage'
+import ObservingPage from './pages/ObservingPage'
+import OverviewPage from './pages/OverviewPage'
+import StudentOverviewPage from './pages/StudentOverviewPage'
 
 function App() {
   return (
@@ -26,7 +29,31 @@ function App() {
         }
       />
       <Route
-        path="/observations"
+        path="/overzicht"
+        element={
+          <AppLayout>
+            <OverviewPage />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/overzicht/leerling"
+        element={
+          <AppLayout>
+            <StudentOverviewPage />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/observeren"
+        element={
+          <AppLayout>
+            <ObservingPage />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/management/observations"
         element={
           <AppLayout>
             <ObservationsPage />

@@ -52,3 +52,4 @@ class Student(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     class_ = relationship("Class", back_populates="students")
+    student_observations = relationship("StudentObservation", back_populates="student")

@@ -5,7 +5,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-from app.api import auth, goals, observations, schools, users
+from app.api import auth, goals, observation_goals, observations, schools, student_observations, users
 
 app = FastAPI(
     title="ObsApp API",
@@ -22,7 +22,9 @@ app.add_middleware(
 
 app.include_router(auth.router, prefix="/api")
 app.include_router(goals.router, prefix="/api")
+app.include_router(observation_goals.router, prefix="/api")
 app.include_router(observations.router, prefix="/api")
+app.include_router(student_observations.router, prefix="/api")
 app.include_router(schools.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
 
