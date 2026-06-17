@@ -457,8 +457,8 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 24px;
-  margin-bottom: 24px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .page-header h1,
@@ -499,10 +499,16 @@ p {
   width: 100%;
 }
 
-.overview-table {
-  width: max-content;
+.overview-table-wrapper {
+  width: 100%;
   max-width: 100%;
-  min-width: 640px;
+  overflow-x: auto;
+}
+
+.overview-table {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -511,9 +517,15 @@ p {
 .overview-table td {
   padding: 10px 6px;
   border-bottom: 1px solid var(--md-border);
+  border-right: 1px solid var(--md-border);
   text-align: center;
   vertical-align: middle;
   overflow: visible;
+}
+
+.overview-table th:last-child,
+.overview-table td:last-child {
+  border-right: none;
 }
 
 .overview-table th {
@@ -523,7 +535,7 @@ p {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   background: #fafafa;
-  height: 150px;
+  height: 220px;
   padding: 0;
 }
 
@@ -536,15 +548,15 @@ p {
 }
 
 .overview-header-goal {
-  width: 280px;
-  min-width: 240px;
+  width: 220px;
+  min-width: 180px;
   text-align: right;
   padding: 14px 12px;
 }
 
 .overview-header-student {
-  width: 64px;
-  min-width: 56px;
+  width: 36px;
+  min-width: 32px;
   text-align: center;
   padding: 0;
   vertical-align: bottom;
@@ -555,12 +567,12 @@ p {
   transform: rotate(-80deg);
   transform-origin: center center;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--md-text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 24px;
+  letter-spacing: 0.4px;
+  margin-bottom: 20px;
 }
 
 .overview-cell-goal {
@@ -576,14 +588,14 @@ p {
 }
 
 .overview-cell-status {
-  padding: 4px 2px;
+  padding: 4px 1px;
   position: relative;
 }
 
 .overview-status-chip {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   margin: 0 auto;
   border-radius: 4px;
   cursor: default;
@@ -938,12 +950,32 @@ p {
   height: 40px;
   border-radius: 50%;
   background: #e3f2fd;
-  color: var(--md-primary);
+  color: white;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   flex: 0 0 auto;
+}
+
+.student-avatar-image {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.student-avatar-mini {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+
+.student-avatar-mini.student-avatar-image {
+  width: 24px;
+  height: 24px;
 }
 
 .student-card strong,

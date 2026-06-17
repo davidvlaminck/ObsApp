@@ -1,5 +1,6 @@
 import { AxiosError } from 'axios'
 import { FormEvent, useEffect, useRef, useState } from 'react'
+import { StudentAvatar } from '../components/StudentAvatar'
 import {
   activateSchoolYear,
   addTeacherToClass,
@@ -804,15 +805,9 @@ export default function SchoolsPage() {
                              {students.length > 0 ? (
                                <ul style={{ margin: 0, paddingLeft: '1.2em' }}>
                                  {students.map((s) => (
-                                   <li key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                     {s.image_path && (
-                                       <img
-                                         src={s.image_path}
-                                         alt={s.name}
-                                         style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover' }}
-                                       />
-                                     )}
-                                     <span>{s.name}</span>
+                                    <li key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <StudentAvatar student={s} className="student-avatar-mini" />
+                                      <span>{s.name}</span>
                                      <input
                                        type="file"
                                        accept="image/*"

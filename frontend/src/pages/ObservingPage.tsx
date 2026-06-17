@@ -1,5 +1,6 @@
 import { AxiosError } from 'axios'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { StudentAvatar } from '../components/StudentAvatar'
 import {
   getClasses,
   getMe,
@@ -75,14 +76,6 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 
   return detail ?? fallback
 }
-
-const getInitials = (name: string) =>
-  name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0].toUpperCase())
-    .join('')
 
 const getStudentObservationLabel = (status?: ObservationStatus) => {
   switch (status) {
@@ -447,7 +440,7 @@ export default function ObservingPage() {
                     className={getStudentCardClassName(observation?.status)}
                     onClick={() => openObservationModal(student)}
                   >
-                    <span className="student-avatar">{getInitials(student.name)}</span>
+                    <StudentAvatar student={student} />
                     <span>
                       <strong>{student.name}</strong>
                       <span className="text-muted">{getStudentObservationLabel(observation?.status)}</span>

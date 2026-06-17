@@ -37,6 +37,8 @@ interface MenuItem {
   children?: MenuItem[]
 }
 
+const DRAWER_WIDTH = 220
+
 const menuItems: MenuItem[] = [
   { label: 'Dashboard', to: '/dashboard', icon: DashboardIcon },
   { label: 'Overzicht per klas', to: '/overzicht', icon: AssignmentIcon },
@@ -248,10 +250,10 @@ export default function AppLayout({ children }: AppLayoutProps) {
         open={isMobile ? drawerOpen : true}
         onClose={() => setDrawerOpen(false)}
         sx={{
-          width: 280,
+          width: DRAWER_WIDTH,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: 280,
+            width: DRAWER_WIDTH,
             boxSizing: 'border-box',
             borderRight: '1px solid',
             borderColor: 'divider',
@@ -342,16 +344,14 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <MenuIcon />
         </IconButton>
       )}
-
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 2,
-          width: { md: `calc(100% - 280px)` },
-          ml: { md: '280px' },
-        }}
-      >
+        <Box
+          component="main"
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            p: { xs: 1, md: 1.5 },
+          }}
+        >
         {children}
       </Box>
     </Box>
