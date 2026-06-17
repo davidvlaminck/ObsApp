@@ -179,117 +179,139 @@ export default function OverviewPage() {
 
       {error && <div className="inline-message inline-message-error">{error}</div>}
 
-      <div className="overview-filters">
-        <div className="form-group">
-          <label htmlFor="overview-class">Klas</label>
-          <select
-            id="overview-class"
-            value={selectedClassId ?? ''}
-            onChange={(event) => {
-              const value = event.target.value ? Number(event.target.value) : null
-              setSelectedClassId(value)
-            }}
-          >
-            <option value="">Kies klas</option>
-            {classes.map((classItem) => (
-              <option key={classItem.id} value={classItem.id}>
-                {classItem.name}
-              </option>
+
+<div className="overview-page-scroll">
+  <div className="overview-filters">
+    <div className="form-group">
+      <label htmlFor="overview-class">Klas</label>
+      <select
+        id="overview-class"
+        value={selectedClassId ?? ''}
+        onChange={(event) => {
+          const value = event.target.value ? Number(event.target.value) : null
+          setSelectedClassId(value)
+        }}
+      >
+        <option value="">Kies klas</option>
+        {classes.map((classItem) => (
+          <option key={classItem.id} value={classItem.id}>
+            {classItem.name}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div className="form-group">
+      <label htmlFor="overview-subject">Vak</label>
+      <select
+        id="overview-subject"
+        value={selectedSubject}
+        disabled={!selectedClassId}
+        onChange={(event) => setSelectedSubject(event.target.value)}
+      >
+        <option value="">Alle vakken</option>
+        {subjects.map((subject) => (
+          <option key={subject} value={subject}>
+            {subject}
+          </option>
+        ))}
+      </select>
+    </div>
+  </div>
+
+  {!selectedClassId ? (
+    <div className="empty-state">Kies een klas om het overzicht te bekijken.</div>
+  ) : !overview || overview.goals.length === 0 ? (
+    <div className="empty-state">Geen observatiedoelen gevonden voor deze selectie.</div>
+  ) : (
+    <div className="overview-table-wrapper">
+      <table className="overview-table">
+        <thead>
+          <tr>
+            <th className="overview-header-goal">Leerdoel</th>
+            {overview.students.map((student) => (
+              <th key={student.id} className="overview-header-student">
+                <span className="overview-student-name">{student.name}</span>
+              </th>
             ))}
-          </select>
-        </div>
+          </tr>
+        </thead>
+        <tbody>
+          {overview.goals.map((goal) => (
+            <tr key={goal.id}>
+              <td className="overview-cell-goal">
+                <div className="overview-goal-name">{goal.name}</div>
+              </td>
+              {overview.students.map((student) => {
+                const status = statusByGoalAndStudent.get(`${goal.id}-${student.id}`)
+                const hasComment = Boolean(status?.comment)
+                const isCommentOpen =
+                  commentTarget?.goalId === goal.id && commentTarget?.studentId === student.id
 
-        <div className="form-group">
-          <label htmlFor="overview-subject">Vak</label>
-          <select
-            id="overview-subject"
-            value={selectedSubject}
-            disabled={!selectedClassId}
-            onChange={(event) => setSelectedSubject(event.target.value)}
-          >
-            <option value="">Alle vakken</option>
-            {subjects.map((subject) => (
-              <option key={subject} value={subject}>
-                {subject}
-              </option>
-            ))}
-          </select>
-        </div>
-
-      </div>
-
-      {!selectedClassId ? (
-        <div className="empty-state">Kies een klas om het overzicht te bekijken.</div>
-      ) : !overview || overview.goals.length === 0 ? (
-        <div className="empty-state">Geen observatiedoelen gevonden voor deze selectie.</div>
-      ) : (
-        <div className="overview-table-wrapper">
-          <table className="overview-table">
-            <thead>
-              <tr>
-                <th className="overview-header-goal">Leerdoel</th>
-                {overview.students.map((student) => (
-                  <th key={student.id} className="overview-header-student">
-                    <span className="overview-student-name">{student.name}</span>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {overview.goals.map((goal) => (
-                <tr key={goal.id}>
-                  <td className="overview-cell-goal">
-                    <div className="overview-goal-name">{goal.name}</div>
-                  </td>
-                  {overview.students.map((student) => {
-                    const status = statusByGoalAndStudent.get(`${goal.id}-${student.id}`)
-                    const hasComment = Boolean(status?.comment)
-                    const isCommentOpen = commentTarget?.goalId === goal.id && commentTarget?.studentId === student.id
-                    return (
-                      <td key={student.id} className="overview-cell-status">
+                return (
+                  <td key={student.id} className="overview-cell-status">
+                    <span
+                      className="overview-status-chip"
+                      style={{ backgroundColor: getStatusColor(status?.status) }}
+                      onClick={() => {
+                        if (hasComment) {
+                          setCommentTarget(
+                            isCommentOpen ? null : { goalId: goal.id, studentId: student.id }
+                          )
+                        }
+                      }}
+                    >
+                      {hasComment && (
                         <span
-                          className="overview-status-chip"
-                          style={{ backgroundColor: getStatusColor(status?.status) }}
-                          onClick={() => {
-                            if (hasComment) {
-                              setCommentTarget(isCommentOpen ? null : { goalId: goal.id, studentId: student.id })
-                            }
-                          }}
+                          className="overview-flag"
+                          onClick={(event) => event.stopPropagation()}
                         >
-                          {hasComment && (
-                            <span className="overview-flag" onClick={(event) => event.stopPropagation()}>
-                              <svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M1 1H9V10H1V1Z" fill="white" stroke="#424242" strokeWidth="1.2" strokeLinejoin="round" />
-                                <path d="M1 1V4L5 6.5L1 9V1Z" fill="#e53935" />
-                              </svg>
-                            </span>
-                          )}
+                          <svg
+                            width="10"
+                            height="12"
+                            viewBox="0 0 10 12"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M1 1H9V10H1V1Z"
+                              fill="white"
+                              stroke="#424242"
+                              strokeWidth="1.2"
+                              strokeLinejoin="round"
+                            />
+                            <path d="M1 1V4L5 6.5L1 9V1Z" fill="#e53935" />
+                          </svg>
                         </span>
-                        {isCommentOpen && status?.comment && (
-                          <div className="overview-comment-popup">
-                            <div className="overview-comment-header">
-                              <strong>Commentaar</strong>
-                              <button
-                                type="button"
-                                className="overview-comment-close"
-                                onClick={() => setCommentTarget(null)}
-                                aria-label="Sluiten"
-                              >
-                                ×
-                              </button>
-                            </div>
-                            <p>{status.comment}</p>
-                          </div>
-                        )}
-                      </td>
-                    )
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                      )}
+                    </span>
+
+                    {isCommentOpen && status?.comment && (
+                      <div className="overview-comment-popup">
+                        <div className="overview-comment-header">
+                          <strong>Commentaar</strong>
+                          <button
+                            type="button"
+                            className="overview-comment-close"
+                            onClick={() => setCommentTarget(null)}
+                            aria-label="Sluiten"
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <p>{status.comment}</p>
+                      </div>
+                    )}
+                  </td>
+                )
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</div>
 
     </>
   )
