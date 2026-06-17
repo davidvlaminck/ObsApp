@@ -16,6 +16,7 @@ class ObservationGoal(Base):
     domain = Column(String, nullable=True, index=True)
     subdomain = Column(String, nullable=False, index=True)
     goal_id = Column(Integer, ForeignKey("goals.id", ondelete="SET NULL"), nullable=True, index=True)
+    class_id = Column(Integer, ForeignKey("classes.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

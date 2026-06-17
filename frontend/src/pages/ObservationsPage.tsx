@@ -7,10 +7,12 @@ import {
   getObservationGoalSubjects,
   getObservationGoalSubdomains,
   getObservationGoals,
+  getObservationGoalClasses,
   searchOpStapGoals,
   GoalResponse,
   GoalSearchFilters,
   ObservationGoalResponse,
+  ClassOption,
 } from '../services/observations'
 
 type ObservationGoalForm = {
@@ -19,6 +21,7 @@ type ObservationGoalForm = {
   domain: string
   subdomain: string
   goal_id: number | null
+  class_id: number | null
 }
 
 type GoalModalFilters = {
@@ -56,6 +59,7 @@ const formatGoalPreview = (description: string | null) => {
 
 export default function ObservationsPage() {
   const [observationGoals, setObservationGoals] = useState<ObservationGoalResponse[]>([])
+  const [classes, setClasses] = useState<ClassOption[]>([])
   const [subjects, setSubjects] = useState<string[]>([])
   const [domains, setDomains] = useState<string[]>([])
   const [modalDomains, setModalDomains] = useState<string[]>([])
@@ -72,6 +76,7 @@ export default function ObservationsPage() {
     domain: '',
     subdomain: '',
     goal_id: null,
+    class_id: null,
   })
   const [selectedGoalSnapshot, setSelectedGoalSnapshot] = useState<GoalResponse | null>(null)
 
@@ -87,12 +92,13 @@ export default function ObservationsPage() {
   const [goalError, setGoalError] = useState('')
   const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null)
 
-  const loadObservationGoals = async (filters: { subject?: string; domain?: string; subdomain?: string } = {}) => {
+  const loadObservationGoals = async (filters: { subject?: string; domain?: string; subdomain?: string; class_id?: number } = {}) => {
     try {
       const data = await getObservationGoals({
         subject: filters.subject || form.subject || undefined,
         domain: filters.domain || form.domain || undefined,
         subdomain: filters.subdomain || form.subdomain || undefined,
+        class_id: filters.class_id || form.class_id || undefined,
       })
       setObservationGoals(data)
       setError('')
@@ -105,10 +111,12 @@ export default function ObservationsPage() {
     const load = async () => {
       try {
         setLoading(true)
-        const [subjectsData, goalsData] = await Promise.all([
+        const [classesData, subjectsData, goalsData] = await Promise.all([
+          getObservationGoalClasses(),
           getObservationGoalSubjects(),
           getObservationGoals(),
         ])
+        setClasses(classesData)
         setSubjects(subjectsData)
         setObservationGoals(goalsData)
         setError('')
@@ -202,7 +210,12 @@ export default function ObservationsPage() {
 
   useEffect(() => {
     loadObservationGoals()
-  }, [form.subject, form.domain, form.subdomain])
+  }, [form.subject, form.domain, form.subdomain, form.class_id])
+
+  const handleTableClassFilter = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const classId = event.target.value ? Number(event.target.value) : undefined
+    loadObservationGoals({ class_id: classId })
+  }
 
   const searchGoals = useCallback(async (filters: GoalModalFilters) => {
     const params: GoalSearchFilters = {
@@ -287,8 +300,9 @@ export default function ObservationsPage() {
         domain: form.domain,
         subdomain: form.subdomain,
         goal_id: form.goal_id ?? undefined,
+        class_id: form.class_id ?? undefined,
       })
-      setForm({ name: '', subject: '', domain: '', subdomain: '', goal_id: null })
+      setForm({ name: '', subject: '', domain: '', subdomain: '', goal_id: null, class_id: null })
       setSelectedGoalSnapshot(null)
       setSuccess('Observatiedoel is aangemaakt.')
       await loadObservationGoals()
@@ -345,75 +359,99 @@ export default function ObservationsPage() {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="observation-goal-subject">Vak</label>
-              <select
-                id="observation-goal-subject"
-                value={form.subject}
-                onChange={(event) => {
-                  setForm((current) => ({
-                    ...current,
-                    subject: event.target.value,
-                    domain: '',
-                    subdomain: '',
-                    goal_id: null,
-                  }))
-                  setSelectedGoalSnapshot(null)
-                }}
-              >
-                <option value="">Kies vak</option>
-                {subjects.map((subject) => (
-                  <option key={subject} value={subject}>
-                    {subject}
-                  </option>
-                ))}
-              </select>
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="observation-goal-subject">Vak</label>
+                <select
+                  id="observation-goal-subject"
+                  value={form.subject}
+                  onChange={(event) => {
+                    setForm((current) => ({
+                      ...current,
+                      subject: event.target.value,
+                      domain: '',
+                      subdomain: '',
+                      goal_id: null,
+                    }))
+                    setSelectedGoalSnapshot(null)
+                  }}
+                >
+                  <option value="">Kies vak</option>
+                  {subjects.map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="observation-goal-domain">Domein</label>
+                <select
+                  id="observation-goal-domain"
+                  value={form.domain}
+                  disabled={!form.subject}
+                  onChange={(event) => {
+                    setForm((current) => ({
+                      ...current,
+                      domain: event.target.value,
+                      subdomain: '',
+                      goal_id: null,
+                    }))
+                    setSelectedGoalSnapshot(null)
+                  }}
+                >
+                  <option value="">Kies domein</option>
+                  {domains.map((domain) => (
+                    <option key={domain} value={domain}>
+                      {domain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="observation-goal-subdomain">Subdomein</label>
+                <select
+                  id="observation-goal-subdomain"
+                  value={form.subdomain}
+                  disabled={!form.subject}
+                  onChange={(event) => {
+                    setForm((current) => ({
+                      ...current,
+                      subdomain: event.target.value,
+                      goal_id: null,
+                    }))
+                    setSelectedGoalSnapshot(null)
+                  }}
+                >
+                  <option value="">Kies subdomein</option>
+                  {subdomains.map((subdomain) => (
+                    <option key={subdomain} value={subdomain}>
+                      {subdomain}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="form-group">
-              <label htmlFor="observation-goal-domain">Domein</label>
+              <label htmlFor="observation-goal-class">Klas</label>
               <select
-                id="observation-goal-domain"
-                value={form.domain}
-                disabled={!form.subject}
+                id="observation-goal-class"
+                value={form.class_id ?? ''}
                 onChange={(event) => {
+                  const value = event.target.value
                   setForm((current) => ({
                     ...current,
-                    domain: event.target.value,
-                    subdomain: '',
-                    goal_id: null,
+                    class_id: value ? Number(value) : null,
                   }))
-                  setSelectedGoalSnapshot(null)
                 }}
               >
-                <option value="">Kies domein</option>
-                {domains.map((domain) => (
-                  <option key={domain} value={domain}>
-                    {domain}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="observation-goal-subdomain">Subdomein</label>
-              <select
-                id="observation-goal-subdomain"
-                value={form.subdomain}
-                disabled={!form.subject}
-                onChange={(event) => {
-                  setForm((current) => ({
-                    ...current,
-                    subdomain: event.target.value,
-                    goal_id: null,
-                  }))
-                  setSelectedGoalSnapshot(null)
-                }}
-              >
-                <option value="">Kies subdomein</option>
-                {subdomains.map((subdomain) => (
-                  <option key={subdomain} value={subdomain}>
-                    {subdomain}
+                <option value="">Alle klassen</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name} ({cls.class_type})
                   </option>
                 ))}
               </select>
@@ -457,7 +495,17 @@ export default function ObservationsPage() {
               <h2>Gedefinieerde observatiedoelen</h2>
               <p className="text-muted">Deze doelen kunnen later gebruikt worden om effectieve observaties mee te doen.</p>
             </div>
-            <span className="count-pill">{observationGoals.length}</span>
+            <div className="table-filters">
+              <select value={form.class_id ?? ''} onChange={handleTableClassFilter}>
+                <option value="">Alle klassen</option>
+                {classes.map((cls) => (
+                  <option key={cls.id} value={cls.id}>
+                    {cls.name}
+                  </option>
+                ))}
+              </select>
+              <span className="count-pill">{observationGoals.length}</span>
+            </div>
           </div>
 
           {loading ? (
@@ -612,6 +660,22 @@ export default function ObservationsPage() {
 
             {goalError && <div className="inline-message inline-message-error">{goalError}</div>}
 
+            {selectedGoalId && (
+              <div className="goal-selection-bar">
+                <span className="goal-selection-info">
+                  Geselecteerd: <strong>{goalSearchResults.find((g) => g.id === selectedGoalId)?.code}</strong>
+                </span>
+                <div className="goal-selection-actions">
+                  <button className="btn btn-outline" type="button" onClick={() => setSelectedGoalId(null)}>
+                    Deselecteren
+                  </button>
+                  <button className="btn btn-primary" type="button" onClick={handleConfirmGoalSelection}>
+                    Doel koppelen
+                  </button>
+                </div>
+              </div>
+            )}
+
             {searchingGoals ? (
               <div className="empty-state compact">Op Stap doelen zoeken...</div>
             ) : goalSearchResults.length === 0 ? (
@@ -646,9 +710,6 @@ export default function ObservationsPage() {
             <div className="modal-footer">
               <button className="btn btn-outline" type="button" onClick={() => setGoalModalOpen(false)}>
                 Sluiten
-              </button>
-              <button className="btn btn-primary" type="button" onClick={handleConfirmGoalSelection} disabled={!selectedGoalId}>
-                Doel koppelen
               </button>
             </div>
           </section>

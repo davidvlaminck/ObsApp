@@ -347,9 +347,17 @@ def seed_opstap_goals():
 def link_demo_observation_goal():
     """Link the demo observation goals to the imported Op Stap goals."""
     demo_goal_specs = [
-        ("rangtelwoorden", "2.1.GK3.5", "Getallenkennis", "Natuurlijke getallen"),
-        ("telrij tot 20", "2.1.GK3.1", "Getallenkennis", "Natuurlijke getallen"),
-        ("aantallen tot 10", "2.1.GK3.3", "Getallenkennis", "Natuurlijke getallen"),
+        # Wiskunde - Getallenkennis
+        ("rangtelwoorden", "2.1.GK3.5", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+        ("telrij tot 20", "2.1.GK3.1", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+        ("aantallen tot 10", "2.1.GK3.3", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+        # Wiskunde - Meetkunde
+        ("vormen herkennen", "2.1.GK3.7", "Wiskunde", "Meetkunde", "Vormen"),
+        # Nederlands - Lezen
+        ("klanken herkennen", "2.1.GK3.2", "Nederlands", "Lezen", "Klankbewustzijn"),
+        ("tekst begrijpen", "2.1.GK3.4", "Nederlands", "Lezen", "Begrip"),
+        # Nederlands - Schrijven
+        ("letters schrijven", "2.1.GK3.6", "Nederlands", "Schrijven", "Handschrift"),
     ]
 
     db = SessionLocal()
@@ -362,7 +370,7 @@ def link_demo_observation_goal():
             print("Demo observation goals skipped: required school, class or teacher not found.")
             return
 
-        for name, code, domain, subdomain in demo_goal_specs:
+        for name, code, subject, domain, subdomain in demo_goal_specs:
             demo_goal = db.query(Goal).filter_by(code=code).first()
             if not demo_goal:
                 print(f"Demo observation goal skipped: Op Stap goal {code} not found.")
@@ -378,7 +386,7 @@ def link_demo_observation_goal():
                     school_id=school.id,
                     created_by=teacher.id,
                     name=name,
-                    subject="Wiskunde",
+                    subject=subject,
                     domain=domain,
                     subdomain=subdomain,
                 )

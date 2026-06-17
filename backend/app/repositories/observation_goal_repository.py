@@ -20,6 +20,7 @@ class ObservationGoalRepository:
             domain=payload.domain,
             subdomain=payload.subdomain,
             goal=self._get_opstap_goal(payload.goal_id),
+            class_id=payload.class_id,
         )
         self.db.add(observation_goal)
         self.db.commit()
@@ -58,9 +59,20 @@ class ObservationGoalRepository:
         domain: str | None = None,
         subdomain: str | None = None,
         q: str | None = None,
+        class_id: int | None = None,
     ) -> list[ObservationGoal]:
         query = self.db.query(ObservationGoal).options(joinedload(ObservationGoal.goal))
         query = query.filter(ObservationGoal.school_id == school_id)
+
+        if class_id:
+            class_model = self.db.query(ClassModel).filter(ClassModel.id == class_id).first()
+            if class_model:
+                query = query.outerjoin(ObservationGoal.goal).filter(
+                    or_(
+                        Goal.level == class_model.class_type,
+                        and_(ObservationGoal.goal_id.is_(None), ObservationGoal.subdomain == class_model.class_type),
+                    )
+                )
 
         if subject:
             query = query.filter(ObservationGoal.subject.ilike(subject))
@@ -194,6 +206,7 @@ class ObservationGoalRepository:
             domain=observation_goal.domain,
             subdomain=observation_goal.subdomain,
             goal_id=observation_goal.goal_id,
+            class_id=observation_goal.class_id,
             goal=self._goal_summary(observation_goal.goal) if observation_goal.goal else None,
             created_at=observation_goal.created_at,
             updated_at=observation_goal.updated_at,

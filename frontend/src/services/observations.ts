@@ -2,6 +2,12 @@ import axios from 'axios'
 import { getToken } from './auth'
 import type { ClassResponse, StudentResponse, UserResponse } from './auth'
 
+export interface ClassOption {
+  id: number
+  name: string
+  class_type: string
+}
+
 const api = axios.create({
   baseURL: '/api',
 })
@@ -50,6 +56,7 @@ export interface ObservationGoalResponse {
   domain: string
   subdomain: string
   goal_id: number | null
+  class_id: number | null
   goal: GoalSummary | null
   created_at: string | null
   updated_at: string | null
@@ -61,6 +68,7 @@ export interface ObservationGoalCreate {
   domain: string
   subdomain: string
   goal_id?: number | null
+  class_id?: number | null
 }
 
 export interface GoalSearchFilters {
@@ -68,6 +76,7 @@ export interface GoalSearchFilters {
   domain?: string
   subdomain?: string
   q?: string
+  class_id?: number
 }
 
 export async function getObservationGoals(filters?: GoalSearchFilters): Promise<ObservationGoalResponse[]> {
@@ -77,6 +86,11 @@ export async function getObservationGoals(filters?: GoalSearchFilters): Promise<
 
 export async function getObservationGoalSubjects(): Promise<string[]> {
   const response = await api.get<string[]>('/observation-goals/subjects')
+  return response.data
+}
+
+export async function getObservationGoalClasses(): Promise<ClassOption[]> {
+  const response = await api.get<ClassOption[]>('/observation-goals/classes')
   return response.data
 }
 

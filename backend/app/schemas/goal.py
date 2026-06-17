@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 class GoalBase(BaseModel):
     code: str = Field(min_length=1, max_length=50)
-    title: str = Field(min_length=1, max_length=500)
+    title: str = Field(min_length=1, max_length=2000)
     description: Optional[str] = None
     subject: str = Field(min_length=1, max_length=100)
     level: Optional[str] = Field(default=None, max_length=20)

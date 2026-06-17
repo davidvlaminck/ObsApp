@@ -13,6 +13,7 @@ from app.repositories.school_year_repository import (
 from app.repositories.student_observation_repository import StudentObservationRepository
 from app.schemas.goal import GoalResponse
 from app.schemas.observation_goal import ObservationGoalCreate, ObservationGoalResponse
+from app.schemas.school import ClassResponse
 from app.schemas.student_observation import ObservationContextResponse, OverviewResponse
 from app.schemas.user import UserResponse
 
@@ -63,6 +64,7 @@ def list_observation_goals(
     domain: str | None = None,
     subdomain: str | None = None,
     q: str | None = None,
+    class_id: int | None = None,
     db=Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
 ):
@@ -71,7 +73,7 @@ def list_observation_goals(
     return [
         repo.to_response(goal)
         for goal in repo.get_all(
-            school_id, subject=subject, domain=domain, subdomain=subdomain, q=q
+            school_id, subject=subject, domain=domain, subdomain=subdomain, q=q, class_id=class_id
         )
     ]
 
@@ -123,6 +125,31 @@ def get_observation_context(
         student_observations=student_observations,
         class_info=class_info,
     )
+
+
+@router.get("/classes", response_model=list[ClassResponse])
+def list_observation_goal_classes(
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    school_id = _ensure_school_user(current_user)
+    class_repo = ClassRepository(db)
+    year_repo = SchoolYearRepository(db)
+
+    if current_user.is_superuser:
+        school_years = year_repo.get_school_years_by_school(school_id)
+        class_ids = []
+        for year in school_years:
+            class_ids.extend([cls.id for cls in class_repo.get_classes_by_school_year(year.id)])
+    else:
+        from app.models.user import User as UserModel
+        user = db.query(UserModel).filter(UserModel.id == current_user.id).first()
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden")
+        class_ids = [cls.id for cls in user.classes]
+
+    classes = [class_repo.get_class_by_id(cid) for cid in class_ids]
+    return [class_repo.class_to_response(cls) for cls in classes if cls]
 
 
 @router.get("/subjects", response_model=list[str])

@@ -46,11 +46,9 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   if (status === 401) {
     return 'Sessie verlopen. Log opnieuw in.'
   }
-
   if (status === 403) {
     return 'Geen toegang.'
   }
-
   return detail ?? fallback
 }
 
@@ -63,7 +61,9 @@ export default function OverviewPage() {
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
   const [selectedSubject, setSelectedSubject] = useState('')
   const [error, setError] = useState('')
-  const [commentTarget, setCommentTarget] = useState<{ goalId: number; studentId: number } | null>(null)
+  const [commentTarget, setCommentTarget] = useState<{ goalId: number; studentId: number } | null>(
+    null
+  )
   const [studentObservations, setStudentObservations] = useState<StudentObservationResponse[]>([])
 
   useEffect(() => {
@@ -78,10 +78,13 @@ export default function OverviewPage() {
         }
 
         const schoolYears = await getSchoolYears(currentUser.school_id)
-        const activeSchoolYear = schoolYears.find((schoolYear) => schoolYear.is_active) ?? schoolYears[0] ?? null
+        const activeSchoolYear =
+          schoolYears.find((schoolYear) => schoolYear.is_active) ?? schoolYears[0] ?? null
+
         if (activeSchoolYear) {
           const loadedClasses = await getClasses(activeSchoolYear.id)
           setClasses(loadedClasses)
+
           if (loadedClasses.length === 1) {
             setSelectedClassId(loadedClasses[0].id)
           }
@@ -138,13 +141,16 @@ export default function OverviewPage() {
 
   const statusByGoalAndStudent = useMemo(() => {
     const map = new Map<string, StudentObservationResponse>()
+
     for (const observation of studentObservations) {
       const key = `${observation.observation_goal_id}-${observation.student_id}`
       const current = map.get(key)
+
       if (!current || isObservationNewer(observation, current)) {
         map.set(key, observation)
       }
     }
+
     return map
   }, [studentObservations])
 
@@ -161,8 +167,10 @@ export default function OverviewPage() {
             <p className="text-muted">Overzicht van observaties per klas en doel.</p>
           </div>
         </section>
+
         <div className="inline-message inline-message-error">
-          Superusers moeten zich eerst als leerkracht identificeren voordat ze het overzicht kunnen bekijken.
+          Superusers moeten zich eerst als leerkracht identificeren voordat ze het overzicht kunnen
+          bekijken.
         </div>
       </>
     )
@@ -173,146 +181,163 @@ export default function OverviewPage() {
       <section className="page-header">
         <div>
           <h1>Overzicht per klas</h1>
-          <p className="text-muted">Kies een klas en vak om de observatiestatus per leerling te bekijken.</p>
+          <p className="text-muted">
+            Kies een klas en vak om de observatiestatus per leerling te bekijken.
+          </p>
         </div>
       </section>
 
       {error && <div className="inline-message inline-message-error">{error}</div>}
 
+      <div className="overview-page-scroll">
+        <div className="overview-filters">
+          <div className="form-group">
+            <label>Klas</label>
 
-<div className="overview-page-scroll">
-  <div className="overview-filters">
-    <div className="form-group">
-      <label htmlFor="overview-class">Klas</label>
-      <select
-        id="overview-class"
-        value={selectedClassId ?? ''}
-        onChange={(event) => {
-          const value = event.target.value ? Number(event.target.value) : null
-          setSelectedClassId(value)
-        }}
-      >
-        <option value="">Kies klas</option>
-        {classes.map((classItem) => (
-          <option key={classItem.id} value={classItem.id}>
-            {classItem.name}
-          </option>
-        ))}
-      </select>
-    </div>
+            <div className="class-chips">
+              {classes.length === 0 ? (
+                <span className="text-muted">Geen klassen beschikbaar</span>
+              ) : (
+                classes.map((classItem, index) => (
+                  <button
+                    key={classItem.id}
+                    type="button"
+                    className={`class-chip class-chip-${index % 4} ${
+                      selectedClassId === classItem.id ? 'active' : ''
+                    }`}
+                    onClick={() => setSelectedClassId(classItem.id)}
+                  >
+                    {classItem.name}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
 
-    <div className="form-group">
-      <label htmlFor="overview-subject">Vak</label>
-      <select
-        id="overview-subject"
-        value={selectedSubject}
-        disabled={!selectedClassId}
-        onChange={(event) => setSelectedSubject(event.target.value)}
-      >
-        <option value="">Alle vakken</option>
-        {subjects.map((subject) => (
-          <option key={subject} value={subject}>
-            {subject}
-          </option>
-        ))}
-      </select>
-    </div>
-  </div>
+          <div className="form-group">
+            <label>Vak</label>
+            <div className="subject-chips">
+              <button
+                type="button"
+                className={`subject-chip ${selectedSubject === '' ? 'active all' : ''}`}
+                disabled={!selectedClassId}
+                onClick={() => setSelectedSubject('')}
+              >
+                Alle vakken
+              </button>
 
-  {!selectedClassId ? (
-    <div className="empty-state">Kies een klas om het overzicht te bekijken.</div>
-  ) : !overview || overview.goals.length === 0 ? (
-    <div className="empty-state">Geen observatiedoelen gevonden voor deze selectie.</div>
-  ) : (
-    <div className="overview-table-wrapper">
-      <table className="overview-table">
-        <thead>
-          <tr>
-            <th className="overview-header-goal">Leerdoel</th>
-            {overview.students.map((student) => (
-              <th key={student.id} className="overview-header-student">
-                <span className="overview-student-name">{student.name}</span>
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {overview.goals.map((goal) => (
-            <tr key={goal.id}>
-              <td className="overview-cell-goal">
-                <div className="overview-goal-name">{goal.name}</div>
-              </td>
-              {overview.students.map((student) => {
-                const status = statusByGoalAndStudent.get(`${goal.id}-${student.id}`)
-                const hasComment = Boolean(status?.comment)
-                const isCommentOpen =
-                  commentTarget?.goalId === goal.id && commentTarget?.studentId === student.id
+              {subjects.map((subject, index) => (
+                <button
+                  key={subject}
+                  type="button"
+                  className={`subject-chip chip-${index % 6} ${
+                    selectedSubject === subject ? 'active' : ''
+                  }`}
+                  disabled={!selectedClassId}
+                  onClick={() => setSelectedSubject(subject)}
+                >
+                  {subject}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
-                return (
-                  <td key={student.id} className="overview-cell-status">
-                    <span
-                      className="overview-status-chip"
-                      style={{ backgroundColor: getStatusColor(status?.status) }}
-                      onClick={() => {
-                        if (hasComment) {
-                          setCommentTarget(
-                            isCommentOpen ? null : { goalId: goal.id, studentId: student.id }
-                          )
-                        }
-                      }}
-                    >
-                      {hasComment && (
-                        <span
-                          className="overview-flag"
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <svg
-                            width="10"
-                            height="12"
-                            viewBox="0 0 10 12"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
+        {!selectedClassId ? (
+          <div className="empty-state">Kies een klas om het overzicht te bekijken.</div>
+        ) : !overview || overview.goals.length === 0 ? (
+          <div className="empty-state">Geen observatiedoelen gevonden voor deze selectie.</div>
+        ) : (
+          <div className="overview-table-wrapper">
+            <table className="overview-table">
+              <thead>
+                <tr>
+                  <th className="overview-header-goal">Leerdoel</th>
+                  {overview.students.map((student) => (
+                    <th key={student.id} className="overview-header-student">
+                      <span className="overview-student-name">{student.name}</span>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+
+              <tbody>
+                {overview.goals.map((goal) => (
+                  <tr key={goal.id}>
+                    <td className="overview-cell-goal">
+                      <div className="overview-goal-name">{goal.name}</div>
+                    </td>
+
+                    {overview.students.map((student) => {
+                      const status = statusByGoalAndStudent.get(`${goal.id}-${student.id}`)
+                      const hasComment = Boolean(status?.comment)
+                      const isCommentOpen =
+                        commentTarget?.goalId === goal.id && commentTarget?.studentId === student.id
+
+                      return (
+                        <td key={student.id} className="overview-cell-status">
+                          <span
+                            className={`overview-status-chip ${hasComment ? 'has-comment' : ''}`}
+                            style={{ backgroundColor: getStatusColor(status?.status) }}
+                            onClick={() => {
+                              if (hasComment) {
+                                setCommentTarget(
+                                  isCommentOpen ? null : { goalId: goal.id, studentId: student.id }
+                                )
+                              }
+                            }}
                           >
-                            <path
-                              d="M1 1H9V10H1V1Z"
-                              fill="white"
-                              stroke="#424242"
-                              strokeWidth="1.2"
-                              strokeLinejoin="round"
-                            />
-                            <path d="M1 1V4L5 6.5L1 9V1Z" fill="#e53935" />
-                          </svg>
-                        </span>
-                      )}
-                    </span>
+                            {hasComment && (
+                              <span
+                                className="overview-flag"
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <svg
+                                  width="10"
+                                  height="12"
+                                  viewBox="0 0 10 12"
+                                  fill="none"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M1 1H9V10H1V1Z"
+                                    fill="white"
+                                    stroke="#424242"
+                                    strokeWidth="1.2"
+                                    strokeLinejoin="round"
+                                  />
+                                  <path d="M1 1V4L5 6.5L1 9V1Z" fill="#e53935" />
+                                </svg>
+                              </span>
+                            )}
+                          </span>
 
-                    {isCommentOpen && status?.comment && (
-                      <div className="overview-comment-popup">
-                        <div className="overview-comment-header">
-                          <strong>Commentaar</strong>
-                          <button
-                            type="button"
-                            className="overview-comment-close"
-                            onClick={() => setCommentTarget(null)}
-                            aria-label="Sluiten"
-                          >
-                            ×
-                          </button>
-                        </div>
-                        <p>{status.comment}</p>
-                      </div>
-                    )}
-                  </td>
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )}
-</div>
-
+                          {isCommentOpen && status?.comment && (
+                            <div className="overview-comment-popup">
+                              <div className="overview-comment-header">
+                                <strong>Commentaar</strong>
+                                <button
+                                  type="button"
+                                  className="overview-comment-close"
+                                  onClick={() => setCommentTarget(null)}
+                                  aria-label="Sluiten"
+                                >
+                                  ×
+                                </button>
+                              </div>
+                              <p>{status.comment}</p>
+                            </div>
+                          )}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </>
   )
 }

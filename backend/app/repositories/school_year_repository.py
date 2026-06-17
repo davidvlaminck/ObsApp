@@ -28,6 +28,9 @@ class SchoolYearRepository:
     def get_by_school(self, school_id: int) -> list[SchoolYear]:
         return self.db.query(SchoolYear).filter(SchoolYear.school_id == school_id).order_by(SchoolYear.start_date.desc()).all()
 
+    def get_school_years_by_school(self, school_id: int) -> list[SchoolYear]:
+        return self.db.query(SchoolYear).filter(SchoolYear.school_id == school_id).order_by(SchoolYear.start_date.desc()).all()
+
     def get_active_by_school(self, school_id: int) -> SchoolYear | None:
         return self.db.query(SchoolYear).filter(SchoolYear.school_id == school_id, SchoolYear.is_active.is_(True)).first()
 
