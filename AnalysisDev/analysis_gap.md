@@ -12,7 +12,7 @@ Een school en schooljaar wordt aangemaakt na betaling. Nadien kunnen gebruikers 
 - [ ] ? klassen koppelen aan leeftijdsgroep
 - [ ] custom observatiestatussen maken (toevoegen, updaten, verwijderen, volgorde aanpassen)
 - [ ] herwerken tot een formulier met stappen?
-- [ ] ? evalutieperiodes instellen (laat toe om leerlingen op te volgen door observatiestatus te zien aan het einde van een periode)
+- [ ] laat toe om leerlingen op te volgen door observatiestatus te zien doorheen de tijd
 
 Na te kijken:
 - wat met dubbele namen in uploads
@@ -33,10 +33,11 @@ Na te kijken:
 - [ ] nadien op stap doel toevoegen
 - [ ] koppelen van GO doelen
 - [ ] koppelen op minimum doelen
+- [ ] Eigen doelen maken onder vak Varia (welbevinden, betrokkenheid)
 
 ### Thema's
 
-- [ ] ...
+- [ ] Thema's aanmaken en doelen koppelen
 
 ## Observaties
 
