@@ -193,66 +193,78 @@ export default function StudentOverviewPage() {
 
       {error && <div className="inline-message inline-message-error">{error}</div>}
 
-      <div className="overview-filters">
-        <div className="form-group">
-          <label htmlFor="student-overview-class">Klas</label>
-          <select
-            id="student-overview-class"
-            value={selectedClassId ?? ''}
-            onChange={(event) => {
-              const value = event.target.value ? Number(event.target.value) : null
-              setSelectedClassId(value)
-            }}
-          >
-            <option value="">Kies klas</option>
-            {classes.map((classItem) => (
-              <option key={classItem.id} value={classItem.id}>
-                {classItem.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="overview-page-scroll">
+        <div className="overview-filters">
+          <div className="form-group">
+            <label>Klas</label>
+            <div className="class-chips">
+              {classes.length === 0 ? (
+                <span className="text-muted">Geen klassen beschikbaar</span>
+              ) : (
+                classes.map((classItem, index) => (
+                  <button
+                    key={classItem.id}
+                    type="button"
+                    className={`class-chip class-chip-${index % 4} ${
+                      selectedClassId === classItem.id ? 'active' : ''
+                    }`}
+                    onClick={() => setSelectedClassId(classItem.id)}
+                  >
+                    {classItem.name}
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
 
-        <div className="form-group">
-          <label htmlFor="student-overview-subject">Vak</label>
-          <select
-            id="student-overview-subject"
-            value={selectedSubject}
-            disabled={!selectedClassId}
-            onChange={(event) => {
-              setSelectedSubject(event.target.value)
-              setSelectedStudentId(null)
-            }}
-          >
-            <option value="">Alle vakken</option>
-            {subjects.map((subject) => (
-              <option key={subject} value={subject}>
-                {subject}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="form-group">
+            <label>Vak</label>
+            <div className="subject-chips">
+              <button
+                type="button"
+                className={`subject-chip ${selectedSubject === '' ? 'active all' : ''}`}
+                disabled={!selectedClassId}
+                onClick={() => setSelectedSubject('')}
+              >
+                Alle vakken
+              </button>
 
-        <div className="form-group">
-          <label htmlFor="student-overview-student">Leerling</label>
-          <select
-            id="student-overview-student"
-            value={selectedStudentId ?? ''}
-            disabled={!selectedClassId || !overview?.students.length}
-            onChange={(event) => {
-              const value = event.target.value ? Number(event.target.value) : null
-              setSelectedStudentId(value)
-            }}
-          >
-            <option value="">Kies leerling</option>
-            {overview?.students.map((student: StudentResponse) => (
-              <option key={student.id} value={student.id}>
-                {student.name}
-              </option>
-            ))}
-          </select>
+              {subjects.map((subject, index) => (
+                <button
+                  key={subject}
+                  type="button"
+                  className={`subject-chip chip-${index % 6} ${
+                    selectedSubject === subject ? 'active' : ''
+                  }`}
+                  disabled={!selectedClassId}
+                  onClick={() => setSelectedSubject(subject)}
+                >
+                  {subject}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="student-overview-student">Leerling</label>
+            <select
+              id="student-overview-student"
+              value={selectedStudentId ?? ''}
+              disabled={!selectedClassId || !overview?.students.length}
+              onChange={(event) => {
+                const value = event.target.value ? Number(event.target.value) : null
+                setSelectedStudentId(value)
+              }}
+            >
+              <option value="">Kies leerling</option>
+              {overview?.students.map((student: StudentResponse) => (
+                <option key={student.id} value={student.id}>
+                  {student.name}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
 
       {!selectedClassId ? (
         <div className="empty-state">Kies een klas om het overzicht per leerling te bekijken.</div>
@@ -308,6 +320,7 @@ export default function StudentOverviewPage() {
           </div>
         </section>
       )}
+      </div>
     </>
   )
 }
