@@ -5,6 +5,7 @@ import SchoolAccessRoute from './components/SchoolAccessRoute'
 import LoginPage from './pages/LoginPage'
 import LandingPage from './pages/LandingPage'
 import SchoolsPage from './pages/SchoolsPage'
+import ManagementPage from './pages/ManagementPage'
 import UsersPage from './pages/UsersPage'
 import SetPasswordPage from './pages/SetPasswordPage'
 import DashboardPage from './pages/DashboardPage'
@@ -66,6 +67,16 @@ function App() {
           <AppLayout>
             <SchoolAccessRoute>
               <SchoolsPage />
+            </SchoolAccessRoute>
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/management/classes"
+        element={
+          <AppLayout>
+            <SchoolAccessRoute>
+              <ManagementPage />
             </SchoolAccessRoute>
           </AppLayout>
         }

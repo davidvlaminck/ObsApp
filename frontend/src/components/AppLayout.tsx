@@ -19,6 +19,7 @@ import {
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import AssignmentIcon from '@mui/icons-material/Assignment'
 import VisibilityIcon from '@mui/icons-material/Visibility'
+import HomeIcon from '@mui/icons-material/Home'
 import SchoolIcon from '@mui/icons-material/School'
 import PeopleIcon from '@mui/icons-material/People'
 import MenuIcon from '@mui/icons-material/Menu'
@@ -50,7 +51,8 @@ const menuItems: MenuItem[] = [
     icon: AssignmentIcon,
     children: [
       { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
-      { label: 'Scholen', to: '/schools', icon: SchoolIcon, adminOnly: true },
+      { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
+      { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
       { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
     ],
   },
