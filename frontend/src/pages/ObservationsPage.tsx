@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { FormEvent, useCallback, useEffect, useState } from 'react'
 import {
   createObservationGoal,
@@ -471,14 +472,16 @@ export default function ObservationsPage() {
                     .join(' · ')}
                 </span>
                 <button
-                  className="link-button"
+                  className="link-button delete-link-button"
                   type="button"
                   onClick={() => {
                     setForm((current) => ({ ...current, goal_id: null }))
                     setSelectedGoalSnapshot(null)
                   }}
+                  aria-label="Koppeling verwijderen"
+                  title="Koppeling verwijderen"
                 >
-                  Koppeling verwijderen
+                  <DeleteIcon fontSize="small" aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -539,8 +542,14 @@ export default function ObservationsPage() {
                       <td>{goal.subdomain}</td>
                       <td>{formatGoalLabel(goal.goal)}</td>
                       <td>
-                        <button className="table-action danger-link" type="button" onClick={() => handleDelete(goal.id)}>
-                          Verwijderen
+                        <button
+                          className="table-action danger-link delete-icon-button"
+                          type="button"
+                          onClick={() => handleDelete(goal.id)}
+                          aria-label={`Verwijder ${goal.name}`}
+                          title={`Verwijder ${goal.name}`}
+                        >
+                          <DeleteIcon fontSize="small" aria-hidden="true" />
                         </button>
                       </td>
                     </tr>
@@ -646,7 +655,7 @@ export default function ObservationsPage() {
                 className="btn btn-outline"
                 type="button"
                 onClick={() => {
-                  setGoalSearchFilters({ subject: form.subject, domain: form.domain, subdomain: form.subdomain, q: '' })
+                  setGoalSearchFilters({ subject: '', domain: '', subdomain: '', q: '' })
                   setSelectedGoalId(null)
                   setGoalError('')
                 }}

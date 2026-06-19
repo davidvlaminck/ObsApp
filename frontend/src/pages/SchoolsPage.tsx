@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { StudentAvatar } from '../components/StudentAvatar'
 import {
@@ -822,12 +823,13 @@ export default function SchoolsPage() {
                                        📷
                                      </label>
                                      <button
-                                       className="table-action"
+                                       className="table-action delete-icon-button"
                                        type="button"
                                        onClick={() => handleDeleteStudent(s.id)}
-                                       style={{ color: '#d32f2f' }}
+                                       aria-label={`Verwijder ${s.name}`}
+                                       title={`Verwijder ${s.name}`}
                                      >
-                                       ✕
+                                       <DeleteIcon fontSize="small" aria-hidden="true" />
                                      </button>
                                    </li>
                                  ))}
@@ -843,12 +845,13 @@ export default function SchoolsPage() {
                                   <li key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <span>{t.name}</span>
                                     <button
-                                      className="table-action"
+                                      className="table-action delete-icon-button"
                                       type="button"
                                       onClick={() => handleRemoveTeacher(cls.id, t.id)}
-                                      style={{ color: '#d32f2f' }}
+                                      aria-label={`Verwijder ${t.name} als leerkracht`}
+                                      title={`Verwijder ${t.name} als leerkracht`}
                                     >
-                                      ✕
+                                      <DeleteIcon fontSize="small" aria-hidden="true" />
                                     </button>
                                   </li>
                                 ))}
@@ -912,11 +915,13 @@ export default function SchoolsPage() {
                       </td>
                       <td>
                         <button
-                          className="table-action"
+                          className="table-action delete-icon-button"
                           type="button"
                           onClick={() => handleRemovePreviewItem(index)}
+                          aria-label={`Verwijder importrij ${item.row_number}`}
+                          title={`Verwijder importrij ${item.row_number}`}
                         >
-                          Verwijderen
+                          <DeleteIcon fontSize="small" aria-hidden="true" />
                         </button>
                       </td>
                     </tr>

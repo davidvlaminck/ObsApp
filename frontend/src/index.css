@@ -1251,6 +1251,35 @@ p {
   text-decoration: underline;
 }
 
+.delete-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.delete-icon-button:hover {
+  background-color: rgba(211, 47, 47, 0.08);
+  color: var(--md-error);
+}
+
+.delete-icon-button:active {
+  background-color: rgba(211, 47, 47, 0.14);
+}
+
+.link-button.delete-link-button {
+  color: var(--md-error);
+}
+
 .table-action {
   min-height: 36px;
   padding: 0 8px;
@@ -1333,9 +1362,13 @@ p {
 
 .goal-modal-filters {
   display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(160px, 220px) minmax(240px, 1fr);
+  grid-template-columns: minmax(160px, 220px) minmax(160px, 220px) minmax(160px, 220px);
   gap: 16px;
   align-items: start;
+}
+
+.goal-modal-filters .form-group:nth-child(4) {
+  grid-column: 1 / -1;
 }
 
 .goal-results {
