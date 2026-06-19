@@ -63,7 +63,7 @@ def ensure_goal_columns():
                 """
                 UPDATE goals
                 SET subject = CASE
-                    WHEN lower(subject) IN ('ned', 'ned_com') THEN 'Nederlands'
+                    WHEN lower(subject) IN ('ned', 'ned_com', 'nederlands en communicatie', 'nederlands & communicatie', 'nederlands-communicatie') THEN 'Nederlands'
                     WHEN lower(subject) IN ('wiskunde', 'w_t') THEN 'Wiskunde'
                     WHEN lower(subject) IN ('aardr') THEN 'Aardrijkskunde'
                     WHEN lower(subject) IN ('gesch') THEN 'Geschiedenis'
