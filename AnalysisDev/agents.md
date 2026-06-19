@@ -8,6 +8,9 @@ Om dat te bereiken werken we stap per stap, met telkens duidelijke deliverables.
 
 # ObsApp development rules
 
+## AI guidelines
+- zie ai.md
+
 ## Algemeen
 - Respecteer bestaande mapstructuur.
 - Maak kleine, controleerbare wijzigingen.
