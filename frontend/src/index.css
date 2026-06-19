@@ -282,6 +282,29 @@ p {
   overflow: hidden;
 }
 
+.table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.student-observation-table {
+  width: 100%;
+  table-layout: fixed;
+  min-width: 720px;
+}
+
+.student-observation-table th,
+.student-observation-table td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-observation-table td:first-child {
+  white-space: normal;
+}
+
 .table-header {
   display: flex;
   justify-content: space-between;
@@ -530,8 +553,7 @@ p {
 
 .overview-page-scroll {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
+  overflow: auto;
 }
 
 .overview-filters {
@@ -539,7 +561,17 @@ p {
   flex-direction: column;
   gap: 14px;
   margin-bottom: 14px;
-  min-width: 1700px;
+}
+
+@media (max-width: 900px) {
+  .overview-filters {
+    gap: 10px;
+  }
+
+  .subject-chip {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 
 .subject-chips {
@@ -622,24 +654,27 @@ p {
 .overview-table-wrapper {
   width: 100%;
   max-width: none;
-  overflow: visible;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .overview-table {
-  width: max-content;
-  min-width: 1700px;
+  width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
+  min-width: 900px;
 }
 
 .overview-table th,
 .overview-table td {
-  padding: 8px 4px;
+  padding: 8px 6px;
   border-bottom: 1px solid var(--md-border);
   border-right: 1px solid var(--md-border);
   text-align: center;
   vertical-align: middle;
-  overflow: visible;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .overview-table th:last-child,
@@ -649,13 +684,12 @@ p {
 
 .overview-table th {
   color: var(--md-text-secondary);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.3px;
   background: #fafafa;
-  height: 160px;
-  padding: 0;
+  padding: 10px 6px;
 }
 
 .overview-table tbody tr:last-child td {
@@ -664,21 +698,23 @@ p {
 
 .overview-header-goal,
 .overview-cell-goal {
-  width: 200px;
-  min-width: 200px;
-  max-width: 200px;
+  width: 160px;
+  min-width: 160px;
+  max-width: 160px;
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
 }
 
 .overview-header-goal {
-  text-align: right;
-  padding: 12px 10px;
+  padding: 10px 8px;
 }
 
 .overview-header-student,
 .overview-cell-status {
-  width: 52px;
-  min-width: 52px;
-  max-width: 52px;
+  width: 40px;
+  min-width: 40px;
+  max-width: 40px;
   text-align: center;
 }
 
@@ -803,6 +839,22 @@ p {
   box-shadow: var(--md-shadow);
 }
 
+@media (max-width: 900px) {
+  .overview-student-panel {
+    padding: 12px;
+    margin-top: 16px;
+  }
+
+  .overview-student-panel-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .overview-student-panel h2 {
+    font-size: 16px;
+  }
+}
+
 .overview-student-panel-header {
   display: flex;
   justify-content: space-between;
@@ -824,9 +876,31 @@ p {
 }
 
 .student-observation-goal-name {
-  max-width: 420px;
+  max-width: 320px;
   font-weight: 500;
   color: var(--md-text-primary);
+  word-break: break-word;
+}
+
+@media (max-width: 900px) {
+  .student-observation-table th,
+  .student-observation-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  .student-observation-goal-name {
+    max-width: 180px;
+  }
+
+  .overview-filters {
+    gap: 10px;
+  }
+
+  .subject-chip {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
 }
 
 .overview-observation-pill {
@@ -1010,6 +1084,23 @@ p {
   border-radius: var(--md-radius);
   box-shadow: var(--md-shadow);
   padding: 24px;
+}
+
+@media (max-width: 1200px) {
+  .observing-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .observing-panel {
+    max-width: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .observing-panel,
+  .selected-observation-goal {
+    padding: 16px;
+  }
 }
 
 .observing-panel h2,
@@ -1212,6 +1303,11 @@ p {
     align-items: stretch;
     flex-direction: column;
   }
+
+  .observing-panel .table-header {
+    flex-direction: column;
+    gap: 8px;
+  }
 }
 
 .selected-goal-card {
@@ -1369,6 +1465,24 @@ p {
 
 .goal-modal-filters .form-group:nth-child(4) {
   grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+  .goal-modal-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-header,
+  .modal-footer,
+  .modal-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .modal-actions .btn,
+  .modal-footer .btn {
+    width: 100%;
+  }
 }
 
 .goal-results {
