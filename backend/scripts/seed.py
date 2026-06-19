@@ -7,9 +7,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from app.core.database import Base, engine, SessionLocal
 from app.models.school import School
 from app.models.school_year import Class, SchoolYear
+from app.models.school_year import Student
 from app.models.user import User
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
+from app.models.student_observation import StudentObservation
 from app.core.security import get_password_hash
 
 
@@ -155,7 +157,13 @@ def _derive_subject_from_filename(stem: str) -> str:
         "rkg": "Religie en levensbeschouwing",
         "v_g": "Vormgeving",
     }
-    return subject_map.get(name.lower(), name)
+    return _normalize_subject(subject_map.get(name.lower(), name))
+
+
+def _normalize_subject(value: str) -> str:
+    if value.lower() in {"nederlands en communicatie", "nederlands & communicatie", "nederlands-communicatie"}:
+        return "Nederlands"
+    return value
 
 
 def seed_vo_goals():
@@ -176,7 +184,7 @@ def seed_vo_goals():
             code = str(row[8]).strip()
             title = _clean_text(row[9]) or str(row[9]).strip() if row[9] else ""
             description = _clean_text(row[10])
-            subject = str(row[4]).strip() if row[4] else ""
+            subject = _normalize_subject(str(row[4]).strip() if row[4] else "")
             level = "K-"
             goal_type = "VO"
             doel_soort = None
@@ -297,7 +305,7 @@ def seed_opstap_goals():
 
             # Derive subject, domain, subdomain, cluster from path
             path_parts = [p.strip() for p in path.split(" > ") if p.strip()]
-            subject = path_parts[0] if path_parts else ""
+            subject = _normalize_subject(path_parts[0]) if path_parts else ""
             domain = path_parts[1] if len(path_parts) > 1 else None
             subdomain = path_parts[2] if len(path_parts) > 2 else None
             cluster = path_parts[3] if len(path_parts) > 3 else None
@@ -315,9 +323,7 @@ def seed_opstap_goals():
 
             # Link to VO goal via minimum_goal_code (remove K- prefix if present)
             vo_code = minimum_goal_code.removeprefix("K-") if minimum_goal_code.startswith("K-") else minimum_goal_code
-            parent_goal_id = None
             if vo_code and vo_code in vo_goals:
-                parent_goal_id = vo_goals[vo_code].id
                 linked += 1
 
             goal = Goal(
@@ -355,9 +361,12 @@ def link_demo_observation_goal():
         ("vormen herkennen", "2.1.GK3.7", "Wiskunde", "Meetkunde", "Vormen"),
         # Nederlands - Lezen
         ("klanken herkennen", "2.1.GK3.2", "Nederlands", "Lezen", "Klankbewustzijn"),
+        ("woorden lezen", "2.1.GK3.2", "Nederlands", "Lezen", "Woordlezen"),
         ("tekst begrijpen", "2.1.GK3.4", "Nederlands", "Lezen", "Begrip"),
+        ("luisteren naar verhalen", "2.1.GK3.4", "Nederlands", "Lezen", "Luisteren"),
         # Nederlands - Schrijven
-        ("letters schrijven", "2.1.GK3.6", "Nederlands", "Schrijven", "Handschrift"),
+        ("letters schrijven", "2.1.GK3.2", "Nederlands", "Schrijven", "Handschrift"),
+        ("woorden schrijven", "2.1.GK3.4", "Nederlands", "Schrijven", "Spelling"),
     ]
 
     db = SessionLocal()
@@ -400,9 +409,149 @@ def link_demo_observation_goal():
         db.close()
 
 
+def seed_static_class_observations():
+    seeded_class_observations = [
+        ("klanken herkennen", 0, "in_ontwikkeling", date(2026, 10, 5), "Voorbeeldcommentaar: herkent de begin- en eindklank."),
+        ("klanken herkennen", 1, "zelfstandig", date(2026, 10, 6), None),
+        ("klanken herkennen", 2, "voorsprong", date(2026, 10, 7), None),
+        ("klanken herkennen", 3, "in_ontwikkeling", date(2026, 10, 8), None),
+        ("klanken herkennen", 4, "zelfstandig", date(2026, 10, 9), None),
+        ("klanken herkennen", 5, "voorsprong", date(2026, 10, 10), None),
+        ("klanken herkennen", 6, "onvoldoende", date(2026, 10, 11), None),
+        ("klanken herkennen", 7, "in_ontwikkeling", date(2026, 10, 12), None),
+        ("klanken herkennen", 8, "zelfstandig", date(2026, 10, 13), None),
+        ("klanken herkennen", 9, "voorsprong", date(2026, 10, 14), None),
+        ("klanken herkennen", 10, "in_ontwikkeling", date(2026, 10, 15), None),
+        ("klanken herkennen", 11, "zelfstandig", date(2026, 10, 16), None),
+        ("klanken herkennen", 12, "voorsprong", date(2026, 10, 17), None),
+        ("klanken herkennen", 13, "onvoldoende", date(2026, 10, 18), None),
+        ("klanken herkennen", 14, "in_ontwikkeling", date(2026, 10, 19), None),
+        ("woorden lezen", 0, "zelfstandig", date(2026, 10, 20), None),
+        ("woorden lezen", 1, "voorsprong", date(2026, 10, 21), None),
+        ("woorden lezen", 2, "in_ontwikkeling", date(2026, 10, 22), None),
+        ("woorden lezen", 3, "zelfstandig", date(2026, 10, 23), None),
+        ("woorden lezen", 4, "voorsprong", date(2026, 10, 24), None),
+        ("woorden lezen", 5, "onvoldoende", date(2026, 10, 25), None),
+        ("woorden lezen", 6, "in_ontwikkeling", date(2026, 10, 26), None),
+        ("woorden lezen", 7, "zelfstandig", date(2026, 10, 27), None),
+        ("woorden lezen", 8, "voorsprong", date(2026, 10, 28), None),
+        ("woorden lezen", 9, "in_ontwikkeling", date(2026, 10, 29), None),
+        ("woorden lezen", 10, "zelfstandig", date(2026, 10, 30), None),
+        ("woorden lezen", 11, "voorsprong", date(2026, 10, 31), None),
+        ("woorden lezen", 12, "onvoldoende", date(2026, 11, 1), None),
+        ("woorden lezen", 13, "in_ontwikkeling", date(2026, 11, 2), None),
+        ("woorden lezen", 14, "zelfstandig", date(2026, 11, 3), None),
+        ("luisteren naar verhalen", 0, "voorsprong", date(2026, 11, 4), None),
+        ("luisteren naar verhalen", 1, "in_ontwikkeling", date(2026, 11, 5), None),
+        ("luisteren naar verhalen", 2, "zelfstandig", date(2026, 11, 6), None),
+        ("luisteren naar verhalen", 3, "voorsprong", date(2026, 11, 7), None),
+        ("luisteren naar verhalen", 4, "onvoldoende", date(2026, 11, 8), None),
+        ("luisteren naar verhalen", 5, "in_ontwikkeling", date(2026, 11, 9), None),
+        ("luisteren naar verhalen", 6, "zelfstandig", date(2026, 11, 10), None),
+        ("luisteren naar verhalen", 7, "voorsprong", date(2026, 11, 11), None),
+        ("luisteren naar verhalen", 8, "in_ontwikkeling", date(2026, 11, 12), None),
+        ("luisteren naar verhalen", 9, "zelfstandig", date(2026, 11, 13), None),
+        ("luisteren naar verhalen", 10, "voorsprong", date(2026, 11, 14), None),
+        ("luisteren naar verhalen", 11, "onvoldoende", date(2026, 11, 15), None),
+        ("luisteren naar verhalen", 12, "in_ontwikkeling", date(2026, 11, 16), None),
+        ("luisteren naar verhalen", 13, "zelfstandig", date(2026, 11, 17), None),
+        ("luisteren naar verhalen", 14, "voorsprong", date(2026, 11, 18), None),
+        ("rangtelwoorden", 0, "zelfstandig", date(2026, 11, 19), None),
+        ("rangtelwoorden", 1, "voorsprong", date(2026, 11, 20), None),
+        ("rangtelwoorden", 2, "in_ontwikkeling", date(2026, 11, 21), None),
+        ("rangtelwoorden", 3, "zelfstandig", date(2026, 11, 22), None),
+        ("rangtelwoorden", 4, "voorsprong", date(2026, 11, 23), None),
+        ("rangtelwoorden", 5, "onvoldoende", date(2026, 11, 24), None),
+        ("rangtelwoorden", 6, "in_ontwikkeling", date(2026, 11, 25), None),
+        ("rangtelwoorden", 7, "zelfstandig", date(2026, 11, 26), None),
+        ("rangtelwoorden", 8, "voorsprong", date(2026, 11, 27), None),
+        ("rangtelwoorden", 9, "in_ontwikkeling", date(2026, 11, 28), None),
+        ("rangtelwoorden", 10, "zelfstandig", date(2026, 11, 29), None),
+        ("rangtelwoorden", 11, "voorsprong", date(2026, 11, 30), None),
+        ("rangtelwoorden", 12, "onvoldoende", date(2026, 12, 1), None),
+        ("rangtelwoorden", 13, "in_ontwikkeling", date(2026, 12, 2), None),
+        ("rangtelwoorden", 14, "zelfstandig", date(2026, 12, 3), None),
+        ("vormen herkennen", 0, "voorsprong", date(2026, 12, 4), None),
+        ("vormen herkennen", 1, "in_ontwikkeling", date(2026, 12, 5), None),
+        ("vormen herkennen", 2, "zelfstandig", date(2026, 12, 6), None),
+        ("vormen herkennen", 3, "voorsprong", date(2026, 12, 7), None),
+        ("vormen herkennen", 4, "onvoldoende", date(2026, 12, 8), None),
+        ("vormen herkennen", 5, "in_ontwikkeling", date(2026, 12, 9), None),
+        ("vormen herkennen", 6, "zelfstandig", date(2026, 12, 10), None),
+        ("vormen herkennen", 7, "voorsprong", date(2026, 12, 11), None),
+        ("vormen herkennen", 8, "in_ontwikkeling", date(2026, 12, 12), None),
+        ("vormen herkennen", 9, "zelfstandig", date(2026, 12, 13), None),
+        ("vormen herkennen", 10, "voorsprong", date(2026, 12, 14), None),
+        ("vormen herkennen", 11, "onvoldoende", date(2026, 12, 15), None),
+        ("vormen herkennen", 12, "in_ontwikkeling", date(2026, 12, 16), None),
+        ("vormen herkennen", 13, "zelfstandig", date(2026, 12, 17), None),
+        ("vormen herkennen", 14, "voorsprong", date(2026, 12, 18), None),
+    ]
+
+    db = SessionLocal()
+    try:
+        school = db.query(School).filter_by(slug="demo-school").first()
+        class_model = db.query(Class).filter_by(name="3K", class_type="K3").first()
+        teacher = db.query(User).filter_by(email="lieve@example.com", school_id=school.id if school else None).first()
+        students = (
+            db.query(Student)
+            .filter(Student.class_id == class_model.id)
+            .order_by(Student.name)
+            .all()
+            if class_model
+            else []
+        )
+
+        if not school or not class_model or not teacher or not students:
+            print("Static class observations skipped: required school, class, teacher or students not found.")
+            return
+
+        observation_goals = {
+            goal.name: goal
+            for goal in db.query(ObservationGoal)
+            .filter(ObservationGoal.school_id == school.id)
+            .all()
+        }
+
+        for goal_name, student_index, status, observation_date, comment in seeded_class_observations:
+            if student_index >= len(students) or goal_name not in observation_goals:
+                continue
+
+            observation_goal = observation_goals[goal_name]
+            student = students[student_index]
+            existing = (
+                db.query(StudentObservation)
+                .filter(
+                    StudentObservation.observation_goal_id == observation_goal.id,
+                    StudentObservation.student_id == student.id,
+                )
+                .first()
+            )
+            if existing:
+                continue
+
+            db.add(
+                StudentObservation(
+                    school_id=school.id,
+                    observation_goal_id=observation_goal.id,
+                    student_id=student.id,
+                    observed_by=teacher.id,
+                    status=status,
+                    observation_date=observation_date,
+                    comment=comment,
+                )
+            )
+
+        db.commit()
+        print(f"Static class observations seeded: {len(seeded_class_observations)} observations.")
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     reset_database()
     seed_school_and_admin()
     seed_vo_goals()
     seed_opstap_goals()
     link_demo_observation_goal()
+    seed_static_class_observations()
