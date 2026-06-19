@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StudentAvatar } from '../components/StudentAvatar'
+import { sortSubjects } from '../lib/subjectSort'
 import {
   getClasses,
   getMe,
@@ -327,7 +328,7 @@ export default function ObservingPage() {
               }}
             >
               <option value="">Alle vakken</option>
-              {subjects.map((subject) => (
+              {sortSubjects(subjects).map((subject) => (
                 <option key={subject} value={subject}>
                   {subject}
                 </option>

@@ -1,6 +1,7 @@
 import { AxiosError } from 'axios'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { FormEvent, useCallback, useEffect, useState } from 'react'
+import { sortSubjects } from '../lib/subjectSort'
 import {
   createObservationGoal,
   deleteObservationGoal,
@@ -378,7 +379,7 @@ export default function ObservationsPage() {
                   }}
                 >
                   <option value="">Kies vak</option>
-                  {subjects.map((subject) => (
+                  {sortSubjects(subjects).map((subject) => (
                     <option key={subject} value={subject}>
                       {subject}
                     </option>
@@ -589,7 +590,7 @@ export default function ObservationsPage() {
                   }
                 >
                   <option value="">Alle vakken</option>
-                  {subjects.map((subject) => (
+                  {sortSubjects(subjects).map((subject) => (
                     <option key={subject} value={subject}>
                       {subject}
                     </option>

@@ -1,5 +1,6 @@
 import { AxiosError } from 'axios'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { SubjectChips } from '../components/SubjectChips'
 import {
   getClasses,
   getMe,
@@ -216,30 +217,12 @@ export default function OverviewPage() {
 
           <div className="form-group">
             <label>Vak</label>
-            <div className="subject-chips">
-              <button
-                type="button"
-                className={`subject-chip ${selectedSubject === '' ? 'active all' : ''}`}
-                disabled={!selectedClassId}
-                onClick={() => setSelectedSubject('')}
-              >
-                Alle vakken
-              </button>
-
-              {subjects.map((subject, index) => (
-                <button
-                  key={subject}
-                  type="button"
-                  className={`subject-chip chip-${index % 6} ${
-                    selectedSubject === subject ? 'active' : ''
-                  }`}
-                  disabled={!selectedClassId}
-                  onClick={() => setSelectedSubject(subject)}
-                >
-                  {subject}
-                </button>
-              ))}
-            </div>
+            <SubjectChips
+              subjects={subjects}
+              selectedSubject={selectedSubject}
+              onSelect={setSelectedSubject}
+              disabled={!selectedClassId}
+            />
           </div>
         </div>
 
