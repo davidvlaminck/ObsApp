@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios'
+import AddAPhotoIcon from '@mui/icons-material/AddAPhoto'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { StudentAvatar } from '../components/StudentAvatar'
@@ -471,8 +472,22 @@ export default function ManagementPage() {
                                          if (file) handleStudentImageUpload(s.id, file)
                                        }}
                                      />
-                                     <label htmlFor={`image-upload-${s.id}`} className="table-action" style={{ cursor: 'pointer' }}>
-                                       📷
+                                     <label
+                                       htmlFor={`image-upload-${s.id}`}
+                                       className="table-action"
+                                       style={{
+                                         cursor: 'pointer',
+                                         display: 'inline-flex',
+                                         alignItems: 'center',
+                                         justifyContent: 'center',
+                                         width: '36px',
+                                         height: '36px',
+                                         padding: 0,
+                                       }}
+                                       aria-label={`Foto uploaden voor ${s.name}`}
+                                       title={`Foto uploaden voor ${s.name}`}
+                                     >
+                                       <AddAPhotoIcon fontSize="small" aria-hidden="true" />
                                      </label>
                                      <button
                                        className="table-action delete-icon-button"
