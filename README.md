@@ -2,6 +2,17 @@
 
 Multi-tenant observatie-app met FastAPI backend en React frontend.
 
+## License
+
+This repository contains proprietary source code for **ObsApp**.
+
+The source code is publicly visible for informational purposes only.
+No permission is granted to use, copy, modify, distribute, deploy, sublicense, sell, or create derivative works from this code or any part of it.
+
+**All rights reserved.**
+See the [LICENSE](./LICENSE) file for full terms.
+
+
 ## Vereisten
 
 - Python 3.11+

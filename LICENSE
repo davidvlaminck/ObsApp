@@ -1,0 +1,64 @@
+ObsApp Proprietary License
+Version 1.0
+Copyright (c) 2026 David Vlaminck
+All rights reserved.
+
+1. Ownership
+This software, including all source code, object code, documentation, designs, specifications,
+interfaces, workflows, screenshots, branding elements, and related materials (collectively, the
+"Software"), is and remains the exclusive property of David Vlaminck.
+
+2. No Open Source License
+This Software is NOT open source.
+No right is granted to use, copy, modify, merge, publish, distribute, sublicense, sell, lease,
+host, deploy, reverse engineer, create derivative works from, or otherwise exploit the Software,
+in whole or in part, except with prior explicit written permission from David Vlaminck.
+
+3. Public Visibility Does Not Equal Permission
+The public availability of this repository and its contents on GitHub or any other platform does
+NOT grant any license or permission to use the Software.
+Viewing the source code is permitted solely for informational purposes.
+
+4. Prohibited Uses
+Without prior explicit written permission from David Vlaminck, you may NOT:
+- use the Software for commercial purposes;
+- use the Software for non-commercial purposes;
+- copy or reproduce the Software;
+- modify, adapt, translate, or create derivative works based on the Software;
+- distribute, publish, sublicense, lease, lend, or sell the Software;
+- deploy, host, run, or make the Software available as a service;
+- use any part of the Software in another application, platform, SaaS product, or service;
+- remove or alter any copyright, trademark, attribution, or proprietary notice;
+- use the Software to build a competing product or service.
+
+5. No Trademark or Branding Rights
+No rights are granted to any names, logos, marks, product names, brand assets, or visual identity
+associated with the Software, including but not limited to "ObsApp".
+
+6. Limited Internal Use by Owner
+Notwithstanding the foregoing, David Vlaminck, as the owner and copyright holder of the Software,
+retains the unrestricted right to use, modify, license, deploy, commercialize, and otherwise
+exploit the Software in any manner.
+
+7. Contributions
+Unless explicitly agreed otherwise in writing, any suggestion, patch, pull request, contribution,
+or submission made to this repository may be rejected, ignored, or incorporated by David Vlaminck
+without creating any ownership, license, compensation, or recurring obligation in favor of the
+contributor.
+
+8. Enforcement
+Any unauthorized use of the Software constitutes an infringement of copyright and other applicable
+intellectual property rights and may result in legal action.
+
+9. Disclaimer
+The Software is provided "as is", without warranty of any kind, express or implied, including but
+not limited to warranties of merchantability, fitness for a particular purpose, title, and
+non-infringement.
+
+10. Governing Law
+This License shall be governed by and construed in accordance with the laws applicable in Belgium,
+without regard to conflict of law principles.
+
+11. Contact
+For licensing inquiries or requests for written permission, contact:
+David Vlaminck
