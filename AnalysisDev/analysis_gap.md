@@ -5,6 +5,9 @@
 ### School opzetten
 Een school en schooljaar wordt aangemaakt na betaling. Nadien kunnen gebruikers van die school zelf hun klassen en leerlingen beheren.
 
+- [ ] demo gebruiker kunnen koppelen aan bestaande school
+- [ ] school selecteren uit lijst
+- [ ] gebruikers koppelen aan een school (eerste krijgt toegang, daarna principe van binnenlaten)
 - [ ] betaling loggen (enkel voor superuser)
 - [ ] schooljaar aanmaken (enkel voor superuser)selectie
 - [ ] instellen of de school een GO, katholiek of onafhankelijk onderwijs is
