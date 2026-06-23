@@ -218,6 +218,7 @@ def test_observation_context_returns_latest_student_statuses_for_selected_goal(
         "student_id": context["student_id"],
         "status": "zelfstandig",
         "observation_date": "2026-06-16",
+        "comment": "Laatste observatie.",
     }
 
 

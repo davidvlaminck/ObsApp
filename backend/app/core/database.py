@@ -24,9 +24,19 @@ def initialize_database():
 
         Base.metadata.create_all(bind=engine)
         ensure_user_columns()
+        ensure_school_columns()
         ensure_goal_columns()
         seed_default_data()
         _initialized = True
+
+
+def ensure_school_columns():
+    columns = {column["name"] for column in inspect(engine).get_columns("schools")}
+    with engine.begin() as connection:
+        if "is_demo" not in columns:
+            connection.execute(text("ALTER TABLE schools ADD COLUMN is_demo BOOLEAN DEFAULT false"))
+        if "koepel" not in columns:
+            connection.execute(text("ALTER TABLE schools ADD COLUMN koepel VARCHAR"))
 
 
 def ensure_user_columns():
@@ -42,6 +52,12 @@ def ensure_user_columns():
             connection.execute(text("ALTER TABLE users ADD COLUMN password_reset_expires_at TIMESTAMP"))
         if "school_id" not in columns:
             connection.execute(text("ALTER TABLE users ADD COLUMN school_id INTEGER"))
+        if "is_demo" not in columns:
+            connection.execute(text("ALTER TABLE users ADD COLUMN is_demo BOOLEAN DEFAULT false"))
+        if "demo_expires_at" not in columns:
+            connection.execute(text("ALTER TABLE users ADD COLUMN demo_expires_at TIMESTAMP"))
+        if "demo_school_id" not in columns:
+            connection.execute(text("ALTER TABLE users ADD COLUMN demo_school_id INTEGER"))
 
 
 def ensure_goal_columns():

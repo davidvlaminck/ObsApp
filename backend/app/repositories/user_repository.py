@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.models.user import User
@@ -26,6 +28,9 @@ class UserRepository:
         school_id: int | None = None,
         is_active: bool = True,
         is_pending: bool = False,
+        is_demo: bool = False,
+        demo_expires_at: datetime | None = None,
+        demo_school_id: int | None = None,
     ) -> User:
         user = User(
             email=email,
@@ -35,6 +40,9 @@ class UserRepository:
             school_id=school_id,
             is_active=is_active,
             is_pending=is_pending,
+            is_demo=is_demo,
+            demo_expires_at=demo_expires_at,
+            demo_school_id=demo_school_id,
         )
         self.db.add(user)
         self.db.commit()
@@ -53,4 +61,7 @@ class UserRepository:
             is_superuser=user.is_superuser,
             is_pending=user.is_pending,
             school_id=user.school_id,
+            is_demo=user.is_demo,
+            demo_school_id=user.demo_school_id,
+            demo_expires_at=user.demo_expires_at,
         )

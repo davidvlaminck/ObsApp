@@ -7,6 +7,10 @@ Een school en schooljaar wordt aangemaakt na betaling. Nadien kunnen gebruikers 
 
 - [ ] demo gebruiker kunnen koppelen aan bestaande school
 - [ ] school selecteren uit lijst
+- [ ] demo landing page
+- [ ] demo opnieuw aanvragen
+- [ ] demo data aanmaken
+- [ ] demo data automatisch verwijderen
 - [ ] gebruikers koppelen aan een school (eerste krijgt toegang, daarna principe van binnenlaten)
 - [ ] betaling loggen (enkel voor superuser)
 - [ ] schooljaar aanmaken (enkel voor superuser)selectie

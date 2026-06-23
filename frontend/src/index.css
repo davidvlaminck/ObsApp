@@ -42,13 +42,13 @@ textarea {
 
 /* Card component */
 .card {
-  background: var(--md-surface);
-  border-radius: var(--md-radius);
-  box-shadow: var(--md-shadow);
-  padding: 32px;
-  max-width: 400px;
-  margin: 0 auto;
-}
+   background: var(--md-surface);
+   border-radius: var(--md-radius);
+   box-shadow: var(--md-shadow);
+   padding: 32px;
+   max-width: 480px;
+   margin: 0 auto;
+ }
 
 /* Avatar */
 .avatar {

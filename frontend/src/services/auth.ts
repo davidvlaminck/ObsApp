@@ -57,6 +57,9 @@ export interface UserResponse {
   is_superuser: boolean
   is_pending: boolean
   school_id: number | null
+  is_demo: boolean
+  demo_school_id: number | null
+  demo_expires_at: string | null
 }
 
 export async function login(data: LoginRequest): Promise<TokenResponse> {
@@ -235,6 +238,41 @@ export interface SetPasswordRequest {
 
 export async function setPassword(data: SetPasswordRequest): Promise<UserResponse> {
   const response = await api.post<UserResponse>('/auth/set-password', data)
+  return response.data
+}
+
+export interface VlaanderenSchool {
+  id: string
+  name: string
+  slug: string
+  is_active: boolean
+}
+
+export interface DemoRegisterRequest {
+  email: string
+  name: string
+  koepel?: string | null
+}
+
+export interface RegularRegisterRequest {
+  email: string
+  name: string
+  school_id?: number | null
+  school_name?: string | null
+}
+
+export async function getVlaanderenSchools(): Promise<VlaanderenSchool[]> {
+  const response = await api.get<VlaanderenSchool[]>('/register/schools')
+  return response.data
+}
+
+export async function registerDemo(data: DemoRegisterRequest): Promise<UserResponse> {
+  const response = await api.post<UserResponse>('/register/demo', data)
+  return response.data
+}
+
+export async function registerRegular(data: RegularRegisterRequest): Promise<UserResponse> {
+  const response = await api.post<UserResponse>('/register/regular', data)
   return response.data
 }
 

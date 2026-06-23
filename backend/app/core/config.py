@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     smtp_from_email: str = "noreply@obsapp.test"
     frontend_base_url: str = "http://localhost:5173"
     activation_token_expire_hours: int = 48
+    demo_account_expire_days: int = 30
 
     model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
 

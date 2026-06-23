@@ -13,8 +13,10 @@ class School(Base):
     slug = Column(String, unique=True, index=True, nullable=False)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    is_demo = Column(Boolean, default=False)
+    koepel = Column(String, nullable=True)
 
-    users = relationship("User", back_populates="school")
+    users = relationship("User", foreign_keys="User.school_id")
     observations = relationship("Observation", back_populates="school")
     student_observations = relationship("StudentObservation", back_populates="school")
     observation_goals = relationship("ObservationGoal", back_populates="school")

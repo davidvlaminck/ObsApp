@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, EmailStr, Field
 
 
@@ -8,6 +10,8 @@ class UserCreate(BaseModel):
     is_active: bool = True
     is_superuser: bool = False
     school_id: int | None = None
+    is_demo: bool = False
+    koepel: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -18,3 +22,6 @@ class UserResponse(BaseModel):
     is_superuser: bool
     is_pending: bool = False
     school_id: int | None = None
+    is_demo: bool = False
+    demo_school_id: int | None = None
+    demo_expires_at: datetime | None = None

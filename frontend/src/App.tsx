@@ -13,11 +13,13 @@ import ObservationsPage from './pages/ObservationsPage'
 import ObservingPage from './pages/ObservingPage'
 import OverviewPage from './pages/OverviewPage'
 import StudentOverviewPage from './pages/StudentOverviewPage'
+import RegistrationPage from './pages/RegistrationPage'
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegistrationPage />} />
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/set-password" element={<SetPasswordPage />} />
 

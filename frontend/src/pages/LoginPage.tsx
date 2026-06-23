@@ -61,6 +61,9 @@ export default function LoginPage() {
             {loading ? 'Bezig...' : 'Inloggen'}
           </button>
         </form>
+        <p style={{ marginTop: '1rem', textAlign: 'center' }}>
+          <a href="/register">Nog geen account? Registreer een (demo) account</a>
+        </p>
       </div>
     </div>
   )
