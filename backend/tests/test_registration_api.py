@@ -36,7 +36,8 @@ def test_register_demo_success(client: TestClient):
     assert data["name"] == "Demo User"
     assert data["is_demo"] is True
     assert data["is_pending"] is True
-    assert data["demo_school_id"] is not None
+    # Demo school is not created yet - it will be created after koepel selection
+    assert data["demo_school_id"] is None
     assert data["demo_expires_at"] is not None
 
 

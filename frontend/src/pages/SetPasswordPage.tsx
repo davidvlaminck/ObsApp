@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios'
 import { FormEvent, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { setPassword } from '../services/auth'
+import { login, setPassword, setToken } from '../services/auth'
 
 export default function SetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -30,9 +30,12 @@ export default function SetPasswordPage() {
 
     setLoading(true)
     try {
-      await setPassword({ token, password })
-      setSuccess('Je wachtwoord is ingesteld. Je kunt nu inloggen.')
-      setTimeout(() => navigate('/login'), 2000)
+      const user = await setPassword({ token, password })
+      // Auto-login after setting password
+      const loginData = await login({ email: user.email, password })
+      setToken(loginData.access_token)
+      setSuccess('Je wachtwoord is ingesteld. Selecteer nu je koepel.')
+      setTimeout(() => navigate('/select-koepel'), 2000)
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>
       setError(axiosError.response?.data?.detail ?? 'Kan wachtwoord niet instellen.')

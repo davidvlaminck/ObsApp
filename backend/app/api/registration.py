@@ -66,7 +66,6 @@ def get_scholen():
 class DemoRegisterRequest(BaseModel):
     email: EmailStr
     name: str = Field(min_length=1)
-    koepel: str | None = None
 
 
 class RegularRegisterRequest(BaseModel):
@@ -82,7 +81,7 @@ def register_demo(
     db=Depends(get_db),
 ):
     """
-    Register a demo account. Creates a personal demo school with sample data.
+    Register a demo account. School will be created after koepel selection.
     """
     service = AuthService(db)
     user_repo = service.user_repo
@@ -94,56 +93,11 @@ def register_demo(
             detail="Dit e-mailadres bestaat al",
         )
 
-    # Create demo user
+    # Create demo user (no school yet)
     user = service.create_demo_user(
         email=payload.email,
         name=payload.name,
-        koepel=payload.koepel,
     )
-
-    # Create personal demo school
-    demo_school = School(
-        name=f"Demo School - {user.id}",
-        slug=f"demo-school-{user.id}-{uuid.uuid4().hex[:8]}",
-        is_active=True,
-        is_demo=True,
-        koepel=payload.koepel,
-    )
-    db.add(demo_school)
-    db.commit()
-    db.refresh(demo_school)
-
-    # Update user with demo_school_id
-    user.demo_school_id = demo_school.id
-    db.commit()
-    db.refresh(user)
-
-    # Create school year
-    school_year = SchoolYear(
-        school_id=demo_school.id,
-        name="2026-2027",
-        start_date=date(2026, 9, 1),
-        end_date=date(2027, 6, 30),
-        is_active=True,
-    )
-    db.add(school_year)
-    db.commit()
-    db.refresh(school_year)
-
-    # Create class
-    class_model = Class(
-        school_year_id=school_year.id,
-        name="3K",
-        class_type="K3",
-    )
-    db.add(class_model)
-    db.commit()
-    db.refresh(class_model)
-
-    # Create demo students
-    for student_name in DEMO_STUDENTS:
-        db.add(Student(class_id=class_model.id, name=student_name))
-    db.commit()
 
     # Create activation token and send email
     token = service.create_activation_token(user)

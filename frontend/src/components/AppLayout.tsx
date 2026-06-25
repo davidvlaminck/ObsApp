@@ -87,7 +87,11 @@ export default function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     const loadCurrentUser = async () => {
       try {
-        setUser(await getMe())
+        const user = await getMe()
+        setUser(user)
+        if (user.needs_koepel_selection) {
+          navigate('/select-koepel')
+        }
       } catch (error) {
         const axiosError = error as AxiosError
         if (axiosError.response?.status === 401) {

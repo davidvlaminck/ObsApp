@@ -14,6 +14,7 @@ import ObservingPage from './pages/ObservingPage'
 import OverviewPage from './pages/OverviewPage'
 import StudentOverviewPage from './pages/StudentOverviewPage'
 import RegistrationPage from './pages/RegistrationPage'
+import KoepelSelectionPage from './pages/KoepelSelectionPage'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
       <Route path="/register" element={<RegistrationPage />} />
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/set-password" element={<SetPasswordPage />} />
+      <Route path="/select-koepel" element={<KoepelSelectionPage />} />
 
       <Route
         path="/dashboard"

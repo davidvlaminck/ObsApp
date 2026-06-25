@@ -6,7 +6,6 @@ export default function RegistrationPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [isDemo, setIsDemo] = useState(false)
-  const [koepel, setKoepel] = useState('')
   const [schoolId, setSchoolId] = useState<number | ''>('')
   const [schoolName, setSchoolName] = useState('')
   const [showOtherSchool, setShowOtherSchool] = useState(false)
@@ -31,9 +30,14 @@ export default function RegistrationPage() {
 
     try {
       if (isDemo) {
-        await registerDemo({ email, name, koepel: koepel || null })
+        await registerDemo({ email, name })
       } else {
-        if (showOtherSchool && schoolName) {
+        if (showOtherSchool) {
+          if (!schoolName) {
+            setError('Geef de naam van uw school op')
+            setLoading(false)
+            return
+          }
           await registerRegular({ email, name, school_name: schoolName })
         } else if (schoolId) {
           await registerRegular({ email, name, school_id: Number(schoolId) })
@@ -93,12 +97,12 @@ export default function RegistrationPage() {
                 gap: "6px",
                 width: "100%",
               }}>
+              {' '}Demo account aanmaken
               <input
                 type="checkbox"
                 checked={isDemo}
                 onChange={(e) => setIsDemo(e.target.checked)}
               />
-              {' '}Demo account aanmaken
             </label>
           </div>
           <p style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '-0.5rem', marginBottom: '1rem' }}>
@@ -114,13 +118,7 @@ export default function RegistrationPage() {
                   value={schoolId}
                   onChange={(e) => {
                     const value = e.target.value
-                    if (value === 'other') {
-                      setShowOtherSchool(true)
-                      setSchoolId('')
-                    } else {
-                      setShowOtherSchool(false)
-                      setSchoolId(value ? Number(value) : '')
-                    }
+                    setSchoolId(value ? Number(value) : '')
                   }}
                   onFocus={loadSchools}
                 >
@@ -130,8 +128,23 @@ export default function RegistrationPage() {
                       {school.name}
                     </option>
                   ))}
-                  <option value="other">Andere school (niet in lijst)</option>
                 </select>
+              </div>
+
+              <div className="checkbox-row" style={{ marginTop: '0.5rem' }}>
+                <label style={{ gap: '6px' }}>
+                  <input
+                    type="checkbox"
+                    checked={showOtherSchool}
+                    onChange={(e) => {
+                      setShowOtherSchool(e.target.checked)
+                      if (!e.target.checked) {
+                        setSchoolName('')
+                      }
+                    }}
+                  />
+                  {' '}Andere school (niet in lijst)
+                </label>
               </div>
 
               {showOtherSchool && (
@@ -147,21 +160,6 @@ export default function RegistrationPage() {
                 </div>
               )}
             </>
-          )}
-
-          {isDemo && (
-            <div className="form-group">
-              <label htmlFor="koepel">Koepel (optioneel)</label>
-              <select
-                id="koepel"
-                value={koepel}
-                onChange={(e) => setKoepel(e.target.value)}
-              >
-                <option value="">-- Geen koepel --</option>
-                <option value="KOOPPEL1">Koepel 1</option>
-                <option value="KOOPPEL2">Koepel 2</option>
-              </select>
-            </div>
           )}
 
           {error && <p className="error">{error}</p>}

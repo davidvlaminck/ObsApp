@@ -5,6 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.core.database import Base, engine, SessionLocal
+from app.models.koepel import Koepel
 from app.models.school import School
 from app.models.school_year import Class, SchoolYear
 from app.models.school_year import Student
@@ -22,15 +23,45 @@ def reset_database():
     print("Database reset complete.")
 
 
+def seed_koepels():
+    """Seed the 3 koepels: OVSG, GO!, and Katholiek Onderwijs Vlaanderen."""
+    db = SessionLocal()
+    try:
+        koepels = [
+            {"name": "OVSG", "slug": "ovsg", "is_active": False},
+            {"name": "GO!", "slug": "go", "is_active": False},
+            {"name": "Katholiek Onderwijs Vlaanderen", "slug": "katholiek-onderwijs-vlaanderen", "is_active": True},
+        ]
+        
+        for koepel_data in koepels:
+            existing = db.query(Koepel).filter(Koepel.slug == koepel_data["slug"]).first()
+            if not existing:
+                koepel = Koepel(
+                    name=koepel_data["name"],
+                    slug=koepel_data["slug"],
+                    is_active=koepel_data["is_active"],
+                )
+                db.add(koepel)
+                print(f"Koepel created: {koepel_data['name']}")
+        
+        db.commit()
+    finally:
+        db.close()
+
+
 def seed_school_and_admin():
     """Create default school and admin user."""
     db = SessionLocal()
     try:
+        # Get Katholiek Onderwijs Vlaanderen koepel
+        kov = db.query(Koepel).filter(Koepel.slug == "katholiek-onderwijs-vlaanderen").first()
+        
         # Create default school
         school = School(
             name="Demo School",
             slug="demo-school",
             is_active=True,
+            koepel_id=kov.id if kov else None,
         )
         db.add(school)
         db.commit()
@@ -110,6 +141,39 @@ def seed_school_and_admin():
     finally:
         db.close()
 
+
+
+def seed_mow_user():
+    """Create MOW user (david.vlaminck@mow.vlaanderen.be) without koepel selection."""
+    db = SessionLocal()
+    try:
+        # Create school for MOW user (without koepel)
+        school = School(
+            name="MOW Test School",
+            slug="mow-test-school",
+            is_active=True,
+            koepel_id=None,  # No koepel selected yet
+        )
+        db.add(school)
+        db.commit()
+        db.refresh(school)
+
+        # Create MOW user
+        mow_user = User(
+            email="david.vlaminck@mow.vlaanderen.be",
+            hashed_password=get_password_hash("testtest"),
+            name="David Vlaminck",
+            is_superuser=False,
+            is_active=True,
+            school_id=school.id,
+            is_pending=False,
+        )
+        db.add(mow_user)
+        db.commit()
+        
+        print(f"MOW user created: david.vlaminck@mow.vlaanderen.be / testtest (no koepel selected)")
+    finally:
+        db.close()
 
 def _clean_text(value) -> str | None:
     if value is None:
@@ -270,6 +334,10 @@ def seed_opstap_goals():
         # First, load all VO goals into a dict keyed by code for linking
         vo_goals = {g.code: g for g in db.query(Goal).filter(Goal.goal_type == "VO").all()}
         print(f"Loaded {len(vo_goals)} VO goals for linking")
+        
+        # Get Katholiek Onderwijs Vlaanderen koepel for linking
+        kov = db.query(Koepel).filter(Koepel.slug == "katholiek-onderwijs-vlaanderen").first()
+        print(f"Katholiek Onderwijs Vlaanderen koepel: {kov.name if kov else 'not found'}")
 
         excel_path = Path(__file__).resolve().parent.parent.parent / "AnalysisDev" / "opstap_naar_minimumdoelen.xlsx"
         wb = load_workbook(excel_path, read_only=True)
@@ -339,6 +407,7 @@ def seed_opstap_goals():
                 minimum_goal_code=minimum_goal_code if minimum_goal_code else None,
                 voorbeelden=voorbeelden if voorbeelden else None,
                 vo_code=vo_code if vo_code else None,
+                koepel_id=kov.id if kov else None,
             )
             db.add(goal)
             count += 1
@@ -550,7 +619,9 @@ def seed_static_class_observations():
 
 if __name__ == "__main__":
     reset_database()
+    seed_koepels()
     seed_school_and_admin()
+    seed_mow_user()
     seed_vo_goals()
     seed_opstap_goals()
     link_demo_observation_goal()

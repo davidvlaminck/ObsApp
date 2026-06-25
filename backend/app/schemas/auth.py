@@ -9,6 +9,7 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+    needs_koepel_selection: bool = False
 
 
 class SetPasswordRequest(BaseModel):
@@ -21,3 +22,4 @@ class UserResponse(BaseModel):
     email: str
     name: str
     school_id: int | None = None
+    needs_koepel_selection: bool = False

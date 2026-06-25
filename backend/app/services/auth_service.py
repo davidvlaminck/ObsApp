@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.security import decode_access_token, get_password_hash, verify_password
+from app.models.school import School
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import UserResponse
@@ -14,6 +15,28 @@ from app.schemas.user import UserResponse as UserResponseSchema
 class AuthService:
     def __init__(self, db: Session):
         self.user_repo = UserRepository(db)
+        self.db = db
+
+    def _needs_koepel_selection(self, user: User) -> bool:
+        """Check if user needs to select a koepel for their school."""
+        if user.is_superuser:
+            return False
+        
+        # For demo users without a demo_school_id, they need to select a koepel first
+        if user.is_demo and not user.demo_school_id:
+            return True
+        
+        # Determine which school to check
+        school_id = user.demo_school_id if user.is_demo else user.school_id
+        if not school_id:
+            return False
+        
+        # Check if the school exists and has no koepel set
+        school = self.db.query(School).filter(School.id == school_id).first()
+        if not school:
+            return False
+        
+        return not school.koepel
 
     def authenticate_user(self, email: str, password: str) -> UserResponseSchema | None:
         user = self.user_repo.get_by_email(email)
@@ -25,7 +48,7 @@ class AuthService:
             return None
         if not user.is_active:
             return None
-        return self.user_repo.to_response(user)
+        return self.user_repo.to_response(user, self._needs_koepel_selection(user))
 
     def get_user_from_token(self, token: str) -> UserResponseSchema | None:
         payload = decode_access_token(token)
@@ -37,7 +60,7 @@ class AuthService:
         user = self.user_repo.get_by_email(email)
         if not user or user.is_pending or not user.is_active:
             return None
-        return self.user_repo.to_response(user)
+        return self.user_repo.to_response(user, self._needs_koepel_selection(user))
 
     def create_user(
         self,
@@ -64,7 +87,6 @@ class AuthService:
         self,
         email: str,
         name: str,
-        koepel: str | None = None,
     ) -> User:
         """Create a demo user with a personal demo school."""
         demo_expires_at = datetime.now(timezone.utc) + timedelta(

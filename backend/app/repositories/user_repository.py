@@ -52,7 +52,9 @@ class UserRepository:
     def get_all(self) -> list[User]:
         return self.db.query(User).all()
 
-    def to_response(self, user: User) -> UserResponse:
+    def to_response(self, user: User, needs_koepel_selection: bool = False) -> UserResponse:
+        # For demo users, return demo_school_id as school_id for API compatibility
+        effective_school_id = user.demo_school_id if user.is_demo else user.school_id
         return UserResponse(
             id=user.id,
             email=user.email,
@@ -60,8 +62,9 @@ class UserRepository:
             is_active=user.is_active,
             is_superuser=user.is_superuser,
             is_pending=user.is_pending,
-            school_id=user.school_id,
+            school_id=effective_school_id,
             is_demo=user.is_demo,
             demo_school_id=user.demo_school_id,
             demo_expires_at=user.demo_expires_at,
+            needs_koepel_selection=needs_koepel_selection,
         )

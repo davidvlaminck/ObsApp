@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, ForeignKey, Integer, String, Text, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -21,6 +21,7 @@ class Goal(Base):
     doel_soort = Column(String, nullable=True, index=True)  # "P", "G", "S", "A", "MD", "+" (alleen Op Stap)
     target_type = Column(String, nullable=True, index=True)  # "NA_TE_STREVEN" of "TE_BEREIKEN" (alleen VO)
     parent_goal_id = Column(Integer, ForeignKey("goals.id"), nullable=True)
+    koepel_id = Column(Integer, ForeignKey("koepels.id"), nullable=True, index=True)
     vo_code = Column(String, nullable=True, index=True)
     minimum_goal_code = Column(String, nullable=True, index=True)  # Code van het minimumdoel (alleen Op Stap)
     voorbeelden = Column(Text, nullable=True)  # Voorbeelden uit de beschrijving (alleen Op Stap)
@@ -30,4 +31,5 @@ class Goal(Base):
 
     parent_goal = relationship("Goal", remote_side=[id], back_populates="children")
     children = relationship("Goal", back_populates="parent_goal")
+    koepel = relationship("Koepel", back_populates="goals")
     observation_goals = relationship("ObservationGoal", back_populates="goal")

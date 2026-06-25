@@ -477,10 +477,62 @@ p {
 }
 
 .badge-active,
-.badge-pending,
-.badge-super {
-  background: #e3f2fd;
-  color: var(--md-primary);
+ .badge-pending,
+ .badge-super {
+   background: #e3f2fd;
+   color: var(--md-primary);
+ }
+
+/* Koepel selection styles */
+.koepel-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.koepel-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius);
+  cursor: pointer;
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+.koepel-option:hover {
+  border-color: var(--md-primary);
+  background-color: rgba(25, 118, 210, 0.04);
+}
+
+.koepel-option.selected {
+  border-color: var(--md-primary);
+  background-color: rgba(25, 118, 210, 0.08);
+}
+
+.koepel-option.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.koepel-option.disabled:hover {
+  border-color: var(--md-border);
+  background-color: var(--md-surface);
+}
+
+.koepel-name {
+  font-size: 16px;
+  color: var(--md-text-primary);
+}
+
+.koepel-badge {
+  font-size: 12px;
+  color: var(--md-text-secondary);
+  background: #fafafa;
+  padding: 4px 8px;
+  border-radius: 4px;
 }
 
 @media (max-width: 900px) {

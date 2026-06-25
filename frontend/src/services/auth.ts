@@ -12,6 +12,7 @@ export interface LoginRequest {
 export interface TokenResponse {
   access_token: string
   token_type: string
+  needs_koepel_selection: boolean
 }
 
 export interface SchoolResponse {
@@ -60,6 +61,7 @@ export interface UserResponse {
   is_demo: boolean
   demo_school_id: number | null
   demo_expires_at: string | null
+  needs_koepel_selection: boolean
 }
 
 export async function login(data: LoginRequest): Promise<TokenResponse> {
@@ -251,7 +253,6 @@ export interface VlaanderenSchool {
 export interface DemoRegisterRequest {
   email: string
   name: string
-  koepel?: string | null
 }
 
 export interface RegularRegisterRequest {
@@ -273,6 +274,11 @@ export async function registerDemo(data: DemoRegisterRequest): Promise<UserRespo
 
 export async function registerRegular(data: RegularRegisterRequest): Promise<UserResponse> {
   const response = await api.post<UserResponse>('/register/regular', data)
+  return response.data
+}
+
+export async function selectKoepel(koepel: string): Promise<UserResponse> {
+  const response = await api.post<UserResponse>('/auth/select-koepel', { koepel })
   return response.data
 }
 

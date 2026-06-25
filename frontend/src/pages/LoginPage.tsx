@@ -16,7 +16,11 @@ export default function LoginPage() {
     try {
       const data = await login({ email, password })
       setToken(data.access_token)
-      navigate('/dashboard')
+      if (data.needs_koepel_selection) {
+        navigate('/select-koepel')
+      } else {
+        navigate('/dashboard')
+      }
     } catch {
       setError('Inloggen mislukt. Controleer je gegevens.')
     } finally {
