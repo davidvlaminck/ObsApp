@@ -4,14 +4,19 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
+from sqlalchemy import delete, select
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import create_access_token
 from app.models.koepel import Koepel
+from app.models.observation import Observation
+from app.models.observation_goal import ObservationGoal
 from app.models.school import School
 from app.models.school_year import Class, SchoolYear, Student
-from app.schemas.auth import LoginRequest, SetPasswordRequest, TokenResponse
+from app.models.student_observation import StudentObservation
+from app.schemas.auth import KoepelResponse, LoginRequest, SetPasswordRequest, TokenResponse
+from app.schemas.school import SchoolResponse
 from app.schemas.user import UserResponse
 from app.services.auth_service import AuthService
 
@@ -53,6 +58,20 @@ async def login(credentials: LoginRequest, db=Depends(get_db)):
         access_token=access_token,
         needs_koepel_selection=user.needs_koepel_selection,
     )
+
+
+@router.get("/koepels", response_model=list[KoepelResponse])
+async def list_koepels(db=Depends(get_db)):
+    koepels = db.query(Koepel).filter(Koepel.is_active == True).all()
+    return [
+        KoepelResponse(
+            id=k.id,
+            name=k.name,
+            slug=k.slug,
+            is_active=k.is_active,
+        )
+        for k in koepels
+    ]
 
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)) -> UserResponse:
@@ -210,4 +229,70 @@ async def select_koepel(
     school.koepel = payload.koepel
     db.commit()
     
+    return service.user_repo.to_response(user)
+
+
+@router.get("/my-school", response_model=SchoolResponse | None)
+async def get_my_school(
+    current_user: UserResponse = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Get the current user's school (regular or demo)."""
+    school_id = current_user.demo_school_id if current_user.is_demo else current_user.school_id
+    if not school_id:
+        return None
+
+    school = db.get(School, school_id)
+    if not school:
+        return None
+
+    return SchoolResponse(
+        id=school.id,
+        name=school.name,
+        slug=school.slug,
+        is_active=school.is_active,
+        created_at=school.created_at,
+    )
+
+
+@router.post("/reset-demo", response_model=UserResponse)
+async def reset_demo(
+    current_user: UserResponse = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Reset demo data for the current demo user."""
+    if not current_user.is_demo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Alleen demo gebruikers kunnen hun data resetten",
+        )
+
+    service = AuthService(db)
+    user = service.user_repo.get_by_email(current_user.email)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Gebruiker niet gevonden",
+        )
+
+    demo_school_id = user.demo_school_id
+    if not demo_school_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Geen demo school gevonden",
+        )
+
+    # Delete related data in order to respect foreign keys
+    db.execute(delete(StudentObservation).where(StudentObservation.school_id == demo_school_id))
+    db.execute(delete(Observation).where(Observation.school_id == demo_school_id))
+    db.execute(delete(ObservationGoal).where(ObservationGoal.school_id == demo_school_id))
+
+    # Delete the demo school (cascades to school years, classes, students)
+    db.execute(delete(School).where(School.id == demo_school_id))
+
+    # Clear demo_school_id and koepel from user
+    user.demo_school_id = None
+    db.commit()
+    db.refresh(user)
+
     return service.user_repo.to_response(user)

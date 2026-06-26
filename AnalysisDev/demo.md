@@ -5,13 +5,13 @@
 Deze documentatie beschrijft de architectuur en logica voor een demo functionaliteit waarbij elke gebruiker die een demo account aanmaakt, een eigen (individuele) demo school krijgt met realistische testdata. Deze demo school wordt gerefereerd aan een specifieke koepel (schoolkoepel/onderwijsnetwerk) en kan later worden omgezet naar een schoolgekoppelde account.
 
 ## Use Case
-
-1. **Registratie**: Een bezoeker registreert een account en vinkt aan dat het een demo account is
-2. **Demo School Aanmaken**: Een unieke demo school wordt aangemaakt gekoppeld aan de gekozen koepel
-3. **Data Seeden**: De demo school wordt gevuld met realistische minimale data (leerlingen, observatiedoelen, observaties)
-4. **Verkennen**: De gebruiker kan de webapp verkennen met deze testdata
-5. **Reset**: De demo data kan worden gereset (automatisch 's nachts of manueel)
-6. **Conversie**: De demo account kan later worden omgezet naar een echte schoolgekoppelde account
+ 
+1. **Registratie**: Een bezoeker registreert een account en kiest een demo account
+2. **Demo School Aanmaken**: Een unieke demo school wordt automatisch aangemaakt voor deze gebruiker met voorbeelddata (schooljaar, 3 klassen, 15 leerlingen in 3K, observaties)
+3. **Verkennen**: De gebruiker kan de webapp verkennen met deze testdata
+4. **Koppeling aan echte school**: Dezelfde account kan later worden gekoppeld aan een niet-demo school
+5. **Demo school verwijderen**: Bij koppeling aan een echte school moet de demo school zeker worden gewist
+6. **Reset**: De demo data kan worden gereset (automatisch 's nachts of manueel)
 
 ## Architectuur Componenten
 

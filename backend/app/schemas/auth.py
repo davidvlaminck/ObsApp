@@ -17,6 +17,16 @@ class SetPasswordRequest(BaseModel):
     password: str = Field(min_length=8)
 
 
+class KoepelResponse(BaseModel):
+    id: int
+    name: str
+    slug: str
+    is_active: bool
+
+    class Config:
+        from_attributes = True
+
+
 class UserResponse(BaseModel):
     id: int
     email: str

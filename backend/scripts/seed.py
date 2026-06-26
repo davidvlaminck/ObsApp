@@ -144,10 +144,10 @@ def seed_school_and_admin():
 
 
 def seed_mow_user():
-    """Create MOW user (david.vlaminck@mow.vlaanderen.be) without koepel selection."""
+    """Create demo user (demo@example.com) without koepel selection."""
     db = SessionLocal()
     try:
-        # Create school for MOW user (without koepel)
+        # Create school for demo user (without koepel)
         school = School(
             name="MOW Test School",
             slug="mow-test-school",
@@ -158,11 +158,11 @@ def seed_mow_user():
         db.commit()
         db.refresh(school)
 
-        # Create MOW user
+        # Create demo user
         mow_user = User(
-            email="david.vlaminck@mow.vlaanderen.be",
-            hashed_password=get_password_hash("testtest"),
-            name="David Vlaminck",
+            email="demo@example.com",
+            hashed_password=get_password_hash("demo"),
+            name="Demo Uitproberen",
             is_superuser=False,
             is_active=True,
             school_id=school.id,
@@ -171,7 +171,7 @@ def seed_mow_user():
         db.add(mow_user)
         db.commit()
         
-        print(f"MOW user created: david.vlaminck@mow.vlaanderen.be / testtest (no koepel selected)")
+        print(f"Demo user created: demo@example.com / demo (no koepel selected)")
     finally:
         db.close()
 

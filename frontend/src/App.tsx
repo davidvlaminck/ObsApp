@@ -15,6 +15,8 @@ import OverviewPage from './pages/OverviewPage'
 import StudentOverviewPage from './pages/StudentOverviewPage'
 import RegistrationPage from './pages/RegistrationPage'
 import KoepelSelectionPage from './pages/KoepelSelectionPage'
+import DemoPage from './pages/DemoPage'
+import DemoSchoolPage from './pages/DemoSchoolPage'
 
 function App() {
   return (
@@ -24,6 +26,15 @@ function App() {
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/set-password" element={<SetPasswordPage />} />
       <Route path="/select-koepel" element={<KoepelSelectionPage />} />
+      <Route path="/demo" element={<DemoPage />} />
+      <Route
+        path="/management/demo-school"
+        element={
+          <AppLayout>
+            <DemoSchoolPage />
+          </AppLayout>
+        }
+      />
 
       <Route
         path="/dashboard"

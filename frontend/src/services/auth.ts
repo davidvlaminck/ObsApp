@@ -277,8 +277,30 @@ export async function registerRegular(data: RegularRegisterRequest): Promise<Use
   return response.data
 }
 
+export interface KoepelResponse {
+  id: number
+  name: string
+  slug: string
+  is_active: boolean
+}
+
+export async function getKoepels(): Promise<KoepelResponse[]> {
+  const response = await api.get<KoepelResponse[]>('/auth/koepels')
+  return response.data
+}
+
 export async function selectKoepel(koepel: string): Promise<UserResponse> {
   const response = await api.post<UserResponse>('/auth/select-koepel', { koepel })
+  return response.data
+}
+
+export async function resetDemo(): Promise<UserResponse> {
+  const response = await api.post<UserResponse>('/auth/reset-demo')
+  return response.data
+}
+
+export async function getMySchool(): Promise<SchoolResponse | null> {
+  const response = await api.get<SchoolResponse | null>('/auth/my-school')
   return response.data
 }
 

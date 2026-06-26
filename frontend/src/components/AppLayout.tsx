@@ -35,6 +35,7 @@ interface MenuItem {
   to: string
   icon: React.ElementType
   adminOnly?: boolean
+  demoOnly?: boolean
   children?: MenuItem[]
 }
 
@@ -52,6 +53,7 @@ const menuItems: MenuItem[] = [
     children: [
       { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
       { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
+      { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
       { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
       { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
     ],
@@ -71,6 +73,9 @@ const filterMenuItems = (items: MenuItem[], user: UserResponse | null): MenuItem
       // If item has children, only show if at least one child is visible
       if (item.children && item.children.length > 0) {
         return true
+      }
+      if (item.demoOnly) {
+        return user?.is_demo
       }
       return !item.adminOnly || user?.is_superuser
     })
