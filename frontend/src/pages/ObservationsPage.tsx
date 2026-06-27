@@ -294,6 +294,9 @@ export default function ObservationsPage() {
     setForm((current) => ({
       ...current,
       name: current.name.trim() || selectedGoal.title,
+      subject: selectedGoal.subject,
+      domain: selectedGoal.domain || '',
+      subdomain: selectedGoal.subdomain || '',
       goal_id: selectedGoal.id,
     }))
     setSelectedGoalSnapshot(selectedGoal)

@@ -296,9 +296,8 @@ p {
 
 .student-observation-table th,
 .student-observation-table td {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .student-observation-table td:first-child {
@@ -412,6 +411,8 @@ p {
   border-bottom: 1px solid var(--md-border);
   text-align: left;
   vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .data-table th {
@@ -778,9 +779,8 @@ p {
   border-right: 1px solid var(--md-border);
   text-align: center;
   vertical-align: middle;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .overview-table th:last-child,
@@ -1322,14 +1322,28 @@ p {
   gap: 16px;
 }
 
+.selected-observation-goal > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-observation-goal strong {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 .goal-detail-content h3 {
   text-align: left;
   margin: 0 0 8px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .goal-detail-content p {
   text-align: left;
   white-space: pre-line;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .status-options {
@@ -1437,6 +1451,8 @@ p {
 
 .goal-metadata {
   font-size: 13px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .link-button {
@@ -1607,6 +1623,12 @@ p {
   padding: 14px;
   cursor: pointer;
   background: #fafafa;
+  max-width: 100%;
+}
+
+.goal-option > div {
+  flex: 1;
+  min-width: 0;
 }
 
 .goal-option:hover,

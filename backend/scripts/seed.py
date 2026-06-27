@@ -1,3 +1,4 @@
+import html
 import sys
 from datetime import date
 from pathlib import Path
@@ -174,9 +175,15 @@ def _clean_text(value) -> str | None:
     # Strip leading apostrophe (from Excel vocabulary fields)
     if text.startswith("'"):
         text = text[1:]
+    # Decode HTML entities (e.g. &nbsp; " >)
+    text = html.unescape(text)
     # Remove HTML tags
     import re
     text = re.sub(r"<[^>]+>", "", text)
+    # Remove zero-width characters
+    text = text.replace("\u200b", "").replace("\u200c", "").replace("\u200d", "").replace("\ufeff", "")
+    # Normalize special spaces to regular space
+    text = text.replace("\u202f", " ").replace("\u2008", " ")
     lines = text.split("\n")
     cleaned_lines = []
     for line in lines:
