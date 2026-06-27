@@ -38,16 +38,6 @@ function App() {
         }
       />
       <Route
-        path="/demo-school"
-        element={
-          <AppLayout>
-            <DemoRoute>
-              <DemoSchoolPage />
-            </DemoRoute>
-          </AppLayout>
-        }
-      />
-      <Route
         path="/management/demo-school"
         element={
           <AppLayout>

@@ -3,6 +3,7 @@ import AddAPhotoIcon from '@mui/icons-material/AddAPhoto'
 import DeleteIcon from '@mui/icons-material/Delete'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { StudentAvatar } from '../components/StudentAvatar'
+import { sortClasses } from '../lib/subjectSort'
 import {
   addTeacherToClass,
   confirmStudentImport,
@@ -95,7 +96,7 @@ export default function ManagementPage() {
     }
     const loadClasses = async () => {
       try {
-        const data = await getClasses(selectedSchoolYearId)
+        const data = sortClasses(await getClasses(selectedSchoolYearId))
         setClasses(data)
         // Load students for each class
         const studentsMap: Record<number, StudentResponse[]> = {}
@@ -150,7 +151,7 @@ export default function ManagementPage() {
       setSuccess(`Klas ${created.name} is toegevoegd.`)
       setClassForm({ name: '', class_type: 'JK' })
       setClassOpen(false)
-      const data = await getClasses(selectedSchoolYearId)
+      const data = sortClasses(await getClasses(selectedSchoolYearId))
       setClasses(data)
     } catch (err) {
       setError(getErrorMessage(err, 'Kan klas niet toevoegen.'))
@@ -255,7 +256,7 @@ export default function ManagementPage() {
       setPreviewItems([])
       // Refresh students after import
       if (selectedSchoolYearId) {
-        const data = await getClasses(selectedSchoolYearId)
+        const data = sortClasses(await getClasses(selectedSchoolYearId))
         setClasses(data)
         const studentsMap: Record<number, StudentResponse[]> = {}
         for (const cls of data) {
@@ -285,7 +286,7 @@ export default function ManagementPage() {
       await uploadStudentImage(studentId, file)
       // Refresh students
       if (selectedSchoolYearId) {
-        const data = await getClasses(selectedSchoolYearId)
+        const data = sortClasses(await getClasses(selectedSchoolYearId))
         setClasses(data)
         const studentsMap: Record<number, StudentResponse[]> = {}
         for (const cls of data) {
@@ -310,7 +311,7 @@ export default function ManagementPage() {
       await deleteStudent(studentId)
       // Refresh students
       if (selectedSchoolYearId) {
-        const data = await getClasses(selectedSchoolYearId)
+        const data = sortClasses(await getClasses(selectedSchoolYearId))
         setClasses(data)
         const studentsMap: Record<number, StudentResponse[]> = {}
         for (const cls of data) {

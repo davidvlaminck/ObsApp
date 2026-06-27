@@ -567,6 +567,60 @@ p {
   margin-bottom: 8px;
 }
 
+/* Home page specific styles */
+.home-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.home-header h1 {
+  text-align: center;
+}
+
+.home-header .text-muted {
+  text-align: center;
+}
+
+.home-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.home-card {
+  max-width: none;
+  margin: 0;
+  height: 100%;
+}
+
+.home-card h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.home-card p {
+  text-align: left;
+}
+
+@media (max-width: 720px) {
+  .home-page {
+    padding: 16px 12px;
+  }
+  
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(160px, 220px));

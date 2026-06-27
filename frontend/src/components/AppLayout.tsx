@@ -45,7 +45,6 @@ const menuItems: MenuItem[] = [
   { label: 'Overzicht per klas', to: '/overzicht', icon: AssignmentIcon },
   { label: 'Overzicht per leerling', to: '/overzicht/leerling', icon: AssignmentIcon },
   { label: 'Observeren', to: '/observeren', icon: VisibilityIcon },
-  { label: 'Demo schoolbeheer', to: '/demo-school', icon: SchoolIcon, demoOnly: true },
   {
     label: 'Beheer',
     to: '/management',
@@ -53,6 +52,7 @@ const menuItems: MenuItem[] = [
     children: [
       { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
       { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
+      { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
       { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
       { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
     ],

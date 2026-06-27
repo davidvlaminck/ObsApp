@@ -1,7 +1,7 @@
 export default function HomePage() {
   return (
-    <section className="page-header">
-      <div>
+    <div className="home-page">
+      <div className="home-header">
         <h1>ObsApp</h1>
         <p className="text-muted">Welkom bij ObsApp - Jouw tool voor observaties bij leerlingen.</p>
       </div>
@@ -9,13 +9,8 @@ export default function HomePage() {
       <div style={{ marginTop: '2rem' }}>
         <h2>Hoe gebruik je deze app?</h2>
         
-        <div style={{ 
-          marginTop: '1.5rem', 
-          display: 'grid', 
-          gap: '1.5rem',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'
-        }}>
-          <article className="card">
+        <div className="home-grid">
+          <article className="card home-card">
             <h3>Overzicht</h3>
             <p className="text-muted">
               Bekijk een overzicht van alle observatiedoelen en de huidige status van leerlingen.
@@ -27,7 +22,7 @@ export default function HomePage() {
             </p>
           </article>
           
-          <article className="card">
+          <article className="card home-card">
             <h3>Overzicht per leerling</h3>
             <p className="text-muted">
               Bekijk alle observaties van één specifieke leerling. 
@@ -38,7 +33,7 @@ export default function HomePage() {
             </p>
           </article>
           
-          <article className="card">
+          <article className="card home-card">
             <h3>Observeren</h3>
             <p className="text-muted">
               Maak nieuwe observaties aan voor leerlingen. 
@@ -49,7 +44,7 @@ export default function HomePage() {
             </p>
           </article>
           
-          <article className="card">
+          <article className="card home-card">
             <h3>Observatiedoelen beheren</h3>
             <p className="text-muted">
               Definieer nieuwe observatiedoelen en koppel ze optioneel aan Op Stap doelen.
@@ -61,6 +56,6 @@ export default function HomePage() {
           </article>
         </div>
       </div>
-    </section>
+    </div>
   )
 }

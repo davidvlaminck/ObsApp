@@ -24,3 +24,21 @@ export const sortSubjects = (subjects: string[]): string[] => {
 
   return [...priority, ...rest]
 }
+
+// Klas-types sorteren: JK, 2K, 3K
+const CLASS_TYPE_ORDER: Record<string, number> = {
+  JK: 0,
+  K2: 1,
+  K3: 2,
+}
+
+export const sortClasses = <T extends { class_type: string; name: string }>(classes: T[]): T[] => {
+  return [...classes].sort((a, b) => {
+    const orderA = CLASS_TYPE_ORDER[a.class_type] ?? 999
+    const orderB = CLASS_TYPE_ORDER[b.class_type] ?? 999
+    if (orderA !== orderB) {
+      return orderA - orderB
+    }
+    return a.name.localeCompare(b.name)
+  })
+}

@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StudentAvatar } from '../components/StudentAvatar'
-import { sortSubjects } from '../lib/subjectSort'
+import { sortSubjects, sortClasses } from '../lib/subjectSort'
 import {
   getClasses,
   getMe,
@@ -142,7 +142,7 @@ export default function ObservingPage() {
         const schoolYears = await getSchoolYears(currentUser.school_id)
         const activeSchoolYear = schoolYears.find((schoolYear) => schoolYear.is_active) ?? schoolYears[0] ?? null
         if (activeSchoolYear) {
-          const loadedClasses = await getClasses(activeSchoolYear.id)
+          const loadedClasses = sortClasses(await getClasses(activeSchoolYear.id))
           setClasses(loadedClasses)
 
           // Use default_class_id if set, otherwise use first class if only one
