@@ -50,6 +50,14 @@ def create_observation_goal(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="School niet gevonden")
 
     repo = ObservationGoalRepository(db)
+    if current_user.is_demo:
+        existing_count = repo.count_by_school(school_id)
+        if existing_count >= 20:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Als demo gebruiker kan je tot 10 doelen zelf aanmaken en gebruiken.",
+            )
+
     try:
         observation_goal = repo.create(payload, school_id, current_user.id)
     except ValueError as exc:
@@ -136,17 +144,10 @@ def list_observation_goal_classes(
     class_repo = ClassRepository(db)
     year_repo = SchoolYearRepository(db)
 
-    if current_user.is_superuser:
-        school_years = year_repo.get_school_years_by_school(school_id)
-        class_ids = []
-        for year in school_years:
-            class_ids.extend([cls.id for cls in class_repo.get_classes_by_school_year(year.id)])
-    else:
-        from app.models.user import User as UserModel
-        user = db.query(UserModel).filter(UserModel.id == current_user.id).first()
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden")
-        class_ids = [cls.id for cls in user.classes]
+    school_years = year_repo.get_school_years_by_school(school_id)
+    class_ids = []
+    for year in school_years:
+        class_ids.extend([cls.id for cls in class_repo.get_classes_by_school_year(year.id)])
 
     classes = [class_repo.get_class_by_id(cid) for cid in class_ids]
     return [class_repo.class_to_response(cls) for cls in classes if cls]
@@ -204,12 +205,13 @@ def search_opstap_goals(
     subject: str | None = None,
     domain: str | None = None,
     subdomain: str | None = None,
+    level: str | None = None,
     q: str | None = None,
     db=Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
 ):
     repo = ObservationGoalRepository(db)
-    goals = repo.search_goals(subject=subject, domain=domain, subdomain=subdomain, q=q)
+    goals = repo.search_goals(subject=subject, domain=domain, subdomain=subdomain, level=level, q=q)
     return [GoalRepository(db).to_response(goal) for goal in goals]
 
 

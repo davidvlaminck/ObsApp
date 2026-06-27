@@ -75,6 +75,7 @@ export interface GoalSearchFilters {
   subject?: string
   domain?: string
   subdomain?: string
+  level?: string
   q?: string
   class_id?: number
 }

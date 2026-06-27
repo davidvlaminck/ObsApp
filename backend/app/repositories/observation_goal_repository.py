@@ -196,6 +196,13 @@ class ObservationGoalRepository:
 
         return sorted(subdomain for subdomain in observation_goal_subdomains | goal_subdomains if subdomain)
 
+    def count_by_school(self, school_id: int) -> int:
+        return (
+            self.db.query(ObservationGoal)
+            .filter(ObservationGoal.school_id == school_id)
+            .count()
+        )
+
     def to_response(self, observation_goal: ObservationGoal) -> ObservationGoalResponse:
         return ObservationGoalResponse(
             id=observation_goal.id,
@@ -242,6 +249,7 @@ class ObservationGoalRepository:
         subject: str | None = None,
         domain: str | None = None,
         subdomain: str | None = None,
+        level: str | None = None,
         q: str | None = None,
     ) -> list[Goal]:
         query = self.db.query(Goal).filter(Goal.goal_type == "OP_STAP")
@@ -251,6 +259,8 @@ class ObservationGoalRepository:
             query = query.filter(Goal.domain.ilike(domain))
         if subdomain:
             query = query.filter(Goal.subdomain.ilike(subdomain))
+        if level:
+            query = query.filter(Goal.level == level)
         if q and len(q.strip()) >= 2:
             search_term = f"%{q.strip()}%"
             query = query.filter(

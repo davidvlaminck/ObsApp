@@ -31,6 +31,7 @@ type GoalModalFilters = {
   subject: string
   domain: string
   subdomain: string
+  level: string
   q: string
 }
 
@@ -72,6 +73,7 @@ export default function ObservationsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [currentUser, setCurrentUser] = useState<{ is_demo: boolean } | null>(null)
 
   const [form, setForm] = useState<ObservationGoalForm>({
     name: '',
@@ -88,6 +90,7 @@ export default function ObservationsPage() {
     subject: '',
     domain: '',
     subdomain: '',
+    level: '',
     q: '',
   })
   const [goalSearchResults, setGoalSearchResults] = useState<GoalResponse[]>([])
@@ -124,6 +127,7 @@ export default function ObservationsPage() {
         setClasses(classesData)
         setSubjects(subjectsData)
         setObservationGoals(goalsData)
+        setCurrentUser({ is_demo: currentUser.is_demo })
 
         // Set default class filter from user's default_class_id
         if (currentUser.default_class_id) {
@@ -233,6 +237,7 @@ export default function ObservationsPage() {
       subject: filters.subject || undefined,
       domain: filters.domain || undefined,
       subdomain: filters.subdomain || undefined,
+      level: filters.level || undefined,
     }
     const text = filters.q.trim()
     if (text.length >= 2) {
@@ -264,10 +269,12 @@ export default function ObservationsPage() {
   }, [goalModalOpen, goalSearchFilters, searchGoals])
 
   const handleOpenGoalModal = () => {
+    const selectedClass = classes.find((cls) => cls.id === form.class_id)
     const initialFilters = {
       subject: form.subject,
       domain: form.domain,
       subdomain: form.subdomain,
+      level: selectedClass?.class_type ?? '',
       q: form.name.trim().length >= 2 ? form.name.trim() : '',
     }
     setGoalSearchFilters(initialFilters)
@@ -317,8 +324,12 @@ export default function ObservationsPage() {
       setSelectedGoalSnapshot(null)
       setSuccess('Observatiedoel is aangemaakt.')
       await loadObservationGoals()
-    } catch (err) {
-      setError(getErrorMessage(err, 'Kan observatiedoel niet aanmaken.'))
+    } catch (err: any) {
+      if (err.response?.status === 403) {
+        setError(err.response?.data?.detail || 'Limiet bereikt.')
+      } else {
+        setError(getErrorMessage(err, 'Kan observatiedoel niet aanmaken.'))
+      }
     } finally {
       setSaving(false)
     }
@@ -468,6 +479,13 @@ export default function ObservationsPage() {
               </select>
             </div>
 
+            {currentUser?.is_demo && (
+              <p className="text-muted" style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
+                Als demo gebruiker kan je tot 10 doelen zelf aanmaken en gebruiken.
+                Huidig gebruik: {Math.max(0, observationGoals.length - 10)}/10
+              </p>
+            )}
+
             <button className="btn btn-outline btn-full" type="button" onClick={handleOpenGoalModal}>
               Zoek Op Stap doel
             </button>
@@ -496,7 +514,11 @@ export default function ObservationsPage() {
               </div>
             )}
 
-            <button className="btn btn-primary btn-full" type="submit" disabled={saving}>
+            <button
+              className="btn btn-primary btn-full"
+              type="submit"
+              disabled={saving || (currentUser?.is_demo && observationGoals.length >= 20)}
+            >
               {saving ? 'Aanmaken...' : 'Observatiedoel aanmaken'}
             </button>
           </form>
@@ -647,6 +669,20 @@ export default function ObservationsPage() {
               </div>
 
               <div className="form-group">
+                <label htmlFor="goal-modal-level">Klasgroep</label>
+                <select
+                  id="goal-modal-level"
+                  value={goalSearchFilters.level}
+                  onChange={(event) => setGoalSearchFilters((current) => ({ ...current, level: event.target.value }))}
+                >
+                  <option value="">Alle klasgroepen</option>
+                  <option value="JK">JK</option>
+                  <option value="K2">2K</option>
+                  <option value="K3">3K</option>
+                </select>
+              </div>
+
+              <div className="form-group">
                 <label htmlFor="goal-modal-q">Zoek in omschrijving</label>
                 <input
                   id="goal-modal-q"
@@ -665,7 +701,7 @@ export default function ObservationsPage() {
                 className="btn btn-outline"
                 type="button"
                 onClick={() => {
-                  setGoalSearchFilters({ subject: '', domain: '', subdomain: '', q: '' })
+                  setGoalSearchFilters({ subject: '', domain: '', subdomain: '', level: '', q: '' })
                   setSelectedGoalId(null)
                   setGoalError('')
                 }}

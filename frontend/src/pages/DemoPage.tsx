@@ -1,3 +1,5 @@
+import { Link } from 'react-router-dom'
+
 export default function DemoPage() {
   return (
     <div className="center-container">
@@ -13,6 +15,9 @@ export default function DemoPage() {
         </ul>
         <p style={{ marginTop: '1.5rem', fontSize: '0.9rem', color: '#6b7280' }}>
           Gebruik het menu om te navigeren.
+        </p>
+        <p style={{ marginTop: '1rem', fontSize: '0.9rem' }}>
+          Ga naar <Link to="/home" style={{ color: '#2563eb', textDecoration: 'underline' }}>Home</Link> voor meer uitleg.
         </p>
       </div>
     </div>

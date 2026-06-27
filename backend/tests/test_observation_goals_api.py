@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
+from datetime import date
 
 from app.api import auth as auth_module
 from app.api import observation_goals as observation_goals_router_module
@@ -11,6 +12,7 @@ from app.core.database import Base
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.school import School
+from app.models.school_year import SchoolYear, Class as ClassModel
 from app.models.user import User
 from app.schemas.user import UserResponse
 
@@ -279,3 +281,118 @@ def test_delete_observation_goal_endpoint_deletes_current_school_goal(
 
     assert response.status_code == 204
     assert observation_goal_db.query(ObservationGoal).count() == 0
+
+
+def test_list_classes_returns_all_school_classes(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    from app.models.school_year import SchoolYear, Class as ClassModel
+
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
+    observation_goal_db.add(school_year)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(school_year)
+
+    cls1 = ClassModel(school_year_id=school_year.id, name="3K", class_type="K3")
+    cls2 = ClassModel(school_year_id=school_year.id, name="2K", class_type="K2")
+    observation_goal_db.add_all([cls1, cls2])
+    observation_goal_db.commit()
+
+    response = observation_goal_client.get("/api/observation-goals/classes")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    names = {c["name"] for c in data}
+    assert names == {"3K", "2K"}
+
+
+def test_search_opstap_goals_filters_by_level(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    observation_goal_db.add_all([
+        Goal(
+            id=10,
+            code="WIS-K3-1.1",
+            title="K3 doel",
+            subject="Wiskunde",
+            level="K3",
+            goal_type="OP_STAP",
+        ),
+        Goal(
+            id=11,
+            code="WIS-K2-1.1",
+            title="K2 doel",
+            subject="Wiskunde",
+            level="K2",
+            goal_type="OP_STAP",
+        ),
+        Goal(
+            id=12,
+            code="NED-JK-1.1",
+            title="JK doel",
+            subject="Nederlands",
+            level="JK",
+            goal_type="OP_STAP",
+        ),
+    ])
+    observation_goal_db.commit()
+
+    response = observation_goal_client.get("/api/observation-goals/goals/search", params={"level": "K3"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["code"] == "WIS-K3-1.1"
+    assert data[0]["level"] == "K3"
+
+
+def test_demo_user_cannot_create_more_than_20_goals(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    seed_opstap_goal(observation_goal_db)
+
+    demo_user_response = UserResponse(
+        id=1,
+        email="teacher@example.com",
+        name="Teacher",
+        is_active=True,
+        is_superuser=False,
+        school_id=1,
+        is_demo=True,
+    )
+    observation_goal_client.app.dependency_overrides[auth_module.get_current_user] = lambda: demo_user_response
+
+    # Create 20 goals (10 predefined + 10 custom)
+    for i in range(20):
+        response = observation_goal_client.post(
+            "/api/observation-goals",
+            json={
+                "name": f"Doel {i}",
+                "subject": "Wiskunde",
+                "domain": "Getallen en bewerkingen",
+                "subdomain": "Getallen",
+                "goal_id": 1,
+            },
+        )
+        assert response.status_code == 201, f"Failed at goal {i}: {response.text}"
+
+    # 21st goal should be rejected
+    response = observation_goal_client.post(
+        "/api/observation-goals",
+        json={
+            "name": "Doel 21",
+            "subject": "Wiskunde",
+            "domain": "Getallen en bewerkingen",
+            "subdomain": "Getallen",
+            "goal_id": 1,
+        },
+    )
+    assert response.status_code == 403
+    assert "Als demo gebruiker kan je tot 10 doelen zelf aanmaken" in response.json()["detail"]
