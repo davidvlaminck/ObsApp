@@ -282,16 +282,31 @@ async def reset_demo(
             detail="Geen demo school gevonden",
         )
 
+    # Clear demo_school_id from user FIRST (to avoid FK constraint violation)
+    user.demo_school_id = None
+    db.add(user)
+    db.commit()
+    
     # Delete related data in order to respect foreign keys
+    # Order matters: delete children first, then parents
     db.execute(delete(StudentObservation).where(StudentObservation.school_id == demo_school_id))
     db.execute(delete(Observation).where(Observation.school_id == demo_school_id))
     db.execute(delete(ObservationGoal).where(ObservationGoal.school_id == demo_school_id))
+    
+    # Get school year IDs for this school
+    school_year_ids = [sy.id for sy in db.query(SchoolYear.id).filter(SchoolYear.school_id == demo_school_id).all()]
+    
+    # Get class IDs for these school years
+    class_ids = [c.id for c in db.query(Class.id).filter(Class.school_year_id.in_(school_year_ids)).all()]
+    
+    # Delete students, then classes, then school years
+    if class_ids:
+        db.execute(delete(Student).where(Student.class_id.in_(class_ids)))
+    db.execute(delete(Class).where(Class.school_year_id.in_(school_year_ids)))
+    db.execute(delete(SchoolYear).where(SchoolYear.school_id == demo_school_id))
 
-    # Delete the demo school (cascades to school years, classes, students)
+    # Delete the demo school
     db.execute(delete(School).where(School.id == demo_school_id))
-
-    # Clear demo_school_id and koepel from user
-    user.demo_school_id = None
     db.commit()
     db.refresh(user)
 

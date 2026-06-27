@@ -147,26 +147,16 @@ def seed_mow_user():
     """Create demo user (demo@example.com) without koepel selection."""
     db = SessionLocal()
     try:
-        # Create school for demo user (without koepel)
-        school = School(
-            name="MOW Test School",
-            slug="mow-test-school",
-            is_active=True,
-            koepel_id=None,  # No koepel selected yet
-        )
-        db.add(school)
-        db.commit()
-        db.refresh(school)
-
-        # Create demo user
+        # Create demo user (no school yet - will be created after koepel selection)
         mow_user = User(
             email="demo@example.com",
             hashed_password=get_password_hash("demo"),
             name="Demo Uitproberen",
             is_superuser=False,
             is_active=True,
-            school_id=school.id,
+            school_id=None,
             is_pending=False,
+            is_demo=True,
         )
         db.add(mow_user)
         db.commit()

@@ -46,6 +46,7 @@ const menuItems: MenuItem[] = [
   { label: 'Overzicht per klas', to: '/overzicht', icon: AssignmentIcon },
   { label: 'Overzicht per leerling', to: '/overzicht/leerling', icon: AssignmentIcon },
   { label: 'Observeren', to: '/observeren', icon: VisibilityIcon },
+  { label: 'Demo schoolbeheer', to: '/demo-school', icon: SchoolIcon, demoOnly: true },
   {
     label: 'Beheer',
     to: '/management',
@@ -53,15 +54,14 @@ const menuItems: MenuItem[] = [
     children: [
       { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
       { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
-      { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
       { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
       { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
     ],
   },
 ]
 
-const filterMenuItems = (items: MenuItem[], user: UserResponse | null): MenuItem[] =>
-  items
+const filterMenuItems = (items: MenuItem[], user: UserResponse | null): MenuItem[] => {
+  return items
     .map((item) => {
       const children = item.children ? filterMenuItems(item.children, user) : []
       return {
@@ -79,6 +79,15 @@ const filterMenuItems = (items: MenuItem[], user: UserResponse | null): MenuItem
       }
       return !item.adminOnly || user?.is_superuser
     })
+    .map((item) => {
+      // Remove empty children arrays
+      if (item.children && item.children.length === 0) {
+        const { children, ...rest } = item
+        return rest
+      }
+      return item
+    })
+}
 
 export default function AppLayout({ children }: AppLayoutProps) {
   const [user, setUser] = useState<UserResponse | null>(null)
