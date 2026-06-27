@@ -9,6 +9,7 @@ Output:
     AnalysisDev/opstap_naar_minimumdoelen.xlsx
 """
 
+import html
 import json
 import re
 import urllib.request
@@ -16,10 +17,14 @@ from openpyxl import Workbook
 
 
 def strip_html(text: str) -> str:
-    """Verwijdert HTML tags uit tekst."""
+    """Verwijdert HTML tags en decodeert HTML-entiteiten uit tekst."""
     if not text:
         return ""
-    return re.sub(r"<[^>]+>", "", text)
+    text = html.unescape(text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = text.replace("\u200b", "").replace("\u200c", "").replace("\u200d", "").replace("\ufeff", "")
+    text = text.replace("\u202f", " ").replace("\u2008", " ")
+    return text
 
 # Configuratie
 API_BASE = "https://cached-api.katholiekonderwijs.vlaanderen"
