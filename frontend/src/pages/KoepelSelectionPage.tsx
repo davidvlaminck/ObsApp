@@ -5,7 +5,8 @@ import type { UserResponse } from '../services/auth'
 
 export default function KoepelSelectionPage() {
   const [koepels, setKoepels] = useState<Array<{ id: number; name: string; slug: string }>>([])
-  const [selected, setSelected] = useState<string>('')
+  const [selectedKoepel, setSelectedKoepel] = useState<string>('')
+  const [selectedClass, setSelectedClass] = useState<string>('K3')  // Default to K3
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -28,18 +29,18 @@ export default function KoepelSelectionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!selected) {
+    if (!selectedKoepel) {
       setError('Selecteer een koepel')
       return
     }
     setSubmitting(true)
     try {
-      const user: UserResponse = await selectKoepel(selected)
+      const user: UserResponse = await selectKoepel(selectedKoepel, selectedClass)
       if (user.is_demo) {
-        navigate('/demo')
-      } else {
-        navigate('/dashboard')
-      }
+                 navigate('/demo')
+               } else {
+                 navigate('/home')
+               }
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Koepel selectie mislukt. Probeer opnieuw.')
     } finally {
@@ -60,17 +61,17 @@ export default function KoepelSelectionPage() {
   return (
     <div className="center-container">
       <div className="card">
-        <h1>Kies je koepel</h1>
+        <h1>Kies je koepel en klas</h1>
         <p style={{ marginBottom: '1.5rem', color: '#6b7280' }}>
-          Selecteer de koepel die bij je school hoort.
+          Selecteer de koepel en klas die bij je school horen.
         </p>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label htmlFor="koepel">Koepel</label>
             <select
               id="koepel"
-              value={selected}
-              onChange={(e) => setSelected(e.target.value)}
+              value={selectedKoepel}
+              onChange={(e) => setSelectedKoepel(e.target.value)}
               required
               autoFocus
             >
@@ -80,6 +81,19 @@ export default function KoepelSelectionPage() {
                   {k.name}
                 </option>
               ))}
+            </select>
+          </div>
+          <div className="form-group">
+            <label htmlFor="class">Klas</label>
+            <select
+              id="class"
+              value={selectedClass}
+              onChange={(e) => setSelectedClass(e.target.value)}
+              required
+            >
+              <option value="JK">JK (Jongste kleuters)</option>
+              <option value="K2">2K (Tweede kleuterklas)</option>
+              <option value="K3">3K (Derde kleuterklas)</option>
             </select>
           </div>
           {error && <p className="error">{error}</p>}

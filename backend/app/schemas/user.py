@@ -25,4 +25,5 @@ class UserResponse(BaseModel):
     is_demo: bool = False
     demo_school_id: int | None = None
     demo_expires_at: datetime | None = None
+    default_class_id: int | None = None
     needs_koepel_selection: bool = False

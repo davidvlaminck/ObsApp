@@ -16,7 +16,6 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material'
-import DashboardIcon from '@mui/icons-material/Dashboard'
 import AssignmentIcon from '@mui/icons-material/Assignment'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import HomeIcon from '@mui/icons-material/Home'
@@ -42,7 +41,7 @@ interface MenuItem {
 const DRAWER_WIDTH = 220
 
 const menuItems: MenuItem[] = [
-  { label: 'Dashboard', to: '/dashboard', icon: DashboardIcon },
+  { label: 'Home', to: '/home', icon: HomeIcon },
   { label: 'Overzicht per klas', to: '/overzicht', icon: AssignmentIcon },
   { label: 'Overzicht per leerling', to: '/overzicht/leerling', icon: AssignmentIcon },
   { label: 'Observeren', to: '/observeren', icon: VisibilityIcon },

@@ -9,6 +9,7 @@ from sqlalchemy import delete, select
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.security import create_access_token
+from app.models.goal import Goal
 from app.models.koepel import Koepel
 from app.models.observation import Observation
 from app.models.observation_goal import ObservationGoal
@@ -31,11 +32,89 @@ DEMO_STUDENTS = [
     "Noor De Smet",
     "Finn Willems",
     "Amber Claes",
+    "Lucas Vermeulen",
+    "Sofie Martens",
+    "Daan Goossens",
+    "Lotte Maes",
+    "Thomas Wouters",
+]
+
+# Demo observation goal specs (name, code, subject, domain, subdomain)
+DEMO_OBSERVATION_GOALS = [
+    # Wiskunde - Getallenkennis
+    ("rangtelwoorden", "2.1.GK3.5", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+    ("telrij tot 20", "2.1.GK3.1", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+    ("aantallen tot 10", "2.1.GK3.3", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+    # Wiskunde - Meetkunde
+    ("vormen herkennen", "2.1.GK3.7", "Wiskunde", "Meetkunde", "Vormen"),
+    # Nederlands - Lezen
+    ("klanken herkennen", "2.1.GK3.2", "Nederlands", "Lezen", "Klankbewustzijn"),
+    ("woorden lezen", "2.1.GK3.2", "Nederlands", "Lezen", "Woordlezen"),
+    ("tekst begrijpen", "2.1.GK3.4", "Nederlands", "Lezen", "Begrip"),
+    ("luisteren naar verhalen", "2.1.GK3.4", "Nederlands", "Lezen", "Luisteren"),
+    # Nederlands - Schrijven
+    ("letters schrijven", "2.1.GK3.2", "Nederlands", "Schrijven", "Handschrift"),
+    ("woorden schrijven", "2.1.GK3.4", "Nederlands", "Schrijven", "Spelling"),
+]
+
+# Demo class observations (goal_name, student_index, status, observation_date, comment)
+DEMO_CLASS_OBSERVATIONS = [
+    ("klanken herkennen", 0, "in_ontwikkeling", date(2026, 10, 5), "Voorbeeldcommentaar: herkent de begin- en eindklank."),
+    ("klanken herkennen", 1, "zelfstandig", date(2026, 10, 6), None),
+    ("klanken herkennen", 2, "voorsprong", date(2026, 10, 7), None),
+    ("klanken herkennen", 3, "in_ontwikkeling", date(2026, 10, 8), None),
+    ("klanken herkennen", 4, "zelfstandig", date(2026, 10, 9), None),
+    ("klanken herkennen", 5, "voorsprong", date(2026, 10, 10), None),
+    ("klanken herkennen", 6, "onvoldoende", date(2026, 10, 11), None),
+    ("klanken herkennen", 7, "in_ontwikkeling", date(2026, 10, 12), None),
+    ("klanken herkennen", 8, "zelfstandig", date(2026, 10, 13), None),
+    ("klanken herkennen", 9, "voorsprong", date(2026, 10, 14), None),
+    ("woorden lezen", 0, "zelfstandig", date(2026, 10, 20), None),
+    ("woorden lezen", 1, "voorsprong", date(2026, 10, 21), None),
+    ("woorden lezen", 2, "in_ontwikkeling", date(2026, 10, 22), None),
+    ("woorden lezen", 3, "zelfstandig", date(2026, 10, 23), None),
+    ("woorden lezen", 4, "voorsprong", date(2026, 10, 24), None),
+    ("woorden lezen", 5, "onvoldoende", date(2026, 10, 25), None),
+    ("woorden lezen", 6, "in_ontwikkeling", date(2026, 10, 26), None),
+    ("woorden lezen", 7, "zelfstandig", date(2026, 10, 27), None),
+    ("woorden lezen", 8, "voorsprong", date(2026, 10, 28), None),
+    ("woorden lezen", 9, "in_ontwikkeling", date(2026, 10, 29), None),
+    ("luisteren naar verhalen", 0, "voorsprong", date(2026, 11, 4), None),
+    ("luisteren naar verhalen", 1, "in_ontwikkeling", date(2026, 11, 5), None),
+    ("luisteren naar verhalen", 2, "zelfstandig", date(2026, 11, 6), None),
+    ("luisteren naar verhalen", 3, "voorsprong", date(2026, 11, 7), None),
+    ("luisteren naar verhalen", 4, "onvoldoende", date(2026, 11, 8), None),
+    ("luisteren naar verhalen", 5, "in_ontwikkeling", date(2026, 11, 9), None),
+    ("luisteren naar verhalen", 6, "zelfstandig", date(2026, 11, 10), None),
+    ("luisteren naar verhalen", 7, "voorsprong", date(2026, 11, 11), None),
+    ("luisteren naar verhalen", 8, "in_ontwikkeling", date(2026, 11, 12), None),
+    ("luisteren naar verhalen", 9, "zelfstandig", date(2026, 11, 13), None),
+    ("rangtelwoorden", 0, "zelfstandig", date(2026, 11, 19), None),
+    ("rangtelwoorden", 1, "voorsprong", date(2026, 11, 20), None),
+    ("rangtelwoorden", 2, "in_ontwikkeling", date(2026, 11, 21), None),
+    ("rangtelwoorden", 3, "zelfstandig", date(2026, 11, 22), None),
+    ("rangtelwoorden", 4, "voorsprong", date(2026, 11, 23), None),
+    ("rangtelwoorden", 5, "onvoldoende", date(2026, 11, 24), None),
+    ("rangtelwoorden", 6, "in_ontwikkeling", date(2026, 11, 25), None),
+    ("rangtelwoorden", 7, "zelfstandig", date(2026, 11, 26), None),
+    ("rangtelwoorden", 8, "voorsprong", date(2026, 11, 27), None),
+    ("rangtelwoorden", 9, "in_ontwikkeling", date(2026, 11, 28), None),
+    ("vormen herkennen", 0, "voorsprong", date(2026, 12, 4), None),
+    ("vormen herkennen", 1, "in_ontwikkeling", date(2026, 12, 5), None),
+    ("vormen herkennen", 2, "zelfstandig", date(2026, 12, 6), None),
+    ("vormen herkennen", 3, "voorsprong", date(2026, 12, 7), None),
+    ("vormen herkennen", 4, "onvoldoende", date(2026, 12, 8), None),
+    ("vormen herkennen", 5, "in_ontwikkeling", date(2026, 12, 9), None),
+    ("vormen herkennen", 6, "zelfstandig", date(2026, 12, 10), None),
+    ("vormen herkennen", 7, "voorsprong", date(2026, 12, 11), None),
+    ("vormen herkennen", 8, "in_ontwikkeling", date(2026, 12, 12), None),
+    ("vormen herkennen", 9, "zelfstandig", date(2026, 12, 13), None),
 ]
 
 
 class KoepelSelectRequest(BaseModel):
     koepel: str
+    class_type: str | None = None  # "JK", "K2", or "K3" - defaults to "K3" for demo data
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -180,23 +259,81 @@ async def select_koepel(
         db.commit()
         db.refresh(school_year)
         
-        # Create class
-        class_model = Class(
-            school_year_id=school_year.id,
-            name="3K",
-            class_type="K3",
-        )
-        db.add(class_model)
-        db.commit()
-        db.refresh(class_model)
+        # Create 3 classes: JK, 2K, 3K
+        class_models = {}
+        for class_name, class_type in [("JK", "JK"), ("2K", "K2"), ("3K", "K3")]:
+            class_model = Class(
+                school_year_id=school_year.id,
+                name=class_name,
+                class_type=class_type,
+            )
+            db.add(class_model)
+            db.commit()
+            db.refresh(class_model)
+            class_models[class_name] = class_model
         
-        # Create demo students
+        # Create demo students in 3K (where demo observations will be)
         for student_name in DEMO_STUDENTS:
-            db.add(Student(class_id=class_model.id, name=student_name))
+            db.add(Student(class_id=class_models["3K"].id, name=student_name))
+        db.commit()
+        
+        # Create demo observation goals
+        for name, code, subject, domain, subdomain in DEMO_OBSERVATION_GOALS:
+            demo_goal = db.query(Goal).filter_by(code=code).first()
+            if demo_goal:
+                demo_observation_goal = ObservationGoal(
+                    school_id=demo_school.id,
+                    created_by=user.id,
+                    name=name,
+                    subject=subject,
+                    domain=domain,
+                    subdomain=subdomain,
+                    class_id=class_models["3K"].id,  # Link to 3K class
+                )
+                db.add(demo_observation_goal)
+                demo_observation_goal.goal_id = demo_goal.id
+        db.commit()
+        
+        # Create demo student observations
+        students = (
+            db.query(Student)
+            .filter(Student.class_id == class_models["3K"].id)
+            .order_by(Student.name)
+            .all()
+        )
+        observation_goals = {
+            goal.name: goal
+            for goal in db.query(ObservationGoal)
+            .filter(ObservationGoal.school_id == demo_school.id)
+            .all()
+        }
+        
+        for goal_name, student_index, status, observation_date, comment in DEMO_CLASS_OBSERVATIONS:
+            if student_index < len(students) and goal_name in observation_goals:
+                observation_goal = observation_goals[goal_name]
+                student = students[student_index]
+                db.add(
+                    StudentObservation(
+                        school_id=demo_school.id,
+                        observation_goal_id=observation_goal.id,
+                        student_id=student.id,
+                        observed_by=user.id,
+                        status=status,
+                        observation_date=observation_date,
+                        comment=comment,
+                    )
+                )
         db.commit()
         
         # Set the koepel on the demo school
         demo_school.koepel = payload.koepel
+        
+        # Set the default class on the user based on selection
+        # Map class_type to class name: "JK" -> "JK", "K2" -> "2K", "K3" -> "3K"
+        class_name_map = {"JK": "JK", "K2": "2K", "K3": "3K"}
+        selected_class_name = class_name_map.get(payload.class_type, "3K")
+        user.default_class_id = class_models[selected_class_name].id
+        
         db.commit()
         
         return service.user_repo.to_response(user)
@@ -282,8 +419,9 @@ async def reset_demo(
             detail="Geen demo school gevonden",
         )
 
-    # Clear demo_school_id from user FIRST (to avoid FK constraint violation)
+    # Clear demo_school_id and default_class_id from user FIRST (to avoid FK constraint violation)
     user.demo_school_id = None
+    user.default_class_id = None
     db.add(user)
     db.commit()
     

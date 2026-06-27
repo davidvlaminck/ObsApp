@@ -19,7 +19,7 @@ export default function LoginPage() {
       if (data.needs_koepel_selection) {
         navigate('/select-koepel')
       } else {
-        navigate('/dashboard')
+        navigate('/home')
       }
     } catch {
       setError('Inloggen mislukt. Controleer je gegevens.')

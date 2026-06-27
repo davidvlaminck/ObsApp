@@ -66,5 +66,6 @@ class UserRepository:
             is_demo=user.is_demo,
             demo_school_id=user.demo_school_id,
             demo_expires_at=user.demo_expires_at,
+            default_class_id=user.default_class_id,
             needs_koepel_selection=needs_koepel_selection,
         )

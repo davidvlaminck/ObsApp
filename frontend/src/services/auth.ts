@@ -61,6 +61,7 @@ export interface UserResponse {
   is_demo: boolean
   demo_school_id: number | null
   demo_expires_at: string | null
+  default_class_id: number | null
   needs_koepel_selection: boolean
 }
 
@@ -289,8 +290,8 @@ export async function getKoepels(): Promise<KoepelResponse[]> {
   return response.data
 }
 
-export async function selectKoepel(koepel: string): Promise<UserResponse> {
-  const response = await api.post<UserResponse>('/auth/select-koepel', { koepel })
+export async function selectKoepel(koepel: string, class_type?: string): Promise<UserResponse> {
+  const response = await api.post<UserResponse>('/auth/select-koepel', { koepel, class_type })
   return response.data
 }
 

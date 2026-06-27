@@ -2,7 +2,7 @@
   "name": "ObsApp",
   "short_name": "ObsApp",
   "description": "Mobiele applicatie voor observaties en schoolbeheer",
-  "start_url": "/dashboard",
+  "start_url": "/home",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",

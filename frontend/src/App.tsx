@@ -9,7 +9,7 @@ import SchoolsPage from './pages/SchoolsPage'
 import ManagementPage from './pages/ManagementPage'
 import UsersPage from './pages/UsersPage'
 import SetPasswordPage from './pages/SetPasswordPage'
-import DashboardPage from './pages/DashboardPage'
+import HomePage from './pages/HomePage'
 import ObservationsPage from './pages/ObservationsPage'
 import ObservingPage from './pages/ObservingPage'
 import OverviewPage from './pages/OverviewPage'
@@ -59,10 +59,10 @@ function App() {
       />
 
       <Route
-        path="/dashboard"
+        path="/home"
         element={
           <AppLayout>
-            <DashboardPage />
+            <HomePage />
           </AppLayout>
         }
       />
@@ -129,7 +129,7 @@ function App() {
         }
       />
 
-      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      <Route path="*" element={<Navigate to="/home" replace />} />
     </Routes>
   )
 }

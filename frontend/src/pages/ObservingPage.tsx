@@ -144,7 +144,11 @@ export default function ObservingPage() {
         if (activeSchoolYear) {
           const loadedClasses = await getClasses(activeSchoolYear.id)
           setClasses(loadedClasses)
-          if (loadedClasses.length === 1) {
+
+          // Use default_class_id if set, otherwise use first class if only one
+          if (currentUser.default_class_id) {
+            setSelectedClassId(currentUser.default_class_id)
+          } else if (loadedClasses.length === 1) {
             setSelectedClassId(loadedClasses[0].id)
           }
         }

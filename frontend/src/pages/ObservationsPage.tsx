@@ -16,6 +16,7 @@ import {
   ObservationGoalResponse,
   ClassOption,
 } from '../services/observations'
+import { getMe } from '../services/auth'
 
 type ObservationGoalForm = {
   name: string
@@ -113,6 +114,8 @@ export default function ObservationsPage() {
     const load = async () => {
       try {
         setLoading(true)
+        const currentUser = await getMe()
+
         const [classesData, subjectsData, goalsData] = await Promise.all([
           getObservationGoalClasses(),
           getObservationGoalSubjects(),
@@ -121,6 +124,12 @@ export default function ObservationsPage() {
         setClasses(classesData)
         setSubjects(subjectsData)
         setObservationGoals(goalsData)
+
+        // Set default class filter from user's default_class_id
+        if (currentUser.default_class_id) {
+          setForm((current) => ({ ...current, class_id: currentUser.default_class_id }))
+        }
+
         setError('')
       } catch (err) {
         setError(getErrorMessage(err, 'Kan gegevens niet laden.'))
@@ -215,8 +224,8 @@ export default function ObservationsPage() {
   }, [form.subject, form.domain, form.subdomain, form.class_id])
 
   const handleTableClassFilter = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const classId = event.target.value ? Number(event.target.value) : undefined
-    loadObservationGoals({ class_id: classId })
+    const classId = event.target.value ? Number(event.target.value) : null
+    setForm((current) => ({ ...current, class_id: classId }))
   }
 
   const searchGoals = useCallback(async (filters: GoalModalFilters) => {
