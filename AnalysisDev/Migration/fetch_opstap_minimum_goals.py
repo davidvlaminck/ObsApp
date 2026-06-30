@@ -11,6 +11,7 @@ Output:
 
 import html
 import json
+import os
 import re
 import urllib.request
 from openpyxl import Workbook
@@ -31,7 +32,7 @@ API_BASE = "https://cached-api.katholiekonderwijs.vlaanderen"
 DOCUMENT_ID = "bdc19260-bd4c-46a8-8009-b2a54f381120"
 SNAPSHOT = "latest"
 KRC_ITEMS_URL = f"{API_BASE}/documents/{DOCUMENT_ID}/snapshots/{SNAPSHOT}/krcItems"
-OUTPUT_PATH = "AnalysisDev/opstap_naar_minimumdoelen.xlsx"
+OUTPUT_PATH = os.path.join(os.path.dirname(__file__), "..", "opstap_naar_minimumdoelen.xlsx")
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; MigrationScript/1.0)",
@@ -182,6 +183,11 @@ def main():
     for row in rows:
         ws.append(row)
 
+    # Zorg dat de output directory bestaat
+    output_dir = os.path.dirname(OUTPUT_PATH)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    
     wb.save(OUTPUT_PATH)
     print(f"Excel opgeslagen naar: {OUTPUT_PATH}")
 
