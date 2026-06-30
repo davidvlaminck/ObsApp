@@ -7,10 +7,10 @@ Een school en schooljaar wordt aangemaakt na betaling. Nadien kunnen gebruikers 
 
 - [ ] demo gebruiker kunnen koppelen aan bestaande school
 - [ ] school selecteren uit lijst
-- [ ] koepel selectie: OVSG, GO! of Gesubsidieerd Vrij Onderwijs (Katholiek Onderwijs Vlaanderen, ...)
-- [ ] demo landing page
+- [x] koepel selectie: OVSG, GO! of Gesubsidieerd Vrij Onderwijs (Katholiek Onderwijs Vlaanderen, ...)
+- [x] demo landing page
 - [ ] demo opnieuw aanvragen
-- [ ] demo data aanmaken
+- [x] demo data aanmaken
 - [ ] demo data automatisch verwijderen
 - [ ] gebruikers koppelen aan een school (eerste krijgt toegang, daarna principe van binnenlaten)
 - [ ] betaling loggen (enkel voor superuser)
@@ -64,3 +64,4 @@ Na te kijken:
 ### Dashboard
 
 - [ ] tonen welke doelen nog niet geobserveerd zijn
+- [ ] Overzicht per leerling: volgende/vorige knop voorzien naast keuzelijst
