@@ -4,12 +4,12 @@
 
 /* Drawer (MUI Drawer component styling) */
 .MuiDrawer-root {
-  background: var(--md-surface);
+  background: var(--md-primary);
 }
 
 .MuiDrawer-paper {
-  background: var(--md-surface) !important;
-  border-right: 1px solid var(--md-border-light) !important;
+  background: var(--md-primary) !important;
+  border-right: 2px solid var(--md-primary-hover) !important;
 }
 
 /* List and menu items */
@@ -26,44 +26,57 @@
   padding: 12px 16px !important;
   margin: 4px 8px !important;
   border-radius: var(--md-radius-sm) !important;
-  color: var(--md-text-primary) !important;
-  font-weight: 500 !important;
+  color: white !important;
+  font-weight: 700 !important;
   font-size: 15px !important;
   transition: all 0.2s ease !important;
 }
 
 .MuiListItemButton-root:hover {
-  background-color: var(--md-primary-light) !important;
-  color: var(--md-primary) !important;
+  background-color: rgba(255, 255, 255, 0.20) !important;
+  color: white !important;
   transform: translateX(2px) !important;
 }
 
 .MuiListItemButton-root.active,
 .MuiListItemButton-root[aria-current="page"] {
-  background-color: var(--md-primary-light) !important;
-  color: var(--md-primary) !important;
+  background-color: rgba(255, 255, 255, 0.25) !important;
+  color: white !important;
   font-weight: 600 !important;
-  border-left: 4px solid var(--md-primary) !important;
-  padding-left: 12px !important;
+  border-bottom: 3px solid white !important;
+  padding-bottom: 9px !important;
 }
 
 /* List item icon */
 .MuiListItemIcon-root {
-  color: var(--md-text-secondary) !important;
+  color: white !important;
   min-width: 40px !important;
   transition: color 0.2s !important;
+}
+
+.MuiListItemIcon-root svg {
+  color: white !important;
+  fill: white !important;
 }
 
 .MuiListItemButton-root:hover .MuiListItemIcon-root,
 .MuiListItemButton-root.active .MuiListItemIcon-root,
 .MuiListItemButton-root[aria-current="page"] .MuiListItemIcon-root {
-  color: var(--md-primary) !important;
+  color: white !important;
+}
+
+.MuiListItemButton-root:hover .MuiListItemIcon-root svg,
+.MuiListItemButton-root.active .MuiListItemIcon-root svg,
+.MuiListItemButton-root[aria-current="page"] .MuiListItemIcon-root svg {
+  color: white !important;
+  fill: white !important;
 }
 
 /* List item text */
 .MuiListItemText-primary {
   font-size: 15px !important;
-  font-weight: 500 !important;
+  font-weight: 700 !important;
+  color: white !important;
 }
 
 /* Collapse for submenu */
@@ -79,27 +92,31 @@
 .MuiListItemButton-root.submenu {
   padding-left: 40px !important;
   font-size: 14px !important;
+  color: rgba(255, 255, 255, 0.90) !important;
 }
 
 .MuiListItemButton-root.submenu:hover {
-  background-color: var(--md-border-light) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
 }
 
 .MuiListItemButton-root.submenu.active {
-  color: var(--md-primary) !important;
+  color: white !important;
   font-weight: 600 !important;
+  border-bottom: 2px solid white !important;
+  padding-bottom: 10px !important;
 }
 
 /* Divider */
 .MuiDivider-root {
-  border-color: var(--md-border-light) !important;
+  border-color: rgba(255, 255, 255, 0.20) !important;
   margin: 8px 0 !important;
 }
 
 /* Theme switcher in menu */
 .theme-selector {
   padding: 16px;
-  border-top: 1px solid var(--md-border-light);
+  border-top: 1px solid rgba(255, 255, 255, 0.20);
   margin-top: 16px;
 }
 
@@ -107,7 +124,7 @@
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
-  color: var(--md-text-secondary);
+  color: rgba(255, 255, 255, 0.75);
   letter-spacing: 0.5px;
   margin-bottom: 12px;
   display: block;
@@ -147,11 +164,13 @@
 
 /* Mobile menu button (hamburger) */
 .menu-button {
-  color: var(--md-text-primary) !important;
+  color: var(--md-primary) !important;
+  transition: all 0.2s ease !important;
 }
 
 .menu-button:hover {
-  color: var(--md-primary) !important;
+  color: var(--md-primary-hover) !important;
+  transform: scale(1.1) !important;
 }
 
 /* Responsive: Hamburger menu for mobile */

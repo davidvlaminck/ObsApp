@@ -1,7 +1,9 @@
 import { AxiosError } from 'axios'
+
 import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { clearToken, getMe, UserResponse } from '../services/auth'
+import { ThemeSelector } from './ThemeSelector'
 import {
   Drawer,
   List,
@@ -231,6 +233,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
         <ListItemButton
           component={NavLink}
           to={item.to}
+          end
           onClick={onNavigate}
           selected={isActive}
           sx={{
@@ -341,6 +344,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
               </Typography>
             </Box>
           </Box>
+            <Divider />
+            <ThemeSelector />
           <button className="btn btn-outline btn-full" type="button" onClick={handleLogout}>
             Uitloggen
           </button>
