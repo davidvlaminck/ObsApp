@@ -1,0 +1,172 @@
+/* Material Design inspired styles */
+:root {
+  --md-primary: #1976d2;
+  --md-primary-hover: #1565c0;
+  --md-error: #d32f2f;
+  --md-background: #f5f5f5;
+  --md-surface: #ffffff;
+  --md-text-primary: #212121;
+  --md-text-secondary: #757575;
+  --md-border: #e0e0e0;
+  --md-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  --md-radius: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: var(--md-background);
+  color: var(--md-text-primary);
+  line-height: 1.5;
+  overscroll-behavior-y: contain;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Typography */
+h1 {
+  font-size: 24px;
+  font-weight: 400;
+  margin: 0 0 8px;
+  text-align: center;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0 0 16px;
+  text-align: center;
+}
+
+p {
+  margin: 0 0 16px;
+  text-align: center;
+  color: var(--md-text-secondary);
+}
+
+/* Text utilities */
+.text-muted {
+  color: var(--md-text-secondary);
+  font-size: 14px;
+}
+
+.error {
+  color: var(--md-error);
+  font-size: 14px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+.success {
+  color: #2e7d32;
+  font-size: 14px;
+  text-align: center;
+  margin-top: 8px;
+}
+
+/* Form elements */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-text-secondary);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1px solid var(--md-border);
+  border-radius: 4px;
+  background: var(--md-surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.form-group select {
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 1px solid var(--md-border);
+  border-radius: 4px;
+  background: var(--md-surface);
+}
+
+.form-group select:focus {
+  outline: none;
+  border-color: var(--md-primary);
+  box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.2);
+}
+
+.checkbox-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.checkbox-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--md-text-primary);
+}
+
+.checkbox-row input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--md-primary);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Links */
+.admin-links {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.admin-links a {
+  color: var(--md-primary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.admin-links a:hover {
+  text-decoration: underline;
+}

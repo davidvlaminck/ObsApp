@@ -1,0 +1,246 @@
+/* =========================================================
+   OVERVIEW PAGE – PAGE-WIDE HORIZONTAL SCROLL + CHIP FILTER
+   ========================================================= */
+
+.overview-page-scroll {
+  width: 100%;
+  overflow: auto;
+}
+
+.overview-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.overview-comment-popup {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  margin-top: 8px;
+  width: 220px;
+  background: var(--md-surface);
+  border-radius: var(--md-radius);
+  box-shadow: var(--md-shadow);
+  border: 1px solid var(--md-border);
+  padding: 12px;
+  text-align: left;
+}
+
+.overview-comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.overview-comment-header strong {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--md-text-secondary);
+}
+
+.overview-comment-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--md-text-secondary);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.overview-comment-popup p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--md-text-primary);
+  text-align: left;
+  line-height: 1.4;
+}
+
+.overview-student-panel {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--md-surface);
+  border-radius: var(--md-radius);
+  box-shadow: var(--md-shadow);
+}
+
+.overview-student-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.overview-student-panel h2 {
+  text-align: left;
+  margin-bottom: 4px;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+/* Home page specific styles */
+.home-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.home-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.home-header h1 {
+  text-align: center;
+}
+
+.home-header .text-muted {
+  text-align: center;
+}
+
+.home-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.home-card {
+  max-width: none;
+  margin: 0;
+  height: 100%;
+}
+
+.home-card h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: left;
+}
+
+.home-card p {
+  text-align: left;
+}
+
+.observations-grid {
+  align-items: start;
+}
+
+.observations-grid .form-card {
+  max-width: none;
+  padding: 24px;
+  position: sticky;
+  top: 24px;
+}
+
+.observation-form-modal {
+  max-width: 760px;
+}
+
+.goal-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.goal-option {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--md-border);
+  border-radius: var(--md-radius);
+  padding: 14px;
+  cursor: pointer;
+  background: #fafafa;
+  max-width: 100%;
+}
+
+.goal-option > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.goal-option:hover,
+.goal-option.selected {
+  border-color: var(--md-primary);
+  background: #e3f2fd;
+}
+
+.goal-option input {
+  margin-top: 4px;
+  accent-color: var(--md-primary);
+}
+
+.goal-option strong,
+.goal-option span {
+  display: block;
+  text-align: left;
+}
+
+.goal-option span {
+  color: var(--md-text-secondary);
+  margin-top: 4px;
+  white-space: pre-line;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .overview-filters {
+    gap: 10px;
+  }
+
+  .subject-chip {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .overview-student-panel {
+    padding: 12px;
+    margin-top: 16px;
+  }
+
+  .overview-student-panel-header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .overview-student-panel h2 {
+    font-size: 16px;
+  }
+
+  .overview-filters {
+    gap: 10px;
+  }
+
+  .subject-chip {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .home-page {
+    padding: 16px 12px;
+  }
+
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .center-container {
+    align-items: flex-start;
+    padding: 24px 16px;
+  }
+
+  .overview-table {
+    min-width: 1200px;
+  }
+}
