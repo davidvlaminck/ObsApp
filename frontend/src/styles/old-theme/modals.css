@@ -1,18 +1,16 @@
-/* Modern Modal Styles */
-
+/* Preview modal styles */
 .preview-modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
   padding: 24px;
-  backdrop-filter: blur(2px);
 }
 
 .preview-modal .card {
@@ -21,7 +19,6 @@
   max-height: 80vh;
   overflow-y: auto;
   margin: 0;
-  border-radius: var(--md-radius-lg);
 }
 
 .preview-actions {
@@ -29,9 +26,7 @@
   justify-content: flex-end;
   gap: 12px;
   padding: 24px;
-  border-top: 1.5px solid var(--md-border-light);
-  background: var(--md-surface-hover);
-  border-radius: 0 0 var(--md-radius-lg) var(--md-radius-lg);
+  border-top: 1px solid var(--md-border);
 }
 
 /* Modal backdrop and card */
@@ -39,12 +34,11 @@
   position: fixed;
   inset: 0;
   z-index: 120;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  backdrop-filter: blur(2px);
 }
 
 .modal-card {
@@ -52,10 +46,9 @@
   max-height: 88vh;
   overflow-y: auto;
   background: var(--md-surface);
-  border-radius: var(--md-radius-lg);
-  box-shadow: var(--md-shadow-lg);
-  padding: 32px;
-  border: 1px solid var(--md-border-light);
+  border-radius: var(--md-radius);
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.25);
+  padding: 24px;
 }
 
 .modal-header,
@@ -67,42 +60,31 @@
   gap: 16px;
 }
 
-.modal-header {
-  margin-bottom: 24px;
-  padding-bottom: 20px;
-  border-bottom: 1.5px solid var(--md-border-light);
-}
-
 .modal-header h2 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   text-align: left;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--md-text-primary);
 }
 
 .modal-header p {
   margin: 0;
   text-align: left;
-  font-size: 14px;
-  color: var(--md-text-secondary);
 }
 
 .modal-actions {
   justify-content: flex-start;
-  padding: 18px 0 0;
+  padding: 16px 0;
 }
 
 .modal-footer {
-  border-top: 1.5px solid var(--md-border-light);
-  padding-top: 20px;
-  margin-top: 24px;
+  border-top: 1px solid var(--md-border);
+  padding-top: 16px;
+  margin-top: 16px;
 }
 
 .goal-modal-filters {
   display: grid;
   grid-template-columns: minmax(160px, 220px) minmax(160px, 220px) minmax(160px, 220px);
-  gap: 18px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -123,37 +105,8 @@
     flex-direction: column;
   }
 
-  .modal-header h2,
-  .modal-header p {
-    width: 100%;
-  }
-
   .modal-actions .btn,
   .modal-footer .btn {
     width: 100%;
-  }
-
-  .modal-card {
-    padding: 24px;
-  }
-}
-
-@media (max-width: 720px) {
-  .preview-modal,
-  .modal-backdrop {
-    padding: 16px;
-  }
-
-  .modal-card {
-    padding: 20px;
-  }
-
-  .modal-header {
-    margin-bottom: 20px;
-    padding-bottom: 16px;
-  }
-
-  .modal-header h2 {
-    font-size: 20px;
   }
 }

@@ -1,11 +1,109 @@
-/* Modern Education Theme - ObsApp Redesign
-   Professional, warm, and engaging for preschool teachers
-   Multiple theme support with localStorage persistence
+/* Theme System - Multiple Color Palettes
+   Teachers can choose from different themes in settings
 */
 
-/* Color themes are defined in themes.css */
-@import './themes.css';
+/* ============================================
+   THEME 1: MODERN TEAL (Default)
+   ============================================ */
+:root {
+  --theme-name: 'Modern Teal';
+  
+  /* Primary: Modern teal (education/growth focused) */
+  --md-primary: #10a878;
+  --md-primary-hover: #0e9067;
+  --md-primary-light: #e8f5f1;
+  
+  /* Secondary: Warm coral (activity/engagement) */
+  --md-secondary: #ff7a59;
+  --md-secondary-light: #ffe8e0;
+  
+  /* Accent: Soft purple (insights/progress) */
+  --md-accent: #8b5cf6;
+  --md-accent-light: #f3e8ff;
+  
+  /* Rest of the palette... */
+  --md-success: #16a34a;
+  --md-success-light: #e8f5e9;
+  --md-warning: #f59e0b;
+  --md-warning-light: #fef3c7;
+  --md-error: #ef4444;
+  --md-error-light: #fee2e2;
+  
+  --md-background: #fafaf8;
+  --md-surface: #ffffff;
+  --md-surface-hover: #f9f8f6;
+  --md-text-primary: #1a1815;
+  --md-text-secondary: #6b6b66;
+  --md-text-tertiary: #9b9b94;
+  --md-border: #e5e5dd;
+  --md-border-light: #f0ede8;
+  
+  --md-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+  --md-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --md-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.12);
+  
+  --md-radius: 12px;
+  --md-radius-lg: 16px;
+  --md-radius-sm: 8px;
+}
 
+/* ============================================
+   THEME 2: OCEAN BLUE
+   ============================================ */
+[data-theme="ocean"] {
+  --theme-name: 'Ocean Blue';
+  --md-primary: #0369a1;
+  --md-primary-hover: #0284c7;
+  --md-primary-light: #e0f2fe;
+  --md-secondary: #ea580c;
+  --md-secondary-light: #fed7aa;
+  --md-accent: #7c3aed;
+  --md-accent-light: #f3e8ff;
+}
+
+/* ============================================
+   THEME 3: FOREST GREEN
+   ============================================ */
+[data-theme="forest"] {
+  --theme-name: 'Forest Green';
+  --md-primary: #047857;
+  --md-primary-hover: #059669;
+  --md-primary-light: #d1fae5;
+  --md-secondary: #dc2626;
+  --md-secondary-light: #fee2e2;
+  --md-accent: #8b5cf6;
+  --md-accent-light: #f3e8ff;
+}
+
+/* ============================================
+   THEME 4: WARM SUNSET
+   ============================================ */
+[data-theme="sunset"] {
+  --theme-name: 'Warm Sunset';
+  --md-primary: #d97706;
+  --md-primary-hover: #b45309;
+  --md-primary-light: #fef3c7;
+  --md-secondary: #e11d48;
+  --md-secondary-light: #ffe4e6;
+  --md-accent: #7c3aed;
+  --md-accent-light: #f3e8ff;
+}
+
+/* ============================================
+   THEME 5: PROFESSIONAL PURPLE
+   ============================================ */
+[data-theme="purple"] {
+  --theme-name: 'Professional Purple';
+  --md-primary: #7c3aed;
+  --md-primary-hover: #6d28d9;
+  --md-primary-light: #f3e8ff;
+  --md-secondary: #f59e0b;
+  --md-secondary-light: #fef3c7;
+  --md-accent: #0891b2;
+  --md-accent-light: #cffafe;
+}
+
+/* Base styles remain the same for all themes */
 * {
   box-sizing: border-box;
 }
@@ -22,6 +120,7 @@ body {
   line-height: 1.6;
   overscroll-behavior-y: contain;
   letter-spacing: -0.3px;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 button,
@@ -35,7 +134,7 @@ textarea {
   min-height: 100vh;
 }
 
-/* Typography - Modern & Warm */
+/* Typography */
 h1 {
   font-size: 32px;
   font-weight: 600;
@@ -69,7 +168,6 @@ p {
   line-height: 1.6;
 }
 
-/* Text utilities */
 .text-muted {
   color: var(--md-text-secondary);
   font-size: 14px;
@@ -91,7 +189,7 @@ p {
   font-weight: 500;
 }
 
-/* Form elements - Modern styling */
+/* Form elements */
 .form-group {
   margin-bottom: 18px;
 }
@@ -172,6 +270,7 @@ p {
   gap: 12px;
   justify-content: center;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .admin-links a {

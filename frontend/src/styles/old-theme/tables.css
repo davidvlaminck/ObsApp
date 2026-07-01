@@ -1,5 +1,4 @@
-/* Modern Table Styles */
-
+/* Table wrapper */
 .table-wrapper {
   width: 100%;
   overflow-x: auto;
@@ -16,7 +15,7 @@
 .data-table th,
 .data-table td {
   padding: 16px;
-  border-bottom: 1px solid var(--md-border-light);
+  border-bottom: 1px solid var(--md-border);
   text-align: left;
   vertical-align: middle;
   word-break: break-word;
@@ -26,19 +25,10 @@
 .data-table th {
   color: var(--md-text-secondary);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  background: linear-gradient(135deg, var(--md-primary-light) 0%, rgba(139, 92, 246, 0.05) 100%);
-  border-bottom: 2px solid var(--md-border);
-}
-
-.data-table tbody tr {
-  transition: background-color 0.2s;
-}
-
-.data-table tbody tr:hover {
-  background-color: var(--md-surface-hover);
+  background: #fafafa;
 }
 
 .data-table tbody tr:last-child td {
@@ -57,13 +47,6 @@
   word-break: break-word;
   overflow-wrap: anywhere;
   vertical-align: top;
-  padding: 14px;
-}
-
-.student-observation-table th {
-  font-weight: 700;
-  background: linear-gradient(135deg, var(--md-primary-light) 0%, rgba(139, 92, 246, 0.05) 100%);
-  border-bottom: 2px solid var(--md-border);
 }
 
 .student-observation-table td:first-child {
@@ -72,7 +55,7 @@
 
 .student-observation-goal-name {
   max-width: 320px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--md-text-primary);
   word-break: break-word;
 }
@@ -90,14 +73,13 @@
   border-collapse: collapse;
   table-layout: fixed;
   min-width: 900px;
-  background: var(--md-surface);
 }
 
 .overview-table th,
 .overview-table td {
-  padding: 10px 8px;
-  border-bottom: 1px solid var(--md-border-light);
-  border-right: 1px solid var(--md-border-light);
+  padding: 8px 6px;
+  border-bottom: 1px solid var(--md-border);
+  border-right: 1px solid var(--md-border);
   text-align: center;
   vertical-align: middle;
   word-break: break-word;
@@ -112,20 +94,11 @@
 .overview-table th {
   color: var(--md-text-secondary);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.3px;
-  background: linear-gradient(135deg, var(--md-primary-light) 0%, rgba(139, 92, 246, 0.05) 100%);
-  border-bottom: 2px solid var(--md-border);
-  padding: 12px 8px;
-}
-
-.overview-table tbody tr {
-  transition: background-color 0.2s;
-}
-
-.overview-table tbody tr:hover {
-  background-color: var(--md-surface-hover);
+  background: #fafafa;
+  padding: 10px 6px;
 }
 
 .overview-table tbody tr:last-child td {
@@ -143,7 +116,7 @@
 }
 
 .overview-header-goal {
-  padding: 12px 10px;
+  padding: 10px 8px;
 }
 
 .overview-header-student,
@@ -164,7 +137,7 @@
   transform: rotate(180deg);
   white-space: nowrap;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--md-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.3px;
@@ -179,7 +152,7 @@
 }
 
 .overview-goal-name {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--md-text-primary);
   font-size: 14px;
   line-height: 1.3;
@@ -188,7 +161,7 @@
 }
 
 .overview-cell-status {
-  padding: 8px 4px;
+  padding: 6px 2px;
   position: relative;
 }
 
@@ -196,45 +169,27 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  min-height: 28px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  min-height: 22px;
   margin: 0 auto;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: default;
   position: relative;
-  font-weight: 700;
-  font-size: 12px;
-  transition: all 0.2s;
 }
 
 .overview-status-chip.has-comment {
   cursor: pointer;
 }
 
-.overview-status-chip.has-comment:hover {
-  transform: scale(1.1);
-  box-shadow: var(--md-shadow-sm);
-}
-
 .overview-flag {
   position: absolute;
   top: -6px;
   right: -6px;
-  width: 14px;
+  width: 12px;
   height: 14px;
   pointer-events: none;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
 }
 
 .overview-observation-pill {
@@ -243,18 +198,16 @@
   border-radius: 999px;
   padding: 6px 12px;
   color: #ffffff;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
-  background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-accent) 100%);
-  box-shadow: 0 2px 6px rgba(16, 168, 120, 0.2);
 }
 
 /* Responsive */
 @media (max-width: 900px) {
   .student-observation-table th,
   .student-observation-table td {
-    padding: 12px 10px;
+    padding: 10px 8px;
     font-size: 13px;
   }
 
