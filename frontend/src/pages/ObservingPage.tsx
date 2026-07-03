@@ -138,6 +138,7 @@ export default function ObservingPage() {
   const [bulkMode, setBulkMode] = useState(false)
   const [bulkStatus, setBulkStatus] = useState<ObservationStatus | ''>('')
   const [bulkSaving, setBulkSaving] = useState(false)
+  const tempIdRef = { current: -1 }
 
   const [goalModal, setGoalModal] = useState<GoalModalState>({
     open: false,
@@ -356,10 +357,28 @@ export default function ObservingPage() {
   const handleBulkStudentClick = useCallback(async (student: StudentResponse, goal: ObservationGoalResponse) => {
     if (!bulkStatus || bulkSaving) return
 
+    const tempId = tempIdRef.current--
+    const optimisticObs: StudentObservationResponse = {
+      id: tempId,
+      school_id: 0,
+      observed_by: 0,
+      observation_goal_id: goal.id,
+      student_id: student.id,
+      status: bulkStatus,
+      observation_date: today,
+      comment: null,
+      observation_goal: goal,
+      observer: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+
+    setAllObservations((current) => [...current, optimisticObs])
+
     try {
       setBulkSaving(true)
       setError('')
-      await createStudentObservation({
+      const real = await createStudentObservation({
         observation_goal_id: goal.id,
         student_id: student.id,
         status: bulkStatus,
@@ -367,9 +386,11 @@ export default function ObservingPage() {
         comment: null,
       })
       setSuccess(`Bulk observatie opgeslagen voor ${student.name}.`)
-      const observations = await listStudentObservations()
-      setAllObservations(observations)
+      setAllObservations((current) =>
+        current.map((obs) => (obs.id === tempId ? real : obs))
+      )
     } catch (err) {
+      setAllObservations((current) => current.filter((obs) => obs.id !== tempId))
       setError(getErrorMessage(err, 'Kan bulk observatie niet opslaan.'))
     } finally {
       setBulkSaving(false)
@@ -378,6 +399,26 @@ export default function ObservingPage() {
 
   const handleBulkGoalClick = useCallback(async (goal: ObservationGoalResponse) => {
     if (!bulkStatus || bulkSaving) return
+
+    const tempObservations: StudentObservationResponse[] = context.students.map((student) => {
+      const tempId = tempIdRef.current--
+      return {
+        id: tempId,
+        school_id: 0,
+        observed_by: 0,
+        observation_goal_id: goal.id,
+        student_id: student.id,
+        status: bulkStatus,
+        observation_date: today,
+        comment: null,
+        observation_goal: goal,
+        observer: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    })
+
+    setAllObservations((current) => [...current, ...tempObservations])
 
     try {
       setBulkSaving(true)
@@ -391,11 +432,18 @@ export default function ObservingPage() {
           comment: null,
         })
       )
-      await Promise.all(promises)
+      const reals = await Promise.all(promises)
       setSuccess(`Bulk observaties opgeslagen voor doel: ${goal.name}`)
-      const observations = await listStudentObservations()
-      setAllObservations(observations)
+      const tempIdSet = new Set(tempObservations.map((obs) => obs.id))
+      setAllObservations((current) =>
+        current.map((obs) => {
+          const real = reals.find((r) => r.student_id === obs.student_id && r.observation_goal_id === goal.id)
+          if (real && tempIdSet.has(obs.id)) return real
+          return obs
+        })
+      )
     } catch (err) {
+      setAllObservations((current) => current.filter((obs) => !tempObservations.some((t) => t.id === obs.id)))
       setError(getErrorMessage(err, 'Kan bulk observaties niet opslaan.'))
     } finally {
       setBulkSaving(false)
