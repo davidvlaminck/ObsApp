@@ -135,6 +135,9 @@ export default function ObservingPage() {
   const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
   const [success, setSuccess] = useState('')
+  const [bulkMode, setBulkMode] = useState(false)
+  const [bulkStatus, setBulkStatus] = useState<ObservationStatus | ''>('')
+  const [bulkSaving, setBulkSaving] = useState(false)
 
   const [goalModal, setGoalModal] = useState<GoalModalState>({
     open: false,
@@ -340,6 +343,65 @@ export default function ObservingPage() {
     setSelectedGoals((current) => current.filter((g) => g.id !== goalId))
   }, [])
 
+  const toggleBulkMode = useCallback(() => {
+    setBulkMode((current) => !current)
+    setBulkStatus('')
+  }, [])
+
+  const exitBulkMode = useCallback(() => {
+    setBulkMode(false)
+    setBulkStatus('')
+  }, [])
+
+  const handleBulkStudentClick = useCallback(async (student: StudentResponse, goal: ObservationGoalResponse) => {
+    if (!bulkStatus || bulkSaving) return
+
+    try {
+      setBulkSaving(true)
+      setError('')
+      await createStudentObservation({
+        observation_goal_id: goal.id,
+        student_id: student.id,
+        status: bulkStatus,
+        observation_date: today,
+        comment: null,
+      })
+      setSuccess(`Bulk observatie opgeslagen voor ${student.name}.`)
+      const observations = await listStudentObservations()
+      setAllObservations(observations)
+    } catch (err) {
+      setError(getErrorMessage(err, 'Kan bulk observatie niet opslaan.'))
+    } finally {
+      setBulkSaving(false)
+    }
+  }, [bulkStatus, bulkSaving])
+
+  const handleBulkGoalClick = useCallback(async (goal: ObservationGoalResponse) => {
+    if (!bulkStatus || bulkSaving) return
+
+    try {
+      setBulkSaving(true)
+      setError('')
+      const promises = context.students.map((student) =>
+        createStudentObservation({
+          observation_goal_id: goal.id,
+          student_id: student.id,
+          status: bulkStatus,
+          observation_date: today,
+          comment: null,
+        })
+      )
+      await Promise.all(promises)
+      setSuccess(`Bulk observaties opgeslagen voor doel: ${goal.name}`)
+      const observations = await listStudentObservations()
+      setAllObservations(observations)
+    } catch (err) {
+      setError(getErrorMessage(err, 'Kan bulk observaties niet opslaan.'))
+    } finally {
+      setBulkSaving(false)
+    }
+  }, [bulkStatus, bulkSaving, context.students])
+
   const openObservationModal = (student: StudentResponse, goal: ObservationGoalResponse) => {
     setObservationModal({ student, goal })
     setForm({ status: '', observation_date: today, comment: '' })
@@ -508,55 +570,96 @@ export default function ObservingPage() {
               <p className="text-muted">Kies een klas om de leerlingen van die klas te tonen.</p>
             </div>
           ) : (
-            <div className="observation-grid-wrapper">
-              <table className="observation-grid">
-                <thead>
-                  <tr>
-                    <th className="observation-grid-header-student">Leerling</th>
-                    {selectedGoals.map((goal) => (
-                      <th key={goal.id} className="observation-grid-header-goal">
-                        <span className="observation-grid-goal-name">{goal.name}</span>
-                        <span className="goal-metadata">
-                          {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
-                        </span>
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {context.students.map((student) => {
-                    const studentObservations = selectedGoals.map((goal) => ({
-                      goal,
-                      observation: observationMap.get(goal.id)?.get(student.id),
-                    }))
+            <>
+              <div className="observation-grid-toolbar">
+                {!bulkMode ? (
+                  <button className="btn btn-outline btn-sm" type="button" onClick={toggleBulkMode}>
+                    Bulk observeren
+                  </button>
+                ) : (
+                  <>
+                    <div className="bulk-status-selector">
+                      {statusOptions.map((status) => (
+                        <button
+                          key={status.value}
+                          type="button"
+                          className={`bulk-status-btn bulk-status-${status.color} ${bulkStatus === status.value ? 'active' : ''}`}
+                          onClick={() => setBulkStatus(status.value)}
+                          disabled={bulkSaving}
+                        >
+                          {status.label}
+                        </button>
+                      ))}
+                    </div>
+                    <button className="btn btn-outline btn-sm" type="button" onClick={exitBulkMode}>
+                      Sluiten
+                    </button>
+                  </>
+                )}
+              </div>
 
-                    return (
-                      <tr key={student.id}>
-                        <td className="observation-grid-cell-student">
-                          <StudentAvatar student={student} />
-                          <span>
-                            <strong>{student.name}</strong>
+              <div className="observation-grid-wrapper">
+                <table className={`observation-grid ${bulkMode ? 'bulk-mode' : ''}`}>
+                  <thead>
+                    <tr>
+                      <th className="observation-grid-header-student">Leerling</th>
+                      {selectedGoals.map((goal) => (
+                        <th
+                          key={goal.id}
+                          className={`observation-grid-header-goal ${bulkMode && bulkStatus ? 'bulk-clickable' : ''}`}
+                          onClick={() => bulkMode && bulkStatus && handleBulkGoalClick(goal)}
+                        >
+                          <span className="observation-grid-goal-name">{goal.name}</span>
+                          <span className="goal-metadata">
+                            {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
                           </span>
-                        </td>
-                        {studentObservations.map(({ goal, observation }) => (
-                          <td key={goal.id} className="observation-grid-cell-status">
-                            <button
-                              type="button"
-                              className={`observation-cell ${observation ? `status-${observation.status}` : ''}`}
-                              onClick={() => openObservationModal(student, goal)}
-                            >
-                              {observation
-                                ? getStudentObservationLabel(observation.status)
-                                : 'Klik om te observeren'}
-                            </button>
+                          {bulkMode && bulkStatus && (
+                            <span className="bulk-column-hint">Klik om hele kolom in te vullen</span>
+                          )}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {context.students.map((student) => {
+                      const studentObservations = selectedGoals.map((goal) => ({
+                        goal,
+                        observation: observationMap.get(goal.id)?.get(student.id),
+                      }))
+
+                      return (
+                        <tr key={student.id}>
+                          <td className="observation-grid-cell-student">
+                            <StudentAvatar student={student} />
+                            <span>
+                              <strong>{student.name}</strong>
+                            </span>
                           </td>
-                        ))}
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          {studentObservations.map(({ goal, observation }) => (
+                            <td key={goal.id} className="observation-grid-cell-status">
+                              <button
+                                type="button"
+                                className={`observation-cell ${observation ? `status-${observation.status}` : ''} ${bulkMode && bulkStatus ? 'bulk-clickable' : ''}`}
+                                onClick={() =>
+                                  bulkMode && bulkStatus
+                                    ? handleBulkStudentClick(student, goal)
+                                    : openObservationModal(student, goal)
+                                }
+                                disabled={bulkSaving}
+                              >
+                                {observation
+                                  ? getStudentObservationLabel(observation.status)
+                                  : 'Klik om te observeren'}
+                              </button>
+                            </td>
+                          ))}
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </section>
       </div>
