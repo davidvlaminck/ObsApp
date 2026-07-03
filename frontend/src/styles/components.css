@@ -1,4 +1,4 @@
-/* Modern Card component */
+i/* Modern Card component */
 .card {
   background: var(--md-surface);
   border-radius: var(--md-radius-lg);
@@ -259,6 +259,13 @@
 }
 
 .class-chip.active {
+  background: linear-gradient(135deg, var(--md-primary) 0%, #0d8862 100%);
+  color: #fff;
+  border-color: var(--md-primary);
+  box-shadow: 0 4px 12px rgba(16, 168, 120, 0.3);
+}
+
+.class-chip-all.active {
   background: linear-gradient(135deg, var(--md-primary) 0%, #0d8862 100%);
   color: #fff;
   border-color: var(--md-primary);

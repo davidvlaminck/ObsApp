@@ -14,12 +14,15 @@ import {
   createStudentObservation,
   getObservationContext,
   getObservationGoalDomains,
+  getObservationGoalSubdomains,
   getObservationGoalSubjects,
- type ObservationContextResponse,
- type ObservationGoalResponse,
- type ObservationStatus,
- type StudentObservationResponse,
- type StudentObservationStatusResponse,
+  getObservationGoals,
+  listStudentObservations,
+  type ObservationContextResponse,
+  type ObservationGoalResponse,
+  type ObservationStatus,
+  type StudentObservationResponse,
+  type StudentObservationStatusResponse,
 } from '../services/observations'
 
 type ObservationForm = {
@@ -31,6 +34,17 @@ type ObservationForm = {
 type ObservationModalState = {
   student: StudentResponse
   goal: ObservationGoalResponse
+}
+
+type GoalModalState = {
+  open: boolean
+  subject: string
+  domain: string
+  subdomain: string
+  goals: ObservationGoalResponse[]
+  tempSelectedIds: number[]
+  domains: string[]
+  subdomains: string[]
 }
 
 const today = new Date().toISOString().slice(0, 10)
@@ -93,12 +107,18 @@ const getStudentObservationLabel = (status?: ObservationStatus) => {
   }
 }
 
+const isObservationNewer = (a: StudentObservationResponse, b: StudentObservationStatusResponse) => {
+  const dateComparison = a.observation_date.localeCompare(b.observation_date)
+  if (dateComparison !== 0) return dateComparison > 0
+
+  return a.id > b.id
+}
+
 export default function ObservingPage() {
   const [user, setUser] = useState<UserResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [classes, setClasses] = useState<ClassResponse[]>([])
   const [subjects, setSubjects] = useState<string[]>([])
-  const [domains, setDomains] = useState<string[]>([])
   const [context, setContext] = useState<ObservationContextResponse>({
     goals: [],
     students: [],
@@ -106,27 +126,54 @@ export default function ObservingPage() {
     class_info: null,
   })
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
-  const [selectedSubject, setSelectedSubject] = useState('')
-  const [selectedDomain, setSelectedDomain] = useState('')
-  const [selectedGoal, setSelectedGoal] = useState<ObservationGoalResponse | null>(null)
-  const [selectedGoalId, setSelectedGoalId] = useState<number | null>(null)
-  const [selectedStudent, setSelectedStudent] = useState<StudentResponse | null>(null)
-  const [goalInfoOpen, setGoalInfoOpen] = useState(false)
+  const [selectedGoals, setSelectedGoals] = useState<ObservationGoalResponse[]>([])
+  const [allObservations, setAllObservations] = useState<StudentObservationResponse[]>([])
   const [observationModal, setObservationModal] = useState<ObservationModalState | null>(null)
+  const [infoGoal, setInfoGoal] = useState<ObservationGoalResponse | null>(null)
   const [form, setForm] = useState<ObservationForm>({ status: '', observation_date: today, comment: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [formError, setFormError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const getStudentCardClassName = (status?: ObservationStatus) => {
-    if (!status) {
-      return 'student-card'
-    }
-    return `student-card status-${status}`
-  }
+  const [goalModal, setGoalModal] = useState<GoalModalState>({
+    open: false,
+    subject: '',
+    domain: '',
+    subdomain: '',
+    goals: [],
+    tempSelectedIds: [],
+    domains: [],
+    subdomains: [],
+  })
 
-  const getStudentObservation = (studentId: number): StudentObservationStatusResponse | undefined => context.student_observations[studentId]
+  const selectedGoalIds = useMemo(() => new Set(selectedGoals.map((g) => g.id)), [selectedGoals])
+  const studentIds = useMemo(() => new Set(context.students.map((s) => s.id)), [context.students])
+
+  const observationMap = useMemo(() => {
+    const map = new Map<number, Map<number, StudentObservationStatusResponse>>()
+
+    for (const obs of allObservations) {
+      if (!selectedGoalIds.has(obs.observation_goal_id)) continue
+      if (!studentIds.has(obs.student_id)) continue
+
+      const goalMap = map.get(obs.observation_goal_id) ?? new Map()
+      const existing = goalMap.get(obs.student_id)
+      if (!existing || isObservationNewer(obs, existing)) {
+        goalMap.set(obs.student_id, {
+          id: obs.id,
+          observation_goal_id: obs.observation_goal_id,
+          student_id: obs.student_id,
+          status: obs.status,
+          observation_date: obs.observation_date,
+          comment: obs.comment,
+        })
+      }
+      map.set(obs.observation_goal_id, goalMap)
+    }
+
+    return map
+  }, [allObservations, selectedGoalIds, studentIds])
 
   useEffect(() => {
     const loadUserAndClasses = async () => {
@@ -145,7 +192,6 @@ export default function ObservingPage() {
           const loadedClasses = sortClasses(await getClasses(activeSchoolYear.id))
           setClasses(loadedClasses)
 
-          // Use default_class_id if set, otherwise use first class if only one
           if (currentUser.default_class_id) {
             setSelectedClassId(currentUser.default_class_id)
           } else if (loadedClasses.length === 1) {
@@ -165,25 +211,80 @@ export default function ObservingPage() {
   }, [])
 
   useEffect(() => {
-    const loadDomains = async () => {
-      if (!selectedSubject) {
-        setDomains([])
+    const loadModalDomains = async () => {
+      if (!goalModal.subject) {
+        setGoalModal((current) => ({ ...current, domains: [], subdomains: [] }))
         return
       }
 
       try {
-        const domainsData = await getObservationGoalDomains(selectedSubject)
-        setDomains(domainsData)
-        if (selectedDomain && !domainsData.includes(selectedDomain)) {
-          setSelectedDomain('')
-        }
+        const [domainsData, subdomainsData] = await Promise.all([
+          getObservationGoalDomains(goalModal.subject),
+          getObservationGoalSubdomains(goalModal.subject),
+        ])
+        setGoalModal((current) => ({ ...current, domains: domainsData, subdomains: subdomainsData }))
       } catch (err) {
-        setError(getErrorMessage(err, 'Kan domeinen niet laden.'))
+        setError(getErrorMessage(err, 'Kan domeinen of subdomeinen niet laden.'))
       }
     }
 
-    loadDomains()
-  }, [selectedSubject, selectedDomain])
+    loadModalDomains()
+  }, [goalModal.subject])
+
+  useEffect(() => {
+    const loadModalSubdomains = async () => {
+      if (!goalModal.subject) {
+        setGoalModal((current) => ({ ...current, subdomains: [] }))
+        return
+      }
+
+      try {
+        const data = await getObservationGoalSubdomains(goalModal.subject, goalModal.domain || undefined)
+        setGoalModal((current) => ({ ...current, subdomains: data }))
+      } catch (err) {
+        setError(getErrorMessage(err, 'Kan subdomeinen niet laden.'))
+      }
+    }
+
+    loadModalSubdomains()
+  }, [goalModal.subject, goalModal.domain])
+
+  useEffect(() => {
+    const loadModalGoals = async () => {
+      if (!goalModal.open) return
+
+      try {
+        const data = await getObservationGoals({
+          subject: goalModal.subject || undefined,
+          domain: goalModal.domain || undefined,
+          subdomain: goalModal.subdomain || undefined,
+        })
+        setGoalModal((current) => ({ ...current, goals: data }))
+      } catch (err) {
+        setError(getErrorMessage(err, 'Kan observatiedoelen niet laden.'))
+      }
+    }
+
+    loadModalGoals()
+  }, [goalModal.open, goalModal.subject, goalModal.domain, goalModal.subdomain])
+
+  useEffect(() => {
+    const loadObservations = async () => {
+      if (!selectedClassId) {
+        setAllObservations([])
+        return
+      }
+
+      try {
+        const data = await listStudentObservations()
+        setAllObservations(data)
+      } catch (err) {
+        setError(getErrorMessage(err, 'Kan observaties niet laden.'))
+      }
+    }
+
+    loadObservations()
+  }, [selectedClassId])
 
   const loadContext = useCallback(async () => {
     if (!user || user.is_superuser || !user.school_id) {
@@ -194,37 +295,53 @@ export default function ObservingPage() {
       setError('')
       const data = await getObservationContext({
         class_id: selectedClassId || undefined,
-        subject: selectedSubject || undefined,
-        domain: selectedDomain || undefined,
-        selected_goal_id: selectedGoalId,
       })
       setContext(data)
-
-      if (selectedGoal && !data.goals.some((goal) => goal.id === selectedGoal.id)) {
-        setSelectedGoal(null)
-        setSelectedGoalId(null)
-      }
-      if (selectedStudent && !data.students.some((student) => student.id === selectedStudent.id)) {
-        setSelectedStudent(null)
-      }
     } catch (err) {
       setError(getErrorMessage(err, 'Kan observatiecontext niet laden.'))
     }
-  }, [selectedClassId, selectedDomain, selectedGoalId, selectedGoal, selectedStudent, selectedSubject, user])
+  }, [selectedClassId, user])
 
   useEffect(() => {
     loadContext()
   }, [loadContext])
 
-  const selectedGoalCode = useMemo(() => selectedGoal?.goal?.code ?? 'Geen Op Stap doel gekoppeld', [selectedGoal])
+  useEffect(() => {
+    if (context.goals.length === 0) return
+    const availableIds = new Set(context.goals.map((g) => g.id))
+    setSelectedGoals((current) => current.filter((g) => availableIds.has(g.id)))
+  }, [context.goals])
 
-  const openObservationModal = (student: StudentResponse) => {
-    if (!selectedGoal) {
-      setError('Kies eerst een observatiedoel.')
-      return
-    }
+  const openGoalModal = useCallback(() => {
+    setGoalModal({
+      open: true,
+      subject: '',
+      domain: '',
+      subdomain: '',
+      goals: [],
+      tempSelectedIds: selectedGoals.map((g) => g.id),
+      domains: [],
+      subdomains: [],
+    })
+  }, [selectedGoals])
 
-    setObservationModal({ student, goal: selectedGoal })
+  const closeGoalModal = useCallback(() => {
+    setGoalModal((current) => ({ ...current, open: false }))
+  }, [])
+
+  const confirmGoalSelection = useCallback(() => {
+    const newGoals = goalModal.goals.filter((g) => goalModal.tempSelectedIds.includes(g.id))
+    setSelectedGoals(newGoals)
+    setSuccess('')
+    closeGoalModal()
+  }, [goalModal, closeGoalModal])
+
+  const removeGoal = useCallback((goalId: number) => {
+    setSelectedGoals((current) => current.filter((g) => g.id !== goalId))
+  }, [])
+
+  const openObservationModal = (student: StudentResponse, goal: ObservationGoalResponse) => {
+    setObservationModal({ student, goal })
     setForm({ status: '', observation_date: today, comment: '' })
     setFormError('')
   }
@@ -232,6 +349,14 @@ export default function ObservingPage() {
   const closeObservationModal = () => {
     setObservationModal(null)
     setFormError('')
+  }
+
+  const openGoalInfo = (goal: ObservationGoalResponse) => {
+    setInfoGoal(goal)
+  }
+
+  const closeGoalInfo = () => {
+    setInfoGoal(null)
   }
 
   const handleSaveObservation = async () => {
@@ -252,7 +377,8 @@ export default function ObservingPage() {
       })
       setSuccess(`Observatie opgeslagen voor ${observationModal.student.name}.`)
       closeObservationModal()
-      await loadContext()
+      const observations = await listStudentObservations()
+      setAllObservations(observations)
       return response
     } catch (err) {
       setFormError(getErrorMessage(err, 'Kan observatie niet opslaan.'))
@@ -287,216 +413,292 @@ export default function ObservingPage() {
       <section className="page-header">
         <div>
           <h1>Observeren</h1>
-          <p className="text-muted">Kies een klas, doel en leerling om een observatie vast te leggen.</p>
+          <p className="text-muted">Kies een klas en doel(en) om observaties per leerling vast te leggen.</p>
         </div>
       </section>
 
       {error && <div className="inline-message inline-message-error">{error}</div>}
       {success && <div className="inline-message inline-message-success">{success}</div>}
 
-      <div className="observing-layout">
-        <section className="observing-panel observing-filters">
-          <h2>Filters</h2>
-
-          <div className="form-group">
-            <label htmlFor="observing-class">Klas</label>
-            <select
-              id="observing-class"
-              value={selectedClassId ?? ''}
-              onChange={(event) => {
-                setSelectedClassId(event.target.value ? Number(event.target.value) : null)
-                setSelectedGoal(null)
-                setSelectedGoalId(null)
-                setSelectedStudent(null)
+      <section className="observing-class-filter-card">
+        <div className="observing-class-filter-header">
+          <h2>Klas</h2>
+          <div className="class-chips">
+            <button
+              type="button"
+              className={`class-chip class-chip-all ${selectedClassId === null ? 'active' : ''}`}
+              onClick={() => {
+                setSelectedClassId(null)
+                setSelectedGoals([])
+                setSuccess('')
               }}
             >
-              <option value="">Kies klas</option>
-              {classes.map((classItem) => (
-                <option key={classItem.id} value={classItem.id}>
-                  {classItem.name}
-                </option>
-              ))}
-            </select>
+              Alle
+            </button>
+            {classes.map((classItem, index) => (
+              <button
+                key={classItem.id}
+                type="button"
+                className={`class-chip class-chip-${index % 4} ${
+                  selectedClassId === classItem.id ? 'active' : ''
+                }`}
+                onClick={() => {
+                  setSelectedClassId(classItem.id)
+                  setSelectedGoals([])
+                  setSuccess('')
+                }}
+              >
+                {classItem.name}
+              </button>
+            ))}
           </div>
+        </div>
+      </section>
 
-          <div className="form-group">
-            <label htmlFor="observing-subject">Vak</label>
-            <select
-              id="observing-subject"
-              value={selectedSubject}
-              onChange={(event) => {
-                setSelectedSubject(event.target.value)
-                setSelectedDomain('')
-                setSelectedGoal(null)
-                setSelectedGoalId(null)
-              }}
-            >
-              <option value="">Alle vakken</option>
-              {sortSubjects(subjects).map((subject) => (
-                <option key={subject} value={subject}>
-                  {subject}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="observing-domain">Domein</label>
-            <select
-              id="observing-domain"
-              value={selectedDomain}
-              disabled={!selectedSubject}
-              onChange={(event) => {
-                setSelectedDomain(event.target.value)
-                setSelectedGoal(null)
-                setSelectedGoalId(null)
-              }}
-            >
-              <option value="">Alle domeinen</option>
-              {domains.map((domain) => (
-                <option key={domain} value={domain}>
-                  {domain}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <button
-            className="btn btn-outline btn-full"
-            type="button"
-            onClick={() => {
-              setSelectedClassId(null)
-              setSelectedSubject('')
-              setSelectedDomain('')
-              setSelectedGoal(null)
-              setSelectedGoalId(null)
-              setSelectedStudent(null)
-              setSuccess('')
-            }}
-          >
-            Filters wissen
-          </button>
-        </section>
-
-        <section className="observing-panel">
-          <div className="table-header">
-            <div>
-              <h2>Observatiedoelen</h2>
-              <p className="text-muted">
-                {selectedClassId ? 'Mogelijke doelen voor de gekozen klas.' : 'Kies een klas om doelen per klasniveau te zien.'}
-              </p>
-            </div>
-            <span className="count-pill">{context.goals.length}</span>
-          </div>
-
-          {context.goals.length === 0 ? (
-            <div className="empty-state compact">
-              <h3>Geen doelen gevonden</h3>
-              <p className="text-muted">Pas de filters aan of maak eerst observatiedoelen aan onder Beheer.</p>
-            </div>
-          ) : (
-            <div className="goal-list">
-             {context.goals.map((goal) => (
-               <button
-                 key={goal.id}
-                 type="button"
-                 className={`goal-selection-card ${selectedGoal?.id === goal.id ? 'selected' : ''}`}
-                 onClick={() => {
-                   setSelectedGoal(goal)
-                   setSelectedGoalId(goal.id)
-                   setSuccess('')
-                 }}
-               >
-                  <span>
-                    <strong>{goal.name}</strong>
-                    <span className="goal-metadata">
-                      {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
-                    </span>
-                    <span className="goal-metadata">{goal.goal?.code ? `Doelcode: ${goal.goal.code}` : 'Geen Op Stap doel gekoppeld'}</span>
-                  </span>
+      {selectedGoals.length > 0 && (
+        <div className="selected-goals-bar">
+          <div className="selected-goals-list">
+            {selectedGoals.map((goal) => (
+              <span key={goal.id} className="selected-goal-chip">
+                <span className="selected-goal-chip-name">{goal.name}</span>
+                <button
+                  type="button"
+                  className="selected-goal-chip-remove"
+                  onClick={() => removeGoal(goal.id)}
+                  aria-label={`Verwijder ${goal.name}`}
+                >
+                  ×
                 </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-        <section className="observing-panel">
-          <div className="table-header">
-            <div>
-              <h2>Leerlingen</h2>
-              <p className="text-muted">{selectedClassId ? 'Klik op een leerling om een observatie in te voeren.' : 'Kies eerst een klas.'}</p>
-            </div>
-            <span className="count-pill">{context.students.length}</span>
+                <button
+                  type="button"
+                  className="selected-goal-chip-info"
+                  onClick={() => openGoalInfo(goal)}
+                  aria-label={`Info over ${goal.name}`}
+                >
+                  ℹ
+                </button>
+              </span>
+            ))}
           </div>
+          <button className="btn btn-outline btn-sm" type="button" onClick={openGoalModal}>
+            + Voeg observatiedoel toe
+          </button>
+        </div>
+      )}
 
-          {context.students.length === 0 ? (
-            <div className="empty-state compact">
+      {selectedGoals.length === 0 && (
+        <div className="observing-add-goals-prompt">
+          <button className="btn btn-primary" type="button" onClick={openGoalModal}>
+            + Voeg observatiedoel toe
+          </button>
+          <p className="text-muted">Kies een of meer observatiedoelen om te beginnen.</p>
+        </div>
+      )}
+
+      <div className="observing-layout">
+        <section className="observing-panel observing-grid-panel">
+          {selectedGoals.length === 0 ? (
+            <div className="empty-state">
+              <h3>Geen doelen geselecteerd</h3>
+              <p className="text-muted">Kies een of meer observatiedoelen om de leerlingen te bekijken.</p>
+            </div>
+          ) : context.students.length === 0 ? (
+            <div className="empty-state">
               <h3>Geen leerlingen geladen</h3>
               <p className="text-muted">Kies een klas om de leerlingen van die klas te tonen.</p>
             </div>
           ) : (
-            <div className="student-list">
-              {context.students.map((student) => {
-                const observation = getStudentObservation(student.id)
-                return (
-                  <button
-                    key={student.id}
-                    type="button"
-                    className={getStudentCardClassName(observation?.status)}
-                    onClick={() => openObservationModal(student)}
-                  >
-                    <StudentAvatar student={student} />
-                    <span>
-                      <strong>{student.name}</strong>
-                      <span className="text-muted">{getStudentObservationLabel(observation?.status)}</span>
-                    </span>
-                  </button>
-                )
-              })}
+            <div className="observation-grid-wrapper">
+              <table className="observation-grid">
+                <thead>
+                  <tr>
+                    <th className="observation-grid-header-student">Leerling</th>
+                    {selectedGoals.map((goal) => (
+                      <th key={goal.id} className="observation-grid-header-goal">
+                        <span className="observation-grid-goal-name">{goal.name}</span>
+                        <span className="goal-metadata">
+                          {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
+                        </span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {context.students.map((student) => {
+                    const studentObservations = selectedGoals.map((goal) => ({
+                      goal,
+                      observation: observationMap.get(goal.id)?.get(student.id),
+                    }))
+
+                    return (
+                      <tr key={student.id}>
+                        <td className="observation-grid-cell-student">
+                          <StudentAvatar student={student} />
+                          <span>
+                            <strong>{student.name}</strong>
+                          </span>
+                        </td>
+                        {studentObservations.map(({ goal, observation }) => (
+                          <td key={goal.id} className="observation-grid-cell-status">
+                            <button
+                              type="button"
+                              className={`observation-cell ${observation ? `status-${observation.status}` : ''}`}
+                              onClick={() => openObservationModal(student, goal)}
+                            >
+                              {observation
+                                ? getStudentObservationLabel(observation.status)
+                                : 'Klik om te observeren'}
+                            </button>
+                          </td>
+                        ))}
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </section>
       </div>
 
-      {selectedGoal && (
-        <section className="selected-observation-goal">
-          <div>
-            <span className="text-muted">Gekozen doel</span>
-            <strong>{selectedGoal.name}</strong>
-            <span className="goal-metadata">{[selectedGoal.subject, selectedGoal.domain, selectedGoal.subdomain].filter(Boolean).join(' · ')}</span>
-          </div>
-          <button className="btn btn-outline" type="button" onClick={() => setGoalInfoOpen(true)}>
-            {selectedGoalCode}
-          </button>
-        </section>
-      )}
-
-      {goalInfoOpen && selectedGoal && (
+      {goalModal.open && (
         <div className="modal-backdrop">
-          <section className="modal-card goal-detail-modal" role="dialog" aria-modal="true" aria-labelledby="goal-detail-title">
+          <section className="modal-card goal-select-modal" role="dialog" aria-modal="true" aria-labelledby="goal-select-title">
             <div className="modal-header">
               <div>
-                <h2 id="goal-detail-title">{selectedGoalCode}</h2>
-                <p className="text-muted">Details van het gekoppelde observatiedoel.</p>
+                <h2 id="goal-select-title">Voeg observatiedoelen toe</h2>
+                <p className="text-muted">Filter op vak, domein en subdomein. Selecteer een of meer doelen.</p>
               </div>
-              <button className="icon-button" type="button" onClick={() => setGoalInfoOpen(false)} aria-label="Sluiten">
+              <button className="icon-button" type="button" onClick={closeGoalModal} aria-label="Sluiten">
                 ✕
               </button>
             </div>
 
-            <div className="goal-detail-content">
-              <h3>{selectedGoal.goal?.title ?? selectedGoal.name}</h3>
-              <span className="goal-metadata">
-                {[selectedGoal.subject, selectedGoal.domain, selectedGoal.subdomain, selectedGoal.goal?.cluster]
-                  .filter(Boolean)
-                  .join(' · ')}
-              </span>
-              <p>{selectedGoal.goal?.description ?? 'Er is geen extra omschrijving beschikbaar voor dit doel.'}</p>
+            <div className="goal-select-filters">
+              <div className="form-group">
+                <label htmlFor="goal-select-subject">Vak</label>
+                <select
+                  id="goal-select-subject"
+                  value={goalModal.subject}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      subject: event.target.value,
+                      domain: '',
+                      subdomain: '',
+                    }))
+                  }
+                >
+                  <option value="">Alle vakken</option>
+                  {sortSubjects(subjects).map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="goal-select-domain">Domein</label>
+                <select
+                  id="goal-select-domain"
+                  value={goalModal.domain}
+                  disabled={!goalModal.subject}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      domain: event.target.value,
+                      subdomain: '',
+                    }))
+                  }
+                >
+                  <option value="">Alle domeinen</option>
+                  {goalModal.domains.map((domain) => (
+                    <option key={domain} value={domain}>
+                      {domain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="goal-select-subdomain">Subdomein</label>
+                <select
+                  id="goal-select-subdomain"
+                  value={goalModal.subdomain}
+                  disabled={!goalModal.subject}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      subdomain: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Alle subdomeinen</option>
+                  {goalModal.subdomains.map((subdomain) => (
+                    <option key={subdomain} value={subdomain}>
+                      {subdomain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="goal-select-list">
+              {goalModal.goals.length === 0 ? (
+                <div className="empty-state compact">
+                  <h3>Geen doelen gevonden</h3>
+                  <p className="text-muted">Pas de filters aan of maak eerst observatiedoelen aan onder Beheer.</p>
+                </div>
+              ) : (
+                goalModal.goals.map((goal) => {
+                  const isSelected = goalModal.tempSelectedIds.includes(goal.id)
+                  const isAlreadyAdded = selectedGoalIds.has(goal.id)
+
+                  return (
+                    <label
+                      key={goal.id}
+                      className={`goal-select-item ${isSelected ? 'selected' : ''} ${isAlreadyAdded ? 'disabled' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        disabled={isAlreadyAdded}
+                        onChange={() => {
+                          setGoalModal((current) => ({
+                            ...current,
+                            tempSelectedIds: isSelected
+                              ? current.tempSelectedIds.filter((id) => id !== goal.id)
+                              : [...current.tempSelectedIds, goal.id],
+                          }))
+                        }}
+                      />
+                      <span>
+                        <strong>{goal.name}</strong>
+                        <span className="goal-metadata">
+                          {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
+                        </span>
+                        <span className="goal-metadata">
+                          {goal.goal?.code ? `Doelcode: ${goal.goal.code}` : 'Geen Op Stap doel gekoppeld'}
+                        </span>
+                      </span>
+                    </label>
+                  )
+                })
+              )}
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-primary" type="button" onClick={() => setGoalInfoOpen(false)}>
-                Sluiten
+              <button className="btn btn-outline" type="button" onClick={closeGoalModal}>
+                Annuleren
+              </button>
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={confirmGoalSelection}
+                disabled={goalModal.tempSelectedIds.length === 0}
+              >
+                Toevoegen ({goalModal.tempSelectedIds.length})
               </button>
             </div>
           </section>
@@ -568,6 +770,38 @@ export default function ObservingPage() {
               </button>
               <button className="btn btn-primary" type="button" onClick={handleSaveObservation} disabled={saving || !form.status || !form.observation_date}>
                 {saving ? 'Opslaan...' : 'Opslaan'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {infoGoal && (
+        <div className="modal-backdrop">
+          <section className="modal-card goal-detail-modal" role="dialog" aria-modal="true" aria-labelledby="goal-detail-title">
+            <div className="modal-header">
+              <div>
+                <h2 id="goal-detail-title">{infoGoal.goal?.code ?? 'Geen doelcode'}</h2>
+                <p className="text-muted">Details van het gekoppelde observatiedoel.</p>
+              </div>
+              <button className="icon-button" type="button" onClick={closeGoalInfo} aria-label="Sluiten">
+                ✕
+              </button>
+            </div>
+
+            <div className="goal-detail-content">
+              <h3>{infoGoal.goal?.title ?? infoGoal.name}</h3>
+              <span className="goal-metadata">
+                {[infoGoal.subject, infoGoal.domain, infoGoal.subdomain, infoGoal.goal?.cluster]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </span>
+              <p>{infoGoal.goal?.description ?? 'Er is geen extra omschrijving beschikbaar voor dit doel.'}</p>
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-primary" type="button" onClick={closeGoalInfo}>
+                Sluiten
               </button>
             </div>
           </section>
