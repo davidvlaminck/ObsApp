@@ -38,6 +38,27 @@ class StudentObservationRepository:
         ):
             raise ValueError("Dit observatiedoel is niet beschikbaar voor deze klas")
 
+        existing = (
+            self.db.query(StudentObservation)
+            .filter(
+                StudentObservation.school_id == school_id,
+                StudentObservation.observation_goal_id == observation_goal.id,
+                StudentObservation.student_id == student.id,
+                StudentObservation.observation_date == payload.observation_date,
+            )
+            .first()
+        )
+
+        if existing:
+            existing.status = payload.status
+            existing.observation_date = payload.observation_date
+            existing.observed_by = observed_by
+            if payload.comment:
+                existing.comment = payload.comment
+            self.db.commit()
+            self.db.refresh(existing)
+            return self.get_by_id(existing.id, school_id) or existing
+
         observation = StudentObservation(
             school_id=school_id,
             observation_goal_id=observation_goal.id,

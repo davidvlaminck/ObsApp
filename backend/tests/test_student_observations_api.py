@@ -368,3 +368,71 @@ def test_create_student_observation_rejects_goal_that_does_not_match_student_cla
     assert response.status_code == 404
     assert response.json()["detail"] == "Dit observatiedoel is niet beschikbaar voor deze klas"
     assert student_observation_db.query(StudentObservation).count() == 0
+
+
+def test_create_student_observation_overwrites_existing_for_same_student_goal_date(
+    student_observation_client: TestClient,
+    student_observation_db: Session,
+):
+    context = seed_observation_context(student_observation_db)
+
+    first_response = student_observation_client.post(
+        "/api/student-observations",
+        json={
+            "observation_goal_id": context["observation_goal_id"],
+            "student_id": context["student_id"],
+            "status": "onvoldoende",
+            "observation_date": "2026-06-16",
+            "comment": "Eerste commentaar",
+        },
+    )
+    assert first_response.status_code == 201
+    assert student_observation_db.query(StudentObservation).count() == 1
+
+    second_response = student_observation_client.post(
+        "/api/student-observations",
+        json={
+            "observation_goal_id": context["observation_goal_id"],
+            "student_id": context["student_id"],
+            "status": "zelfstandig",
+            "observation_date": "2026-06-16",
+        },
+    )
+    assert second_response.status_code == 201
+    data = second_response.json()
+    assert data["status"] == "zelfstandig"
+    assert data["comment"] == "Eerste commentaar"
+    assert student_observation_db.query(StudentObservation).count() == 1
+
+
+def test_create_student_observation_replaces_comment_when_provided(
+    student_observation_client: TestClient,
+    student_observation_db: Session,
+):
+    context = seed_observation_context(student_observation_db)
+
+    student_observation_client.post(
+        "/api/student-observations",
+        json={
+            "observation_goal_id": context["observation_goal_id"],
+            "student_id": context["student_id"],
+            "status": "onvoldoende",
+            "observation_date": "2026-06-16",
+            "comment": "Oude commentaar",
+        },
+    )
+
+    response = student_observation_client.post(
+        "/api/student-observations",
+        json={
+            "observation_goal_id": context["observation_goal_id"],
+            "student_id": context["student_id"],
+            "status": "in_ontwikkeling",
+            "observation_date": "2026-06-16",
+            "comment": "Nieuwe commentaar",
+        },
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["comment"] == "Nieuwe commentaar"
+    assert student_observation_db.query(StudentObservation).count() == 1
