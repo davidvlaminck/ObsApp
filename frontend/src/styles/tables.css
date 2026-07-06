@@ -246,8 +246,6 @@
   font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
-  background: linear-gradient(135deg, var(--md-primary) 0%, var(--md-accent) 100%);
-  box-shadow: 0 2px 6px rgba(16, 168, 120, 0.2);
 }
 
 /* Responsive */

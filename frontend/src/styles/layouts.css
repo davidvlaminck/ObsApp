@@ -596,16 +596,20 @@
 .observation-grid-toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   margin-bottom: 16px;
   flex-wrap: wrap;
 }
 
+.bulk-toggle-btn {
+  min-width: 180px;
+}
+
 .bulk-status-selector {
   display: flex;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
 }
 
 .bulk-status-btn {
@@ -621,7 +625,7 @@
 }
 
 .bulk-status-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
+  filter: brightness(0.95);
 }
 
 .bulk-status-btn.active {
@@ -668,8 +672,6 @@
 }
 
 .observation-grid.bulk-mode {
-  border: 2px solid var(--md-primary);
-  border-radius: var(--md-radius-lg);
   overflow: hidden;
 }
 

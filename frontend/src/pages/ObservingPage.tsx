@@ -620,29 +620,27 @@ export default function ObservingPage() {
           ) : (
             <>
               <div className="observation-grid-toolbar">
-                {!bulkMode ? (
-                  <button className="btn btn-outline btn-sm" type="button" onClick={toggleBulkMode}>
-                    Bulk observeren
-                  </button>
-                ) : (
-                  <>
-                    <div className="bulk-status-selector">
-                      {statusOptions.map((status) => (
-                        <button
-                          key={status.value}
-                          type="button"
-                          className={`bulk-status-btn bulk-status-${status.color} ${bulkStatus === status.value ? 'active' : ''}`}
-                          onClick={() => setBulkStatus(status.value)}
-                          disabled={bulkSaving}
-                        >
-                          {status.label}
-                        </button>
-                      ))}
-                    </div>
-                    <button className="btn btn-outline btn-sm" type="button" onClick={exitBulkMode}>
-                      Sluiten
-                    </button>
-                  </>
+                <button
+                  className="btn btn-outline btn-sm bulk-toggle-btn"
+                  type="button"
+                  onClick={bulkMode ? exitBulkMode : toggleBulkMode}
+                >
+                  {bulkMode ? 'Bulk observaties stoppen' : 'Bulk observeren'}
+                </button>
+                {bulkMode && (
+                  <div className="bulk-status-selector">
+                    {statusOptions.map((status) => (
+                      <button
+                        key={status.value}
+                        type="button"
+                        className={`bulk-status-btn bulk-status-${status.color} ${bulkStatus === status.value ? 'active' : ''}`}
+                        onClick={() => setBulkStatus(status.value)}
+                        disabled={bulkSaving}
+                      >
+                        {status.label}
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
 
