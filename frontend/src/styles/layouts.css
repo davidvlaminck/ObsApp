@@ -298,6 +298,10 @@
   white-space: nowrap;
 }
 
+.observing-class-filter-header .class-chips {
+  margin-top: 0;
+}
+
 /* Selected goals bar */
 .selected-goals-bar {
   display: flex;
