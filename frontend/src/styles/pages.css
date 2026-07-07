@@ -33,6 +33,31 @@
   text-align: left;
 }
 
+.student-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.student-nav select {
+  flex: 1;
+}
+
+.student-nav-buttons {
+  display: flex;
+  gap: 4px;
+}
+
+.student-nav-button {
+  flex: 0 0 auto;
+  width: 34px;
+  min-width: 34px;
+  padding: 6px 0;
+  font-size: 30px;
+  line-height: 1;
+  justify-content: center;
+}
+
 .overview-comment-header {
   display: flex;
   justify-content: space-between;

@@ -154,6 +154,22 @@ export default function StudentOverviewPage() {
     return overview.students.find((student) => student.id === selectedStudentId) ?? null
   }, [overview, selectedStudentId])
 
+  const studentIndex = useMemo(() => {
+    if (!overview || selectedStudentId === null) return -1
+    return overview.students.findIndex((student) => student.id === selectedStudentId)
+  }, [overview, selectedStudentId])
+
+  const goToStudent = useCallback(
+    (direction: 1 | -1) => {
+      if (!overview || overview.students.length === 0) return
+      const currentIndex = studentIndex === -1 ? 0 : studentIndex
+      const nextIndex =
+        (currentIndex + direction + overview.students.length) % overview.students.length
+      setSelectedStudentId(overview.students[nextIndex].id)
+    },
+    [overview, studentIndex],
+  )
+
   const selectedStudentObservations = useMemo(() => {
     if (selectedStudentId === null) return []
 
@@ -235,22 +251,44 @@ export default function StudentOverviewPage() {
 
           <div className="form-group">
             <label htmlFor="student-overview-student">Leerling</label>
-            <select
-              id="student-overview-student"
-              value={selectedStudentId ?? ''}
-              disabled={!selectedClassId || !overview?.students.length}
-              onChange={(event) => {
-                const value = event.target.value ? Number(event.target.value) : null
-                setSelectedStudentId(value)
-              }}
-            >
-              <option value="">Kies leerling</option>
-              {overview?.students.map((student: StudentResponse) => (
-                <option key={student.id} value={student.id}>
-                  {student.name}
-                </option>
-              ))}
-            </select>
+            <div className="student-nav">
+              <select
+                id="student-overview-student"
+                value={selectedStudentId ?? ''}
+                disabled={!selectedClassId || !overview?.students.length}
+                onChange={(event) => {
+                  const value = event.target.value ? Number(event.target.value) : null
+                  setSelectedStudentId(value)
+                }}
+              >
+                <option value="">Kies leerling</option>
+                {overview?.students.map((student: StudentResponse) => (
+                  <option key={student.id} value={student.id}>
+                    {student.name}
+                  </option>
+                ))}
+              </select>
+              <div className="student-nav-buttons">
+                <button
+                  type="button"
+                  className="btn btn-secondary student-nav-button"
+                  aria-label="Vorige leerling"
+                  disabled={!selectedClassId || !overview?.students.length}
+                  onClick={() => goToStudent(-1)}
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-secondary student-nav-button"
+                  aria-label="Volgende leerling"
+                  disabled={!selectedClassId || !overview?.students.length}
+                  onClick={() => goToStudent(1)}
+                >
+                  ›
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
