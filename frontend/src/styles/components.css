@@ -15,6 +15,18 @@ i/* Modern Card component */
   transform: translateY(-2px);
 }
 
+/* Cards centered on a full-screen container (login, demo schoolbeheer, ...)
+   should have no border or shadow and stay static on hover. */
+.center-container .card {
+  border: none;
+  box-shadow: none;
+}
+
+.center-container .card:hover {
+  box-shadow: none;
+  transform: none;
+}
+
 /* Avatar - Distinct colors per student */
 .avatar {
   width: 64px;
