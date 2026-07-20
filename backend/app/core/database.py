@@ -1,108 +1,27 @@
 from threading import Lock
 
-from sqlalchemy import create_engine, inspect, text
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
 
-from app.core.config import settings
+from app.core.config import settings, BASE_DIR
+
+Base = declarative_base()
 
 engine = create_engine(settings.database_url, echo=settings.debug)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
 
 _initialized = False
 _initialize_lock = Lock()
 
 
-def initialize_database():
-    global _initialized
+def run_alembic_migrations() -> None:
+    """Run pending Alembic migrations to bring the database up to date."""
+    from alembic import command
+    from alembic.config import Config
 
-    with _initialize_lock:
-        if _initialized:
-            return
-
-        Base.metadata.create_all(bind=engine)
-        ensure_user_columns()
-        ensure_school_columns()
-        ensure_goal_columns()
-        seed_default_data()
-        _initialized = True
-
-
-def ensure_school_columns():
-    columns = {column["name"] for column in inspect(engine).get_columns("schools")}
-    with engine.begin() as connection:
-        if "is_demo" not in columns:
-            connection.execute(text("ALTER TABLE schools ADD COLUMN is_demo BOOLEAN DEFAULT false"))
-        if "koepel" not in columns:
-            connection.execute(text("ALTER TABLE schools ADD COLUMN koepel VARCHAR"))
-
-
-def ensure_user_columns():
-    columns = {column["name"] for column in inspect(engine).get_columns("users")}
-    with engine.begin() as connection:
-        if "hashed_password" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN hashed_password VARCHAR"))
-        if "is_pending" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN is_pending BOOLEAN DEFAULT false"))
-        if "password_reset_token" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN password_reset_token VARCHAR"))
-        if "password_reset_expires_at" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN password_reset_expires_at TIMESTAMP"))
-        if "school_id" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN school_id INTEGER"))
-        if "is_demo" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN is_demo BOOLEAN DEFAULT false"))
-        if "demo_expires_at" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN demo_expires_at TIMESTAMP"))
-        if "demo_school_id" not in columns:
-            connection.execute(text("ALTER TABLE users ADD COLUMN demo_school_id INTEGER"))
-
-
-def ensure_goal_columns():
-    columns = {column["name"] for column in inspect(engine).get_columns("goals")}
-    with engine.begin() as connection:
-        if "domain" not in columns:
-            connection.execute(text("ALTER TABLE goals ADD COLUMN domain VARCHAR"))
-        if "subdomain" not in columns:
-            connection.execute(text("ALTER TABLE goals ADD COLUMN subdomain VARCHAR"))
-        if "cluster" not in columns:
-            connection.execute(text("ALTER TABLE goals ADD COLUMN cluster VARCHAR"))
-        if "minimum_goal_code" not in columns:
-            connection.execute(text("ALTER TABLE goals ADD COLUMN minimum_goal_code VARCHAR"))
-        if "voorbeelden" not in columns:
-            connection.execute(text("ALTER TABLE goals ADD COLUMN voorbeelden TEXT"))
-
-        connection.execute(
-            text(
-                """
-                UPDATE goals
-                SET subject = CASE
-                    WHEN lower(subject) IN ('ned', 'ned_com', 'nederlands en communicatie', 'nederlands & communicatie', 'nederlands-communicatie') THEN 'Nederlands'
-                    WHEN lower(subject) IN ('wiskunde', 'w_t') THEN 'Wiskunde'
-                    WHEN lower(subject) IN ('aardr') THEN 'Aardrijkskunde'
-                    WHEN lower(subject) IN ('gesch') THEN 'Geschiedenis'
-                    WHEN lower(subject) IN ('v_g') THEN 'Vormgeving'
-                    WHEN lower(subject) IN ('lele') THEN 'Levensleer'
-                    WHEN lower(subject) IN ('muvo') THEN 'Muziek en visuele opvoeding'
-                    WHEN lower(subject) IN ('rkg') THEN 'Religie en levensbeschouwing'
-                    ELSE subject
-                END
-                WHERE subject IS NOT NULL
-                """
-            )
-        )
-        connection.execute(
-            text(
-                """
-                UPDATE goals
-                SET subdomain = level
-                WHERE subdomain IS NULL
-                  AND level IS NOT NULL
-                """
-            )
-        )
+    alembic_cfg = Config(str(BASE_DIR / "alembic.ini"))
+    alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)
+    command.upgrade(alembic_cfg, "head")
 
 
 def seed_default_data():
@@ -135,6 +54,21 @@ def seed_default_data():
             print("Seeded default admin user: admin@example.com / admin")
     finally:
         db.close()
+
+
+def initialize_database():
+    global _initialized
+
+    with _initialize_lock:
+        if _initialized:
+            return
+
+        # Create tables that don't exist yet (for fresh databases)
+        Base.metadata.create_all(bind=engine)
+        # Apply any pending Alembic migrations
+        run_alembic_migrations()
+        seed_default_data()
+        _initialized = True
 
 
 def get_db():
