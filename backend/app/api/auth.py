@@ -1,7 +1,7 @@
 import uuid
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from sqlalchemy import delete, select
@@ -23,8 +23,8 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# Import limiter from main (set in app.state)
-from app.main import limiter
+# Import limiter from core module to avoid circular import
+from app.core.limiter import limiter
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
@@ -122,7 +122,7 @@ class KoepelSelectRequest(BaseModel):
 
 @router.post("/login", response_model=TokenResponse)
 @limiter.limit("5/minute")
-async def login(credentials: LoginRequest, db=Depends(get_db)):
+async def login(request: Request, credentials: LoginRequest, db=Depends(get_db)):
     service = AuthService(db)
     user = service.authenticate_user(credentials.email, credentials.password)
     if not user:
