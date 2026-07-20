@@ -195,7 +195,7 @@ def test_observation_context_returns_latest_student_statuses_for_selected_goal(
             observation_goal_id=context["observation_goal_id"],
             student_id=context["student_id"],
             observed_by=1,
-            status="zelfstandig",
+            status="voldoende",
             observation_date=date(2026, 6, 16),
             comment="Laatste observatie.",
         )
@@ -216,7 +216,7 @@ def test_observation_context_returns_latest_student_statuses_for_selected_goal(
         "id": 2,
         "observation_goal_id": context["observation_goal_id"],
         "student_id": context["student_id"],
-        "status": "zelfstandig",
+        "status": "voldoende",
         "observation_date": "2026-06-16",
         "comment": "Laatste observatie.",
     }
@@ -248,9 +248,9 @@ def test_create_student_observation_endpoint_creates_observation(
         json={
             "observation_goal_id": context["observation_goal_id"],
             "student_id": context["student_id"],
-            "status": "zelfstandig",
+            "status": "voldoende",
             "observation_date": "2026-06-16",
-            "comment": "Kan zelfstandig vergelijken.",
+            "comment": "Kan voldoende vergelijken.",
         },
     )
 
@@ -258,9 +258,9 @@ def test_create_student_observation_endpoint_creates_observation(
     data = response.json()
     assert data["school_id"] == 1
     assert data["observed_by"] == 1
-    assert data["status"] == "zelfstandig"
+    assert data["status"] == "voldoende"
     assert data["observation_date"] == "2026-06-16"
-    assert data["comment"] == "Kan zelfstandig vergelijken."
+    assert data["comment"] == "Kan voldoende vergelijken."
     assert student_observation_db.query(StudentObservation).count() == 1
 
 
@@ -275,7 +275,7 @@ def test_create_student_observation_endpoint_validates_status(
         json={
             "observation_goal_id": context["observation_goal_id"],
             "student_id": context["student_id"],
-            "status": "nog_niet_zelfstandig",
+            "status": "nog_niet_voldoende",
             "observation_date": "2026-06-16",
         },
     )
@@ -394,13 +394,13 @@ def test_create_student_observation_overwrites_existing_for_same_student_goal_da
         json={
             "observation_goal_id": context["observation_goal_id"],
             "student_id": context["student_id"],
-            "status": "zelfstandig",
+            "status": "voldoende",
             "observation_date": "2026-06-16",
         },
     )
     assert second_response.status_code == 201
     data = second_response.json()
-    assert data["status"] == "zelfstandig"
+    assert data["status"] == "voldoende"
     assert data["comment"] == "Eerste commentaar"
     assert student_observation_db.query(StudentObservation).count() == 1
 

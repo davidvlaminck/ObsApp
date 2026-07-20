@@ -119,7 +119,7 @@ export async function searchOpStapGoals(filters: GoalSearchFilters): Promise<Goa
   return response.data
 }
 
-export type ObservationStatus = 'onvoldoende' | 'in_ontwikkeling' | 'zelfstandig' | 'voorsprong'
+export type ObservationStatus = 'onvoldoende' | 'in_ontwikkeling' | 'voldoende' | 'voorsprong'
 
 export interface StudentObservationStatusResponse {
   id: number

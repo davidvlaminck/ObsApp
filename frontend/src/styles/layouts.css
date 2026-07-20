@@ -500,7 +500,7 @@
   color: #b45309;
 }
 
-.observation-cell.status-zelfstandig {
+.observation-cell.status-voldoende {
   background-color: var(--md-success-light);
   border-color: #86efac;
   color: #15803d;
@@ -799,7 +799,7 @@
   border-color: #fcd34d;
 }
 
-.student-card.status-zelfstandig {
+.student-card.status-voldoende {
   background-color: var(--md-success-light);
   border-color: #86efac;
 }

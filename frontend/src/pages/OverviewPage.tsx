@@ -21,7 +21,7 @@ import {
 const statusColors: Record<ObservationStatus, string> = {
   onvoldoende: '#ef5350',
   in_ontwikkeling: '#ff9800',
-  zelfstandig: '#66bb6a',
+  voldoende: '#66bb6a',
   voorsprong: '#42a5f5',
 }
 

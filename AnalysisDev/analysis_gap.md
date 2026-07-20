@@ -71,5 +71,4 @@ Na te kijken:
 - demo data linkt doelen fout aan omschrijven
 - observeratie voor tweede keer werkt niet als het geobserveerd werd op ander datum
 - tonen van meest recente observatie in kleine kleurcode bij bulkobservatie
-- zelfstanding => voldoende
 - thema's > activiteiten > doelen koppelen

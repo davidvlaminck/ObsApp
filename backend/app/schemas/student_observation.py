@@ -8,7 +8,7 @@ from app.schemas.school import ClassResponse, StudentResponse
 from app.schemas.user import UserResponse
 
 
-ObservationStatus = Literal["onvoldoende", "in_ontwikkeling", "zelfstandig", "voorsprong"]
+ObservationStatus = Literal["onvoldoende", "in_ontwikkeling", "voldoende", "voorsprong"]
 
 
 class StudentObservationCreate(BaseModel):

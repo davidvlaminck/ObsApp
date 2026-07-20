@@ -63,9 +63,9 @@ const statusOptions: Array<{ value: ObservationStatus; label: string; descriptio
     color: 'orange',
   },
   {
-    value: 'zelfstandig',
-    label: 'Zelfstandig',
-    description: 'De leerling kan het doel zelfstandig toepassen.',
+    value: 'voldoende',
+    label: 'Voldoende',
+    description: 'De leerling kan het doel voldoende toepassen.',
     color: 'green',
   },
   {
@@ -98,8 +98,8 @@ const getStudentObservationLabel = (status?: ObservationStatus) => {
       return 'Laatste status: onvoldoende'
     case 'in_ontwikkeling':
       return 'Laatste status: in ontwikkeling'
-    case 'zelfstandig':
-      return 'Laatste status: zelfstandig'
+    case 'voldoende':
+      return 'Laatste status: voldoende'
     case 'voorsprong':
       return 'Laatste status: voorsprong in ontwikkeling'
     default:
