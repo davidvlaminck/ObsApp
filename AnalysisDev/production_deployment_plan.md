@@ -392,10 +392,51 @@ Maak `/etc/nginx/sites-available/obsapp`:
 server {
     listen 80;
     listen [::]:80;
-    server_name jouwdomein.be www.jouwdomein.be;
+    server_name _;
 
-    # Redirect naar HTTPS
-    return 301 https://$server_name$request_uri;
+    # Redirect naar HTTPS (wanneer domeinnaam beschikbaar is)
+    # Zonder domeinnaam: comment deze regel uit en gebruik de onderstaande server block
+    return 301 https://$host$request_uri;
+}
+
+# Tijdelijke HTTP configuratie zonder domeinnaam (gebruik server IP)
+server {
+    listen 80;
+    listen [::]:80;
+    server_name _;
+
+    # Frontend statische bestanden
+    root /opt/obsapp/frontend/dist;
+    index index.html;
+
+    # Client max body size voor uploads
+    client_max_body_size 10M;
+
+    # API reverse proxy
+    location /api/ {
+        proxy_pass http://127.0.0.1:8000/api/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Uploads (student afbeeldingen)
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:8000/uploads/;
+        proxy_set_header Host $host;
+    }
+
+    # SPA fallback (alleen voor niet-API routes)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Cache statische bestanden
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
 }
 
 server {
@@ -403,9 +444,9 @@ server {
     listen [::]:443 ssl http2;
     server_name jouwdomein.be www.jouwdomein.be;
 
-    # SSL certificaten (Let's Encrypt)
-    ssl_certificate /etc/letsencrypt/live/jouwdomein.be/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/jouwdomein.be/privkey.pem;
+    # SSL certificaten (Let's Encrypt) - pas aan wanneer domeinnaam beschikbaar is
+    # ssl_certificate /etc/letsencrypt/live/jouwdomein.be/fullchain.pem;
+    # ssl_certificate_key /etc/letsencrypt/live/jouwdomein.be/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
     ssl_prefer_server_ciphers on;
@@ -454,9 +495,13 @@ server {
 ```bash
 sudo ln -s /etc/nginx/sites-available/obsapp /etc/nginx/sites-enabled/
 sudo nginx -t && sudo systemctl reload nginx
+
+> **Let op:** Zonder domeinnaam kun je de app bereiken via het server IP adres (bijv. `http://123.45.67.89`). De HTTPS configuratie en SSL certificaat kunnen later toegevoegd worden wanneer je een domeinnaam hebt gekocht en deze naar je server IP laat wijzen.
 ```
 
-### 5.3 Let's Encrypt SSL Certificaat
+### 5.3 Let's Encrypt SSL Certificaat (na domeinnaam aanschaffen)
+
+Wanneer je een domeinnaam hebt gekocht en deze naar je server IP laat wijzen:
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
@@ -464,6 +509,8 @@ sudo certbot --nginx -d jouwdomein.be -d www.jouwdomein.be
 ```
 
 Auto-renewal is standaard geconfigureerd.
+
+> **Zonder domeinnaam:** Je kunt de app volledig gebruiken via HTTP op het server IP adres. SSL is pas nodig wanneer je een domeinnaam hebt en HTTPS wilt gebruiken.
 
 ---
 
@@ -481,6 +528,8 @@ app.add_middleware(
 )
 ```
 
+> **Zonder domeinnaam:** Voeg ook het server IP toe aan `allow_origins` voor lokale toegang via IP, bijvoorbeeld `"http://123.45.67.89"`.
+
 ---
 
 ## 7. Code Verbeteringen Nodig Voor Productie
@@ -489,8 +538,8 @@ app.add_middleware(
 
 | # | Verbetering | Prioriteit | Bestand |
 |---|-------------|-----------|---------|
-| 1 | **Secret key uit environment** | KRIJGT | [`config.py`](backend/app/core/config.py:13) - `secret_key` heeft een hardcoded default |
-| 2 | **Debug=False** | KRIJGT | [`config.py`](backend/app/core/config.py:12) - `debug=True` is gevaarlijk in productie |
+| 1 | **Secret key uit environment** | KRITIEK | [`config.py`](backend/app/core/config.py:13) - `secret_key` heeft een hardcoded default |
+| 2 | **Debug=False** | KRITIEK | [`config.py`](backend/app/core/config.py:12) - `debug=True` is gevaarlijk in productie |
 | 3 | **Rate limiting op login** | HOOG | [`auth.py`](backend/app/api/auth.py) - geen beperking op login pogingen |
 | 4 | **Refresh tokens** | MEDIUM | [`security.py`](backend/app/core/security.py) - alleen access tokens, geen refresh |
 | 5 | **Alembic migraties** | HOOG | [`database.py`](backend/app/core/database.py) - vervang `create_all()` + handmatige kolom-migraties |
@@ -504,7 +553,7 @@ app.add_middleware(
 
 | # | Verbetering | Prioriteit | Bestand |
 |---|-------------|-----------|---------|
-| 1 | **API base URL configuratie** | KRIJGT | [`auth.ts`](frontend/src/services/auth.ts:3) - `baseURL: '/api'` is OK met reverse proxy, maar geen environment vars |
+| 1 | **API base URL configuratie** | KRITIEK | [`auth.ts`](frontend/src/services/auth.ts:3) - `baseURL: '/api'` is OK met reverse proxy, maar geen environment vars |
 | 2 | **Error boundaries** | MEDIUM - Geen React error boundaries |
 | 3 | **Loading states** | MEDIUM - Controleer of alle async calls loading states hebben |
 | 4 | **Environment variabelen** | LAAG | Gebruik `import.meta.env.VITE_*` voor configuratie |
@@ -516,8 +565,8 @@ app.add_middleware(
 | 1 | **Docker & Docker Compose** | OPTIONEEL - Handig voor consistentie, niet noodzakelijk voor solo dev |
 | 2 | **CI/CD pipeline** | MEDIUM - GitHub Actions of GitLab CI |
 | 3 | **Monitoring** | MEDIUM - UptimeRobot of zelf gehoste monitoring |
-| 4 | **Backup automatisering** | KRIJGT - Zie sectie 3 |
-| 5 | **.env.example** | KRIJGT - Voor ontwikkelaars |
+| 4 | **Backup automatisering** | KRITIEK - Zie sectie 3 |
+| 5 | **.env.example** | KRITIEK - Voor ontwikkelaars |
 
 ---
 
@@ -695,7 +744,7 @@ SELECT count(*) FROM pg_stat_activity WHERE datname = 'obsapp';
 
 ## 11. Deployment Stappen (Samenvatting)
 
-### Eénmalige Setup
+### Eénmalige Setup (zonder domeinnaam mogelijk)
 
 1. **Server aanmaken** op Hetzner Cloud (CX32, Ubuntu 24.04)
 2. **SSH key** configureren, root login uitschakelen
@@ -706,9 +755,10 @@ SELECT count(*) FROM pg_stat_activity WHERE datname = 'obsapp';
 7. **Backend dependencies** installeren (`uv sync --no-dev`)
 8. **Systemd service** aanmaken voor backend
 9. **Frontend build** uitvoeren (`npm run build`)
-10. **Nginx** configureren als reverse proxy
-11. **Let's Encrypt** SSL certificaat aanvragen
-12. **Backup cronjob** instellen
+10. **Nginx** configureren als reverse proxy (gebruik server IP in plaats van domeinnaam)
+11. **Backup cronjob** instellen
+
+> **Zonder domeinnaam:** Stappen 1-10 kunnen volledig uitgevoerd worden zonder domeinnaam. De app is bereikbaar via het server IP adres. SSL certificaat (stap 11) kan later toegevoegd worden wanneer je een domeinnaam hebt.
 
 ### Updates Deployen
 
@@ -745,7 +795,7 @@ sudo systemctl reload nginx
 
 ## 13. Volgende Stappen
 
-1. [ ] Kies een domeinnaam en richt deze op de server IP
+1. [ ] **Optioneel:** Koop een domeinnaam en richt deze op de server IP (voor HTTPS en custom URL)
 2. [ ] Implementeer rate limiting op login endpoint
 3. [ ] Configureer Alembic voor database migraties
 4. [ ] Genereer sterke SECRET_KEY
