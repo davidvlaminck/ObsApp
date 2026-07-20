@@ -735,7 +735,7 @@ SELECT count(*) FROM pg_stat_activity WHERE datname = 'obsapp';
 - [ ] **Fail2ban** geconfigureerd voor SSH en Nginx
 - [ ] **Database** wachtwoord is sterk en uniek
 - [ ] **Admin gebruiker** wachtwoord gewijzigd na eerste login
-- [ ] **Rate limiting** geïmplementeerd op login endpoint
+- [x] **Rate limiting** geïmplementeerd op login endpoint (5 requests/minuut per IP via slowapi)
 - [ ] **Backup** strategie actief en getest
 - [ ] **.env** niet gecommit naar repository
 - [ ] **Student uploads** map heeft correcte permissions (niet wereld-leesbaar)
@@ -795,8 +795,8 @@ sudo systemctl reload nginx
 
 ## 13. Volgende Stappen
 
-1. [ ] **Optioneel:** Koop een domeinnaam en richt deze op de server IP (voor HTTPS en custom URL)
-2. [ ] Implementeer rate limiting op login endpoint
+1. [x] **Rate limiting op login** geïmplementeerd (5 requests/minuut per IP via slowapi)
+2. [ ] **Optioneel:** Koop een domeinnaam en richt deze op de server IP (voor HTTPS en custom URL)
 3. [ ] Configureer Alembic voor database migraties
 4. [ ] Genereer sterke SECRET_KEY
 5. [ ] Stel SMTP provider op (SendGrid/Mailgun)

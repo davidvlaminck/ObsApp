@@ -23,6 +23,9 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+# Import limiter from main (set in app.state)
+from app.main import limiter
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 # Demo students
@@ -118,6 +121,7 @@ class KoepelSelectRequest(BaseModel):
 
 
 @router.post("/login", response_model=TokenResponse)
+@limiter.limit("5/minute")
 async def login(credentials: LoginRequest, db=Depends(get_db)):
     service = AuthService(db)
     user = service.authenticate_user(credentials.email, credentials.password)
