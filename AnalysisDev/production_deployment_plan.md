@@ -540,8 +540,7 @@ app.add_middleware(
 |---|-------------|-----------|---------|
 | 1 | **Secret key uit environment** | KRITIEK | [`config.py`](backend/app/core/config.py:13) - `secret_key` heeft een hardcoded default |
 | 2 | **Debug=False** | KRITIEK | [`config.py`](backend/app/core/config.py:12) - `debug=True` is gevaarlijk in productie |
-| 3 | **Rate limiting op login** | HOOG | [`auth.py`](backend/app/api/auth.py) - geen beperking op login pogingen |
-| 4 | **Refresh tokens** | MEDIUM | [`security.py`](backend/app/core/security.py) - alleen access tokens, geen refresh |
+| 3 | **Refresh tokens** | MEDIUM | [`security.py`](backend/app/core/security.py) - alleen access tokens, geen refresh |
 | 5 | **Alembic migraties** | HOOG | [`database.py`](backend/app/core/database.py) - vervang `create_all()` + handmatige kolom-migraties |
 | 6 | **Logging configuratie** | MEDIUM - Geen logging buiten `print()` statements |
 | 7 | **Request logging** | MEDIUM - Geen request/response logging |
