@@ -47,7 +47,7 @@ type GoalModalState = {
   subdomains: string[]
 }
 
-const today = new Date().toISOString().slice(0, 10)
+const today = new Date().toLocaleDateString('en-CA')
 
 const statusOptions: Array<{ value: ObservationStatus; label: string; description: string; color: string }> = [
   {
@@ -107,6 +107,18 @@ const getStudentObservationLabel = (status?: ObservationStatus) => {
   }
 }
 
+const statusColors: Record<ObservationStatus, string> = {
+  onvoldoende: '#ef5350',
+  in_ontwikkeling: '#ff9800',
+  voldoende: '#66bb6a',
+  voorsprong: '#42a5f5',
+}
+
+const getStatusColor = (status?: ObservationStatus) => {
+  if (!status) return '#f5f5f5'
+  return statusColors[status] ?? '#f5f5f5'
+}
+
 const isObservationNewer = (a: StudentObservationResponse, b: StudentObservationStatusResponse) => {
   const dateComparison = a.observation_date.localeCompare(b.observation_date)
   if (dateComparison !== 0) return dateComparison > 0
@@ -160,6 +172,7 @@ export default function ObservingPage() {
     for (const obs of allObservations) {
       if (!selectedGoalIds.has(obs.observation_goal_id)) continue
       if (!studentIds.has(obs.student_id)) continue
+      if (obs.observation_date > today) continue
 
       const goalMap = map.get(obs.observation_goal_id) ?? new Map()
       const existing = goalMap.get(obs.student_id)
@@ -178,6 +191,33 @@ export default function ObservingPage() {
 
     return map
   }, [allObservations, selectedGoalIds, studentIds])
+
+  const pastObservationMap = useMemo(() => {
+    const map = new Map<number, Map<number, StudentObservationStatusResponse>>()
+
+    for (const obs of allObservations) {
+      if (!selectedGoalIds.has(obs.observation_goal_id)) continue
+      if (!studentIds.has(obs.student_id)) continue
+      if (obs.observation_date >= today) continue
+
+      const goalMap = map.get(obs.observation_goal_id) ?? new Map()
+      const existing = goalMap.get(obs.student_id)
+      if (!existing || isObservationNewer(obs, existing)) {
+        goalMap.set(obs.student_id, {
+          id: obs.id,
+          observation_goal_id: obs.observation_goal_id,
+          student_id: obs.student_id,
+          status: obs.status,
+          observation_date: obs.observation_date,
+          comment: obs.comment,
+        })
+      }
+      map.set(obs.observation_goal_id, goalMap)
+    }
+
+    return map
+  }, [allObservations, selectedGoalIds, studentIds])
+
 
   useEffect(() => {
     const loadUserAndClasses = async () => {
@@ -702,24 +742,37 @@ export default function ObservingPage() {
                               <strong>{student.name}</strong>
                             </span>
                           </td>
-                          {studentObservations.map(({ goal, observation }) => (
-                            <td key={goal.id} className="observation-grid-cell-status">
-                              <button
-                                type="button"
-                                className={`observation-cell ${observation ? `status-${observation.status}` : ''} ${bulkMode && bulkStatus ? 'bulk-clickable' : ''}`}
-                                onClick={() =>
-                                  bulkMode && bulkStatus
-                                    ? handleBulkStudentClick(student, goal)
-                                    : openObservationModal(student, goal)
-                                }
-                                disabled={bulkSaving}
-                              >
-                                {observation
-                                  ? getStudentObservationLabel(observation.status)
-                                  : 'Klik om te observeren'}
-                              </button>
-                            </td>
-                          ))}
+                          {studentObservations.map(({ goal, observation }) => {
+                            const isToday = observation?.observation_date === today
+                            const pastObservation = pastObservationMap.get(goal.id)?.get(student.id)
+
+                            return (
+                              <td key={goal.id} className="observation-grid-cell-status">
+                                <button
+                                  type="button"
+                                  className={`observation-cell ${isToday && observation ? `status-${observation.status}` : ''} ${bulkMode && bulkStatus ? 'bulk-clickable' : ''}`}
+                                  onClick={() =>
+                                    bulkMode && bulkStatus
+                                      ? handleBulkStudentClick(student, goal)
+                                      : openObservationModal(student, goal)
+                                  }
+                                  disabled={bulkSaving}
+                                >
+                                  <span className="observation-cell-text">
+                                    {isToday && observation
+                                      ? getStudentObservationLabel(observation.status)
+                                      : 'Klik om te observeren'}
+                                  </span>
+                                  {pastObservation && (
+                                    <span
+                                      className="observation-date-indicator"
+                                      style={{ backgroundColor: getStatusColor(pastObservation.status) }}
+                                    />
+                                  )}
+                                </button>
+                              </td>
+                            )
+                          })}
                         </tr>
                       )
                     })}

@@ -467,7 +467,7 @@
 .observation-cell {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   width: 100%;
   min-height: 44px;
   padding: 10px 14px;
@@ -480,6 +480,11 @@
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
+}
+
+.observation-cell-text {
+  flex: 1;
+  text-align: center;
 }
 
 .observation-cell:hover {
@@ -510,6 +515,17 @@
   background-color: var(--md-primary-light);
   border-color: #7ee8c1;
   color: #0d8862;
+}
+
+.observation-date-indicator {
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+  min-width: 12px;
+  min-height: 12px;
+  border-radius: 3px;
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 
 /* Goal select modal */
