@@ -159,6 +159,7 @@ export default function ObservingPage() {
   const [success, setSuccess] = useState('')
   const [bulkMode, setBulkMode] = useState(false)
   const [bulkStatus, setBulkStatus] = useState<ObservationStatus | 'geen_observatie' | ''>('')
+  const [bulkDate, setBulkDate] = useState(today)
   const [bulkSaving, setBulkSaving] = useState(false)
   const tempIdRef = { current: -1 }
 
@@ -178,11 +179,12 @@ export default function ObservingPage() {
 
   const observationMap = useMemo(() => {
     const map = new Map<number, Map<number, StudentObservationStatusResponse>>()
+    const referenceDate = bulkMode ? bulkDate : today
 
     for (const obs of allObservations) {
       if (!selectedGoalIds.has(obs.observation_goal_id)) continue
       if (!studentIds.has(obs.student_id)) continue
-      if (obs.observation_date > today) continue
+      if (obs.observation_date > referenceDate) continue
 
       const goalMap = map.get(obs.observation_goal_id) ?? new Map()
       const existing = goalMap.get(obs.student_id)
@@ -200,15 +202,16 @@ export default function ObservingPage() {
     }
 
     return map
-  }, [allObservations, selectedGoalIds, studentIds])
+  }, [allObservations, selectedGoalIds, studentIds, bulkMode, bulkDate])
 
   const pastObservationMap = useMemo(() => {
     const map = new Map<number, Map<number, StudentObservationStatusResponse>>()
+    const referenceDate = bulkMode ? bulkDate : today
 
     for (const obs of allObservations) {
       if (!selectedGoalIds.has(obs.observation_goal_id)) continue
       if (!studentIds.has(obs.student_id)) continue
-      if (obs.observation_date >= today) continue
+      if (obs.observation_date >= referenceDate) continue
 
       const goalMap = map.get(obs.observation_goal_id) ?? new Map()
       const existing = goalMap.get(obs.student_id)
@@ -226,7 +229,7 @@ export default function ObservingPage() {
     }
 
     return map
-  }, [allObservations, selectedGoalIds, studentIds])
+  }, [allObservations, selectedGoalIds, studentIds, bulkMode, bulkDate])
 
   const findObservationId = useCallback((studentId: number, goalId: number, date: string): number | null => {
     const obs = allObservations.find(
@@ -403,18 +406,20 @@ export default function ObservingPage() {
   const toggleBulkMode = useCallback(() => {
     setBulkMode((current) => !current)
     setBulkStatus('')
+    setBulkDate(today)
   }, [])
 
   const exitBulkMode = useCallback(() => {
     setBulkMode(false)
     setBulkStatus('')
+    setBulkDate(today)
   }, [])
 
   const handleBulkStudentClick = useCallback(async (student: StudentResponse, goal: ObservationGoalResponse) => {
     if (!bulkStatus || bulkSaving) return
 
     if (bulkStatus === 'geen_observatie') {
-      const observationId = findObservationId(student.id, goal.id, today)
+      const observationId = findObservationId(student.id, goal.id, bulkDate)
       if (!observationId) return
 
       setAllObservations((current) =>
@@ -436,7 +441,7 @@ export default function ObservingPage() {
           observation_goal_id: goal.id,
           student_id: student.id,
           status: 'voldoende',
-          observation_date: today,
+          observation_date: bulkDate,
           comment: null,
           observation_goal: goal,
           observer: null,
@@ -458,7 +463,7 @@ export default function ObservingPage() {
       observation_goal_id: goal.id,
       student_id: student.id,
       status: bulkStatus,
-      observation_date: today,
+      observation_date: bulkDate,
       comment: null,
       observation_goal: goal,
       observer: null,
@@ -475,7 +480,7 @@ export default function ObservingPage() {
         observation_goal_id: goal.id,
         student_id: student.id,
         status: bulkStatus,
-        observation_date: today,
+        observation_date: bulkDate,
         comment: null,
       })
       setSuccess(`Bulk observatie opgeslagen voor ${student.name}.`)
@@ -491,22 +496,21 @@ export default function ObservingPage() {
     } catch (err) {
       setAllObservations((current) =>
         current.filter(
-          (obs) =>
-            !(obs.student_id === student.id && obs.observation_goal_id === goal.id && obs.observation_date === today)
+          (obs) => !(obs.student_id === student.id && obs.observation_goal_id === goal.id && obs.observation_date === bulkDate)
         )
       )
       setError(getErrorMessage(err, 'Kan bulk observatie niet opslaan.'))
     } finally {
       setBulkSaving(false)
     }
-  }, [bulkStatus, bulkSaving, today])
+  }, [bulkStatus, bulkSaving, bulkDate])
 
   const handleBulkGoalClick = useCallback(async (goal: ObservationGoalResponse) => {
     if (!bulkStatus || bulkSaving) return
 
     if (bulkStatus === 'geen_observatie') {
       const observationsToDelete = context.students
-        .map((student) => findObservationId(student.id, goal.id, today))
+        .map((student) => findObservationId(student.id, goal.id, bulkDate))
         .filter((id): id is number => id !== null)
 
       if (observationsToDelete.length === 0) return
@@ -539,7 +543,7 @@ export default function ObservingPage() {
         observation_goal_id: goal.id,
         student_id: student.id,
         status: bulkStatus,
-        observation_date: today,
+        observation_date: bulkDate,
         comment: null,
         observation_goal: goal,
         observer: null,
@@ -558,7 +562,7 @@ export default function ObservingPage() {
           observation_goal_id: goal.id,
           student_id: student.id,
           status: bulkStatus,
-          observation_date: today,
+          observation_date: bulkDate,
           comment: null,
         })
       )
@@ -588,7 +592,7 @@ export default function ObservingPage() {
     } finally {
       setBulkSaving(false)
     }
-  }, [bulkStatus, bulkSaving, context.students, today])
+  }, [bulkStatus, bulkSaving, context.students, bulkDate])
 
   const openObservationModal = (student: StudentResponse, goal: ObservationGoalResponse) => {
     setObservationModal({ student, goal })
@@ -803,6 +807,14 @@ export default function ObservingPage() {
                         {status.label}
                       </button>
                     ))}
+                    <div className="bulk-date-picker">
+                      <input
+                        id="bulk-observation-date"
+                        type="date"
+                        value={bulkDate}
+                        onChange={(event) => setBulkDate(event.target.value)}
+                      />
+                    </div>
                   </div>
                 )}
               </div>
@@ -847,7 +859,8 @@ export default function ObservingPage() {
                             </span>
                           </td>
                           {studentObservations.map(({ goal, observation }) => {
-                            const isToday = observation?.observation_date === today
+                            const referenceDate = bulkMode ? bulkDate : today
+                            const isToday = observation?.observation_date === referenceDate
                             const pastObservation = pastObservationMap.get(goal.id)?.get(student.id)
 
                             return (
