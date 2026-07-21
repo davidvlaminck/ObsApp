@@ -70,3 +70,34 @@ Na te kijken:
 
 - demo data linkt doelen fout aan omschrijven
 - thema's > activiteiten > doelen koppelen
+
+thema de appel
+activiteiten
+waarneming van de appel klassikaal
+boomgaard spel (spel spelen aan tafel)
+appeltjes sorteren volgens kleur
+telspel appels => tellen tot .. / 
+fruitwinkel
+
+
+ochterdritueel
+omschrijving: bv. kalenders, gebedsritueel, liedje, dans, versje, aanwezigheid, weer, daglijn
+welbevinden verbeteren + aantal specifieke doelen
+
+
+
+doos van generieke activiteiten
+tik tak activiteit
+muzikale activiteit
+winkelspel
+verjaardagsritueel
+poppenkamer
+hoeken
+opruimmen
+speeltijd
+
+
+
+
+activiteit label + omschrijving + doelen selecteren en koppelen
+- 
