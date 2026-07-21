@@ -65,7 +65,7 @@ function App() {
         }
       />
       <Route
-        path="/overzicht/leerling"
+        path="/overzicht/kleuter"
         element={
           <AppLayout>
             <StudentOverviewPage />

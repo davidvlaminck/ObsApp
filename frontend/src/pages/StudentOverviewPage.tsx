@@ -195,8 +195,8 @@ export default function StudentOverviewPage() {
       <>
         <section className="page-header">
           <div>
-            <h1>Overzicht per leerling</h1>
-            <p className="text-muted">Overzicht van observaties per klas, vak en leerling.</p>
+            <h1>Overzicht per kleuter</h1>
+            <p className="text-muted">Overzicht van observaties per klas, vak en kleuter.</p>
           </div>
         </section>
         <div className="inline-message inline-message-error">
@@ -210,8 +210,8 @@ export default function StudentOverviewPage() {
     <>
       <section className="page-header">
         <div>
-          <h1>Overzicht per leerling</h1>
-          <p className="text-muted">Kies een klas, vak en leerling om alle geobserveerde doelen te bekijken.</p>
+          <h1>Overzicht per kleuter</h1>
+          <p className="text-muted">Kies een klas, vak en kleuter om alle geobserveerde doelen te bekijken.</p>
         </div>
       </section>
 
@@ -263,7 +263,7 @@ export default function StudentOverviewPage() {
                   setSelectedStudentId(value)
                 }}
               >
-                <option value="">Kies leerling</option>
+                <option value="">Kies kleuter</option>
                 {overview?.students.map((student: StudentResponse) => (
                   <option key={student.id} value={student.id}>
                     {student.name}
@@ -274,7 +274,7 @@ export default function StudentOverviewPage() {
                 <button
                   type="button"
                   className="btn btn-secondary student-nav-button"
-                  aria-label="Vorige leerling"
+                  aria-label="Vorige kleuter"
                   disabled={!selectedClassId || !overview?.students.length}
                   onClick={() => goToStudent(-1)}
                 >
@@ -283,7 +283,7 @@ export default function StudentOverviewPage() {
                 <button
                   type="button"
                   className="btn btn-secondary student-nav-button"
-                  aria-label="Volgende leerling"
+                  aria-label="Volgende kleuter"
                   disabled={!selectedClassId || !overview?.students.length}
                   onClick={() => goToStudent(1)}
                 >
@@ -295,11 +295,11 @@ export default function StudentOverviewPage() {
         </div>
 
       {!selectedClassId ? (
-        <div className="empty-state">Kies een klas om het overzicht per leerling te bekijken.</div>
+        <div className="empty-state">Kies een klas om het overzicht per kleuter te bekijken.</div>
       ) : !overview || overview.students.length === 0 ? (
-        <div className="empty-state">Geen leerlingen gevonden voor deze klas.</div>
+        <div className="empty-state">Geen kleuteren gevonden voor deze klas.</div>
       ) : !selectedStudent ? (
-        <div className="empty-state">Kies een leerling om het overzicht per leerling te bekijken.</div>
+        <div className="empty-state">Kies een kleuter om het overzicht per kleuter te bekijken.</div>
       ) : studentObservationsLoading ? (
         <div className="empty-state compact">Observaties laden...</div>
       ) : selectedStudentObservations.length === 0 ? (
@@ -309,7 +309,7 @@ export default function StudentOverviewPage() {
           <div className="overview-student-panel-header">
             <div>
               <h2>{selectedStudent.name}</h2>
-              <p className="text-muted">Alle geobserveerde doelen voor deze leerling.</p>
+              <p className="text-muted">Alle geobserveerde doelen voor deze kleuter.</p>
             </div>
           </div>
 

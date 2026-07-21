@@ -3,7 +3,7 @@ export default function HomePage() {
     <div className="home-page">
       <div className="home-header">
         <h1>ObsApp</h1>
-        <p className="text-muted">Welkom bij ObsApp - Jouw tool voor observaties bij leerlingen.</p>
+        <p className="text-muted">Welkom bij ObsApp - Jouw tool voor observaties bij kleuteren.</p>
       </div>
       
       <div style={{ marginTop: '2rem' }}>
@@ -13,8 +13,8 @@ export default function HomePage() {
           <article className="card home-card">
             <h3>Overzicht</h3>
             <p className="text-muted">
-              Bekijk een overzicht van alle observatiedoelen en de huidige status van leerlingen.
-              Deze pagina toont per observatiedoel welke leerlingen al geobserveerd zijn en wat hun status is.
+              Bekijk een overzicht van alle observatiedoelen en de huidige status van kleuteren.
+              Deze pagina toont per observatiedoel welke kleuteren al geobserveerd zijn en wat hun status is.
             </p>
             <p style={{ marginTop: '0.5rem' }}>
               <strong>Tip:</strong> De klasfilter is standaard ingesteld op jouw eigen klas. 
@@ -23,21 +23,21 @@ export default function HomePage() {
           </article>
           
           <article className="card home-card">
-            <h3>Overzicht per leerling</h3>
+            <h3>Overzicht per kleuter</h3>
             <p className="text-muted">
-              Bekijk alle observaties van één specifieke leerling. 
-              Handig om snel een volledig overzicht te krijgen van de vooruitgang van een leerling.
+              Bekijk alle observaties van één specifieke kleuter. 
+              Handig om snel een volledig overzicht te krijgen van de vooruitgang van een kleuter.
             </p>
             <p style={{ marginTop: '0.5rem' }}>
-              <strong>Tip:</strong> Selecteer eerst een leerling om de observaties te zien.
+              <strong>Tip:</strong> Selecteer eerst een kleuter om de observaties te zien.
             </p>
           </article>
           
           <article className="card home-card">
             <h3>Observeren</h3>
             <p className="text-muted">
-              Maak nieuwe observaties aan voor leerlingen. 
-              Kies een klas, vak, domein en observatiedoel om vervolgens de status van elke leerling in te vullen.
+              Maak nieuwe observaties aan voor kleuteren. 
+              Kies een klas, vak, domein en observatiedoel om vervolgens de status van elke kleuter in te vullen.
             </p>
             <p style={{ marginTop: '0.5rem' }}>
               <strong>Tip:</strong> De klasfilter is standaard ingesteld op jouw eigen klas.

@@ -188,7 +188,7 @@ export default function OverviewPage() {
         <div>
           <h1>Overzicht per klas</h1>
           <p className="text-muted">
-            Kies een klas en vak om de observatiestatus per leerling te bekijken.
+            Kies een klas en vak om de observatiestatus per kleuter te bekijken.
           </p>
         </div>
       </section>

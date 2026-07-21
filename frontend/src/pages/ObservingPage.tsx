@@ -54,25 +54,25 @@ const statusOptions: Array<{ value: ObservationStatus | 'geen_observatie'; label
   {
     value: 'onvoldoende',
     label: 'Onvoldoende',
-    description: 'De leerling bereikt het doel nog niet.',
+    description: 'De kleuter bereikt het doel nog niet.',
     color: 'red',
   },
   {
     value: 'in_ontwikkeling',
     label: 'In ontwikkeling',
-    description: 'De leerling is bezig het doel onder de knie te krijgen.',
+    description: 'De kleuter is bezig het doel onder de knie te krijgen.',
     color: 'orange',
   },
   {
     value: 'voldoende',
     label: 'Voldoende',
-    description: 'De leerling kan het doel voldoende toepassen.',
+    description: 'De kleuter kan het doel voldoende toepassen.',
     color: 'green',
   },
   {
     value: 'voorsprong',
     label: 'Voorsprong in ontwikkeling',
-    description: 'De leerling gaat verder dan het verwachte niveau.',
+    description: 'De kleuter gaat verder dan het verwachte niveau.',
     color: 'blue',
   },
   {
@@ -671,11 +671,11 @@ export default function ObservingPage() {
         <section className="page-header">
           <div>
             <h1>Observeren</h1>
-            <p className="text-muted">Voer observaties uit voor leerlingen op basis van bestaande observatiedoelen.</p>
+            <p className="text-muted">Voer observaties uit voor kleuteren op basis van bestaande observatiedoelen.</p>
           </div>
         </section>
         <div className="inline-message inline-message-error">
-          Superusers moeten zich eerst als leerkracht identificeren voordat ze leerlingen kunnen observeren.
+          Superusers moeten zich eerst als leerkracht identificeren voordat ze kleuteren kunnen observeren.
         </div>
       </>
     )
@@ -686,7 +686,7 @@ export default function ObservingPage() {
       <section className="page-header">
         <div>
           <h1>Observeren</h1>
-          <p className="text-muted">Kies een klas en doel(en) om observaties per leerling vast te leggen.</p>
+          <p className="text-muted">Kies een klas en doel(en) om observaties per kleuter vast te leggen.</p>
         </div>
       </section>
 
@@ -773,12 +773,12 @@ export default function ObservingPage() {
           {selectedGoals.length === 0 ? (
             <div className="empty-state">
               <h3>Geen doelen geselecteerd</h3>
-              <p className="text-muted">Kies een of meer observatiedoelen om de leerlingen te bekijken.</p>
+              <p className="text-muted">Kies een of meer observatiedoelen om de kleuteren te bekijken.</p>
             </div>
           ) : context.students.length === 0 ? (
             <div className="empty-state">
-              <h3>Geen leerlingen geladen</h3>
-              <p className="text-muted">Kies een klas om de leerlingen van die klas te tonen.</p>
+              <h3>Geen kleuteren geladen</h3>
+              <p className="text-muted">Kies een klas om de kleuteren van die klas te tonen.</p>
             </div>
           ) : (
             <>

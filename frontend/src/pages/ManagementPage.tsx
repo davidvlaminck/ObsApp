@@ -201,7 +201,7 @@ export default function ManagementPage() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'leerlingen_template.xlsx'
+      a.download = 'kleuteren_template.xlsx'
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -250,7 +250,7 @@ export default function ManagementPage() {
       if (result.errors.length > 0) {
         setError(`Import voltooid met fouten: ${result.errors.join(', ')}`)
       } else {
-        setSuccess(`${result.created} leerlingen toegevoegd.`)
+        setSuccess(`${result.created} kleuteren toegevoegd.`)
       }
       setShowPreview(false)
       setPreviewItems([])
@@ -306,7 +306,7 @@ export default function ManagementPage() {
   }
 
   const handleDeleteStudent = async (studentId: number) => {
-    if (!confirm('Weet je zeker dat je deze leerling wilt verwijderen?')) return
+    if (!confirm('Weet je zeker dat je deze kleuter wilt verwijderen?')) return
     try {
       await deleteStudent(studentId)
       // Refresh students
@@ -326,7 +326,7 @@ export default function ManagementPage() {
       }
       setSuccess('Leerling verwijderd.')
     } catch (err) {
-      setError(getErrorMessage(err, 'Kan leerling niet verwijderen.'))
+      setError(getErrorMessage(err, 'Kan kleuter niet verwijderen.'))
     }
   }
 
@@ -345,7 +345,7 @@ export default function ManagementPage() {
       <section className="page-header">
         <div>
           <h1>Klasbeheer</h1>
-          <p className="text-muted">Beheer klassen, leerlingen en leerkrachten.</p>
+          <p className="text-muted">Beheer klassen, kleuteren en leerkrachten.</p>
         </div>
       </section>
 
@@ -431,7 +431,7 @@ export default function ManagementPage() {
            ) : classes.length === 0 ? (
              <div className="empty-state">
                <h2>Geen klassen gevonden</h2>
-               <p className="text-muted">Voeg hierboven een nieuwe klas toe of upload leerlingen via Excel.</p>
+               <p className="text-muted">Voeg hierboven een nieuwe klas toe of upload kleuteren via Excel.</p>
              </div>
            ) : (
              <div className="table-wrapper">
@@ -503,7 +503,7 @@ export default function ManagementPage() {
                                   ))}
                                </ul>
                              ) : (
-                               <span className="text-muted">Geen leerlingen</span>
+                               <span className="text-muted">Geen kleuteren</span>
                              )}
                           </td>
                           <td>
@@ -551,7 +551,7 @@ export default function ManagementPage() {
           <div className="card">
             <div className="table-header">
               <div>
-                <h2>Voorbeeld leerlingen import</h2>
+                <h2>Voorbeeld kleuteren import</h2>
                 <p className="text-muted">
                   {previewItems.filter((item) => item.is_valid).length} geldige, {previewItems.filter((item) => !item.is_valid).length} ongeldige records
                 </p>

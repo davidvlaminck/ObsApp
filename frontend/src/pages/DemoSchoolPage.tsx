@@ -30,7 +30,7 @@ export default function DemoSchoolPage() {
   }, [])
 
   const handleReset = async () => {
-    if (!window.confirm('Weet je zeker dat je alle demo data wilt resetten? Alle observaties en leerlingen worden verwijderd.')) {
+    if (!window.confirm('Weet je zeker dat je alle demo data wilt resetten? Alle observaties en kleuteren worden verwijderd.')) {
       return
     }
     setResetting(true)
