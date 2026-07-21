@@ -119,7 +119,7 @@ export async function searchOpStapGoals(filters: GoalSearchFilters): Promise<Goa
   return response.data
 }
 
-export type ObservationStatus = 'onvoldoende' | 'in_ontwikkeling' | 'voldoende' | 'voorsprong'
+export type ObservationStatus = 'onvoldoende' | 'in_ontwikkeling' | 'voldoende' | 'voorsprong' | 'geen_observatie'
 
 export interface StudentObservationStatusResponse {
   id: number
@@ -186,6 +186,10 @@ export async function listStudentObservations(): Promise<StudentObservationRespo
 export async function createStudentObservation(data: StudentObservationCreate): Promise<StudentObservationResponse> {
   const response = await api.post<StudentObservationResponse>('/student-observations', data)
   return response.data
+}
+
+export async function deleteStudentObservation(studentObservationId: number): Promise<void> {
+  await api.delete(`/student-observations/${studentObservationId}`)
 }
 
 api.interceptors.request.use((config) => {

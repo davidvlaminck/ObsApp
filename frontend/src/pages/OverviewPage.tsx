@@ -23,6 +23,7 @@ const statusColors: Record<ObservationStatus, string> = {
   in_ontwikkeling: '#ff9800',
   voldoende: '#66bb6a',
   voorsprong: '#42a5f5',
+  geen_observatie: '#9ca3af',
 }
 
 const getStatusColor = (status?: ObservationStatus) => {

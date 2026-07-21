@@ -436,3 +436,60 @@ def test_create_student_observation_replaces_comment_when_provided(
     data = response.json()
     assert data["comment"] == "Nieuwe commentaar"
     assert student_observation_db.query(StudentObservation).count() == 1
+
+
+def test_delete_student_observation_endpoint_deletes_observation(
+    student_observation_client: TestClient,
+    student_observation_db: Session,
+):
+    context = seed_observation_context(student_observation_db)
+
+    create_response = student_observation_client.post(
+        "/api/student-observations",
+        json={
+            "observation_goal_id": context["observation_goal_id"],
+            "student_id": context["student_id"],
+            "status": "voldoende",
+            "observation_date": "2026-06-16",
+        },
+    )
+    assert create_response.status_code == 201
+    observation_id = create_response.json()["id"]
+    assert student_observation_db.query(StudentObservation).count() == 1
+
+    delete_response = student_observation_client.delete(f"/api/student-observations/{observation_id}")
+    assert delete_response.status_code == 204
+    assert student_observation_db.query(StudentObservation).count() == 0
+
+
+def test_delete_student_observation_endpoint_returns_404_for_missing_observation(
+    student_observation_client: TestClient,
+    student_observation_db: Session,
+):
+    seed_observation_context(student_observation_db)
+
+    response = student_observation_client.delete("/api/student-observations/999")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Observatie niet gevonden"
+
+
+def test_delete_student_observation_endpoint_rejects_observation_from_other_school(
+    student_observation_client: TestClient,
+    student_observation_db: Session,
+):
+    seed_observation_context(student_observation_db)
+    student_observation_db.add(
+        StudentObservation(
+            school_id=2,
+            observation_goal_id=1,
+            student_id=1,
+            observed_by=2,
+            status="voldoende",
+            observation_date=date(2026, 6, 16),
+        )
+    )
+    student_observation_db.commit()
+
+    response = student_observation_client.delete("/api/student-observations/1")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Observatie niet gevonden"

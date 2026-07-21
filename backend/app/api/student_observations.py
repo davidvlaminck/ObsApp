@@ -67,3 +67,17 @@ def get_student_observation(
     if not observation:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Observatie niet gevonden")
     return StudentObservationRepository(db).to_response(observation)
+
+
+@router.delete("/{student_observation_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_student_observation(
+    student_observation_id: int,
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    school_id = _ensure_teacher_user(current_user)
+    repo = StudentObservationRepository(db)
+    observation = repo.get_by_id(student_observation_id, school_id)
+    if not observation:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Observatie niet gevonden")
+    repo.delete(observation)

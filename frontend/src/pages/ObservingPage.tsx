@@ -12,6 +12,7 @@ import {
 } from '../services/auth'
 import {
   createStudentObservation,
+  deleteStudentObservation,
   getObservationContext,
   getObservationGoalDomains,
   getObservationGoalSubdomains,
@@ -26,7 +27,7 @@ import {
 } from '../services/observations'
 
 type ObservationForm = {
-  status: ObservationStatus | ''
+  status: ObservationStatus | 'geen_observatie' | ''
   observation_date: string
   comment: string
 }
@@ -49,7 +50,7 @@ type GoalModalState = {
 
 const today = new Date().toLocaleDateString('en-CA')
 
-const statusOptions: Array<{ value: ObservationStatus; label: string; description: string; color: string }> = [
+const statusOptions: Array<{ value: ObservationStatus | 'geen_observatie'; label: string; description: string; color: string }> = [
   {
     value: 'onvoldoende',
     label: 'Onvoldoende',
@@ -73,6 +74,12 @@ const statusOptions: Array<{ value: ObservationStatus; label: string; descriptio
     label: 'Voorsprong in ontwikkeling',
     description: 'De leerling gaat verder dan het verwachte niveau.',
     color: 'blue',
+  },
+  {
+    value: 'geen_observatie',
+    label: 'Geen observatie',
+    description: 'Verwijder de observatie van vandaag.',
+    color: 'white',
   },
 ]
 
@@ -102,6 +109,8 @@ const getStudentObservationLabel = (status?: ObservationStatus) => {
       return 'Laatste status: voldoende'
     case 'voorsprong':
       return 'Laatste status: voorsprong in ontwikkeling'
+    case 'geen_observatie':
+      return 'Geen observatie'
     default:
       return 'Klik om te observeren'
   }
@@ -112,6 +121,7 @@ const statusColors: Record<ObservationStatus, string> = {
   in_ontwikkeling: '#ff9800',
   voldoende: '#66bb6a',
   voorsprong: '#42a5f5',
+  geen_observatie: '#9ca3af',
 }
 
 const getStatusColor = (status?: ObservationStatus) => {
@@ -148,7 +158,7 @@ export default function ObservingPage() {
   const [formError, setFormError] = useState('')
   const [success, setSuccess] = useState('')
   const [bulkMode, setBulkMode] = useState(false)
-  const [bulkStatus, setBulkStatus] = useState<ObservationStatus | ''>('')
+  const [bulkStatus, setBulkStatus] = useState<ObservationStatus | 'geen_observatie' | ''>('')
   const [bulkSaving, setBulkSaving] = useState(false)
   const tempIdRef = { current: -1 }
 
@@ -218,6 +228,12 @@ export default function ObservingPage() {
     return map
   }, [allObservations, selectedGoalIds, studentIds])
 
+  const findObservationId = useCallback((studentId: number, goalId: number, date: string): number | null => {
+    const obs = allObservations.find(
+      (o) => o.student_id === studentId && o.observation_goal_id === goalId && o.observation_date === date
+    )
+    return obs?.id ?? null
+  }, [allObservations])
 
   useEffect(() => {
     const loadUserAndClasses = async () => {
@@ -397,6 +413,43 @@ export default function ObservingPage() {
   const handleBulkStudentClick = useCallback(async (student: StudentResponse, goal: ObservationGoalResponse) => {
     if (!bulkStatus || bulkSaving) return
 
+    if (bulkStatus === 'geen_observatie') {
+      const observationId = findObservationId(student.id, goal.id, today)
+      if (!observationId) return
+
+      setAllObservations((current) =>
+        current.filter(
+          (obs) => !(obs.id === observationId)
+        )
+      )
+
+      try {
+        setBulkSaving(true)
+        setError('')
+        await deleteStudentObservation(observationId)
+        setSuccess(`Observatie verwijderd voor ${student.name}.`)
+      } catch (err) {
+        setAllObservations((current) => [...current, {
+          id: observationId,
+          school_id: 0,
+          observed_by: 0,
+          observation_goal_id: goal.id,
+          student_id: student.id,
+          status: 'voldoende',
+          observation_date: today,
+          comment: null,
+          observation_goal: goal,
+          observer: null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }])
+        setError(getErrorMessage(err, 'Kan observatie niet verwijderen.'))
+      } finally {
+        setBulkSaving(false)
+      }
+      return
+    }
+
     const tempId = tempIdRef.current--
     const optimisticObs: StudentObservationResponse = {
       id: tempId,
@@ -450,6 +503,32 @@ export default function ObservingPage() {
 
   const handleBulkGoalClick = useCallback(async (goal: ObservationGoalResponse) => {
     if (!bulkStatus || bulkSaving) return
+
+    if (bulkStatus === 'geen_observatie') {
+      const observationsToDelete = context.students
+        .map((student) => findObservationId(student.id, goal.id, today))
+        .filter((id): id is number => id !== null)
+
+      if (observationsToDelete.length === 0) return
+
+      setAllObservations((current) =>
+        current.filter((obs) => !observationsToDelete.includes(obs.id))
+      )
+
+      try {
+        setBulkSaving(true)
+        setError('')
+        await Promise.all(
+          observationsToDelete.map((id) => deleteStudentObservation(id))
+        )
+        setSuccess(`Observaties verwijderd voor doel: ${goal.name}`)
+      } catch (err) {
+        setError(getErrorMessage(err, 'Kan observaties niet verwijderen.'))
+      } finally {
+        setBulkSaving(false)
+      }
+      return
+    }
 
     const tempObservations: StudentObservationResponse[] = context.students.map((student) => {
       const tempId = tempIdRef.current--
@@ -533,6 +612,29 @@ export default function ObservingPage() {
   const handleSaveObservation = async () => {
     if (!observationModal || !form.status || !form.observation_date) {
       setFormError('Kies een status en vul een datum in.')
+      return
+    }
+
+    if (form.status === 'geen_observatie') {
+      const observationId = findObservationId(observationModal.student.id, observationModal.goal.id, form.observation_date)
+      if (!observationId) {
+        setFormError('Geen observatie gevonden voor deze datum.')
+        return
+      }
+
+      try {
+        setSaving(true)
+        setFormError('')
+        await deleteStudentObservation(observationId)
+        setSuccess(`Observatie verwijderd voor ${observationModal.student.name}.`)
+        closeObservationModal()
+        const observations = await listStudentObservations()
+        setAllObservations(observations)
+      } catch (err) {
+        setFormError(getErrorMessage(err, 'Kan observatie niet verwijderen.'))
+      } finally {
+        setSaving(false)
+      }
       return
     }
 
@@ -694,7 +796,7 @@ export default function ObservingPage() {
                       <button
                         key={status.value}
                         type="button"
-                        className={`bulk-status-btn bulk-status-${status.color} ${bulkStatus === status.value ? 'active' : ''}`}
+                        className={`bulk-status-btn ${status.color === 'white' ? 'bulk-status-white' : `bulk-status-${status.color}`} ${bulkStatus === status.value ? 'active' : ''}`}
                         onClick={() => setBulkStatus(status.value)}
                         disabled={bulkSaving}
                       >
@@ -721,7 +823,9 @@ export default function ObservingPage() {
                             {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
                           </span>
                           {bulkMode && bulkStatus && (
-                            <span className="bulk-column-hint">Klik om hele kolom in te vullen</span>
+                            <span className="bulk-column-hint">
+                              {bulkStatus === 'geen_observatie' ? 'Klik om hele kolom te wissen' : 'Klik om hele kolom in te vullen'}
+                            </span>
                           )}
                         </th>
                       ))}
@@ -750,7 +854,7 @@ export default function ObservingPage() {
                               <td key={goal.id} className="observation-grid-cell-status">
                                 <button
                                   type="button"
-                                  className={`observation-cell ${isToday && observation ? `status-${observation.status}` : ''} ${bulkMode && bulkStatus ? 'bulk-clickable' : ''}`}
+                                  className={`observation-cell ${isToday && observation ? `status-${observation.status}` : 'no-observation'} ${bulkMode && bulkStatus ? 'bulk-clickable' : ''}`}
                                   onClick={() =>
                                     bulkMode && bulkStatus
                                       ? handleBulkStudentClick(student, goal)
@@ -761,7 +865,7 @@ export default function ObservingPage() {
                                   <span className="observation-cell-text">
                                     {isToday && observation
                                       ? getStudentObservationLabel(observation.status)
-                                      : 'Klik om te observeren'}
+                                      : 'Geen observatie'}
                                   </span>
                                   {pastObservation && (
                                     <span
@@ -991,8 +1095,14 @@ export default function ObservingPage() {
               <button className="btn btn-outline" type="button" onClick={closeObservationModal} disabled={saving}>
                 Annuleren
               </button>
-              <button className="btn btn-primary" type="button" onClick={handleSaveObservation} disabled={saving || !form.status || !form.observation_date}>
-                {saving ? 'Opslaan...' : 'Opslaan'}
+              <button
+                className={`btn ${form.status === 'geen_observatie' ? 'btn-outline' : 'btn-primary'}`}
+                type="button"
+                onClick={handleSaveObservation}
+                disabled={saving || !form.status || !form.observation_date}
+                style={form.status === 'geen_observatie' ? { color: '#c92a2a', borderColor: '#fca5a5' } : undefined}
+              >
+                {saving ? (form.status === 'geen_observatie' ? 'Verwijderen...' : 'Opslaan...') : (form.status === 'geen_observatie' ? 'Verwijderen' : 'Opslaan')}
               </button>
             </div>
           </section>
