@@ -27,3 +27,4 @@ class ActivityGoal(Base):
 
     activity_id = Column(Integer, ForeignKey("activities.id", ondelete="CASCADE"), primary_key=True, index=True)
     goal_id = Column(Integer, ForeignKey("goals.id", ondelete="CASCADE"), primary_key=True, index=True)
+    label = Column(String(200), nullable=True)

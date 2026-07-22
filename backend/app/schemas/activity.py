@@ -4,18 +4,24 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class ActivityGoalItem(BaseModel):
+    goal_id: int = Field(ge=1)
+    label: str | None = Field(default=None, max_length=200)
+    observe: bool = False
+
+
 class ActivityCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=1000)
     theme_id: int | None = None
-    goal_ids: list[int] = Field(default_factory=list, max_length=50)
+    goal_items: list[ActivityGoalItem] = Field(default_factory=list, max_length=50)
 
 
 class ActivityUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=1000)
     theme_id: int | None = None
-    goal_ids: list[int] | None = Field(default=None, max_length=50)
+    goal_items: list[ActivityGoalItem] | None = Field(default=None, max_length=50)
 
 
 class ActivityGoalResponse(BaseModel):
@@ -23,6 +29,7 @@ class ActivityGoalResponse(BaseModel):
     code: str | None = None
     title: str | None = None
     goal_type: str | None = None
+    label: str | None = None
 
 
 class ActivityResponse(BaseModel):

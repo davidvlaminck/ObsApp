@@ -133,7 +133,8 @@ def create_activity(
         name=payload.name,
         description=payload.description,
         theme_id=payload.theme_id,
-        goal_ids=payload.goal_ids,
+        goal_items=[item.model_dump() for item in payload.goal_items],
+        created_by=current_user.id,
     )
     return repo.to_response(activity)
 
@@ -173,7 +174,8 @@ def update_activity(
         name=payload.name,
         description=payload.description,
         theme_id=payload.theme_id,
-        goal_ids=payload.goal_ids,
+        goal_items=[item.model_dump() for item in payload.goal_items] if payload.goal_items is not None else None,
+        created_by=current_user.id,
     )
     return repo.to_response(updated)
 
