@@ -512,9 +512,9 @@
 }
 
 .observation-cell.status-voorsprong {
-  background-color: var(--md-primary-light);
-  border-color: #7ee8c1;
-  color: #0d8862;
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+  color: #1565c0;
 }
 
 .observation-cell.no-observation {
@@ -721,11 +721,11 @@
 }
 
 .bulk-status-blue {
-  background: #f0f9fd;
-  border-color: #7ee8c1;
+  background: #e3f2fd;
+  border-color: #90caf9;
 }
 .bulk-status-blue.active {
-  background: linear-gradient(135deg, #42a5f5, #0d8862);
+  background: linear-gradient(135deg, #1565c0, #42a5f5);
 }
 
 .bulk-status-white {
@@ -869,8 +869,8 @@
 }
 
 .student-card.status-voorsprong {
-  background-color: var(--md-primary-light);
-  border-color: #7ee8c1;
+  background-color: #e3f2fd;
+  border-color: #90caf9;
 }
 
 .student-card strong,
