@@ -100,6 +100,7 @@ Maak een nieuw bestand aan met `sudo nano /usr/local/bin/obsapp-backup.sh`:
 # Dit script maakt een backup van de ObsApp database
 
 # Configuratie
+export HOME=/root
 BACKUP_DIR="/var/backups"
 DB_USER="obsapp_user"
 DB_NAME="obsapp"
@@ -113,19 +114,6 @@ mkdir -p "$BACKUP_DIR"
 # Voer pg_dump uit en comprimeer het resultaat
 # De wachtwoord wordt automatisch opgehaald uit .pgpass (zie Stap 3)
 /usr/bin/pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE"
-
-# Controleer of de backup succesvol was
-if [ $? -eq 0 ]; then
-    echo "Backup succesvol: $BACKUP_FILE"
-else
-    echo "Backup MISLUKT!" >&2
-    exit 1
-fi
-
-# Verwijder oude backups (ouder dan 7 dagen)
-find "$BACKUP_DIR" -name "obsapp_*.sql.gz" -mtime +$RETENTION_DAYS -delete
-
-echo "Oude backups opgeruimd. Behouden: $(ls $BACKUP_DIR/obsapp_*.sql.gz 2>/dev/null | wc -l) bestanden"
 ```
 
 Sla het bestand op en maak het uitvoerbaar:
@@ -205,7 +193,7 @@ Voeg deze regel toe aan het einde van het bestand:
 
 ```
 # Dagelijkse backup van ObsApp database om 02:00 uur
-0 2 * * * /usr/local/bin/obsapp-backup.sh >> /var/log/obsapp-backup.log 2>&1
+HOME=/root 0 2 * * * /usr/local/bin/obsapp-backup.sh >> /var/log/obsapp-backup.log 2>&1
 ```
 
 Sla het bestand op en verlaat de editor.
@@ -244,7 +232,7 @@ sudo -u postgres psql -c "DROP DATABASE obsapp;"
 sudo -u postgres psql -c "CREATE DATABASE obsapp OWNER obsapp_user;"
 
 # 3. Herstel de meest recente backup
-sudo -u postgres gunzip -c /var/backups/obsapp_*.sql.gz | sudo -u postgres psql obsapp
+gunzip -c /var/backups/obsapp_*.sql.gz | sudo -u postgres psql obsapp
 
 # 4. Start de backend weer
 sudo systemctl start obsapp-backend
@@ -324,14 +312,51 @@ Het project gebruikt momenteel `create_all()` met handmatige kolom-migraties in 
    cd backend
    uv run alembic init alembic
    ```
-2. Genereer initiële migratie van bestaande modellen
-3. Verwijder `create_all()` en `ensure_*_columns()` uit [`database.py`](backend/app/core/database.py:18)
-4. Voeg alle kolom-migraties toe als Alembic revisies
+2. Update `alembic/env.py` voor SQLAlchemy:
+   ```python
+   from app.core.database import Base
+   target_metadata = Base.metadata
+   ```
+3. Genereer initiële migratie van bestaande modellen:
+   ```bash
+   uv run alembic revision --autogenerate -m "Initial migration"
+   ```
+4. Controleer en test de migratie lokaal:
+   ```bash
+   uv run alembic downgrade base  # Wis schema
+   uv run alembic upgrade head    # Voer migraties uit
+   ```
+5. Verwijder `create_all()` en `ensure_*_columns()` uit [`database.py`](backend/app/core/database.py:18)
+6. Voeg migratie-check toe aan backend startup:
+   ```python
+   # In main.py
+   from alembic.config import Config
+   from alembic import command
+   
+   alembic_cfg = Config("alembic.ini")
+   command.upgrade(alembic_cfg, "head")
+   ```
 
-**Tijdelijke workaround (zonder Alembic):**
+**Migratie workflow in productie:**
 ```bash
-# Eerste keer starten (tabellen worden aangemaakt)
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+# Voor updates
+cd /opt/obsapp
+git pull origin main
+cd backend
+uv run alembic upgrade head
+sudo systemctl restart obsapp-backend
+```
+
+**Rollback procedure (als migratie faalt):**
+```bash
+# Controleer huidige versie
+uv run alembic current
+
+# Rollback naar vorige versie
+uv run alembic downgrade -1
+
+# Dan herstart backend
+sudo systemctl restart obsapp-backend
 ```
 
 ### 4.5 Systemd Service
@@ -394,16 +419,14 @@ server {
     listen [::]:80;
     server_name _;
 
-    # Redirect naar HTTPS (wanneer domeinnaam beschikbaar is)
-    # Zonder domeinnaam: comment deze regel uit en gebruik de onderstaande server block
-    return 301 https://$host$request_uri;
-}
-
-# Tijdelijke HTTP configuratie zonder domeinnaam (gebruik server IP)
-server {
-    listen 80;
-    listen [::]:80;
-    server_name _;
+    # Tijdelijke HTTP configuratie zonder domeinnaam (gebruik server IP)
+    # WANNEER je een domeinnaam hebt, voeg een aparte server block toe voor HTTPS redirect:
+    # server {
+    #     listen 80;
+    #     listen [::]:80;
+    #     server_name jouwdomein.be www.jouwdomein.be;
+    #     return 301 https://$host$request_uri;
+    # }
 
     # Frontend statische bestanden
     root /opt/obsapp/frontend/dist;
@@ -538,21 +561,22 @@ app.add_middleware(
 
 | # | Verbetering | Prioriteit | Bestand |
 |---|-------------|-----------|---------|
+| 0 | **Admin credentials in stdout** | KRITIEK | [`database.py`](backend/app/core/database.py:54) - seed print `admin@example.com / admin` naar stdout |
 | 1 | **Secret key uit environment** | KRITIEK | [`config.py`](backend/app/core/config.py:13) - `secret_key` heeft een hardcoded default |
 | 2 | **Debug=False** | KRITIEK | [`config.py`](backend/app/core/config.py:12) - `debug=True` is gevaarlijk in productie |
-| 3 | **Refresh tokens** | MEDIUM | [`security.py`](backend/app/core/security.py) - alleen access tokens, geen refresh |
-| 5 | **Alembic migraties** | HOOG | [`database.py`](backend/app/core/database.py) - vervang `create_all()` + handmatige kolom-migraties |
-| 6 | **Logging configuratie** | MEDIUM - Geen logging buiten `print()` statements |
-| 7 | **Request logging** | MEDIUM - Geen request/response logging |
-| 8 | **Email error handling** | MEDIUM | [`registration.py`](backend/app/api/registration.py:107) - `except Exception: pass` zwijgt over fouten |
-| 9 | **Input validatie** | MEDIUM - Controleer of alle inputs correct gevalideerd worden |
-| 10 | **Health check uitbreiden** | LAAG | [`main.py`](backend/app/main.py:128) - alleen `{"status": "ok"}`, geen DB check |
+| 4 | **Backup alerting** | KRITIEK | Monitor failed backups, stuur alerts naar admin |
+| 5 | **Alembic migraties** | HOOG | [`database.py`](backend/app/core/database.py) - vervang `create_all()` |
+| 6 | **Structured logging** | HOOG | Geen logging buiten `print()`, gebruik `logging` module |
+| 7 | **Health check uitbreiden** | MEDIUM | Voeg DB connectivity check toe |
+| 8 | **Email error handling** | MEDIUM | [`registration.py`](backend/app/api/registration.py:107) - log fouten in plaats van silently fail |
+| 9 | **Input validatie** | MEDIUM - Controleer op SQL injection, XSS |
+| 10 | **Refresh tokens** | LAAG | Alleen access tokens volstaan voor deze use case |
 
 ### 7.2 Frontend
 
 | # | Verbetering | Prioriteit | Bestand |
 |---|-------------|-----------|---------|
-| 1 | **API base URL configuratie** | KRITIEK | [`auth.ts`](frontend/src/services/auth.ts:3) - `baseURL: '/api'` is OK met reverse proxy, maar geen environment vars |
+| 1 | **API base URL configuratie** | LAAG | [`auth.ts`](frontend/src/services/auth.ts:3) - `baseURL: '/api'` is OK met reverse proxy, maar geen environment vars |
 | 2 | **Error boundaries** | MEDIUM - Geen React error boundaries |
 | 3 | **Loading states** | MEDIUM - Controleer of alle async calls loading states hebben |
 | 4 | **Environment variabelen** | LAAG | Gebruik `import.meta.env.VITE_*` voor configuratie |
@@ -569,7 +593,445 @@ app.add_middleware(
 
 ---
 
-## 8. Docker Configuratie (Optioneel)
+## 7.4 Rate Limiting op Login
+
+Voeg `slowapi` toe aan dependencies:
+
+```bash
+cd backend
+uv add slowapi
+```
+
+Implementeer rate limiting in [`auth.py`](backend/app/api/auth.py):
+
+```python
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
+@router.post("/login")
+@limiter.limit("5/minute")
+async def login(request: Request, credentials: LoginRequest, db: Session = Depends(get_db)):
+    # Login logic
+    pass
+```
+
+Add to main.py:
+```python
+from slowapi.errors import RateLimitExceeded
+from slowapi import _rate_limit_exceeded_handler
+
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+```
+
+**Threshold:** 5 pogingen per minuut per IP address. Na 5 pogingen: 429 Too Many Requests.
+
+---
+
+## 7.5 Structured Logging
+
+Vervang `print()` statements met `logging` module. Update [`main.py`](backend/app/main.py):
+
+```python
+import logging
+import json
+from logging.handlers import RotatingFileHandler
+
+# Configureer logger
+logger = logging.getLogger("obsapp")
+logger.setLevel(logging.INFO)
+
+# File handler met rotation (50MB max, 10 backups)
+file_handler = RotatingFileHandler(
+    "/var/log/obsapp-backend.log",
+    maxBytes=50_000_000,
+    backupCount=10
+)
+
+# JSON formatter voor machine-readability
+class JSONFormatter(logging.Formatter):
+    def format(self, record):
+        log_data = {
+            "timestamp": self.formatTime(record),
+            "level": record.levelname,
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+            "line": record.lineno,
+        }
+        return json.dumps(log_data)
+
+file_handler.setFormatter(JSONFormatter())
+logger.addHandler(file_handler)
+
+# Health check met DB status
+@app.get("/health")
+async def health_check(db: Session = Depends(get_db)):
+    try:
+        db.execute("SELECT 1")
+        logger.info("Health check passed")
+        return {"status": "ok", "database": "connected"}
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {"status": "unhealthy", "database": "disconnected"}, 503
+```
+
+**Log location:** `/var/log/obsapp-backend.log`
+
+---
+
+## 7.6 Error Handling voor Kritieke Operaties
+
+Update [`registration.py`](backend/app/api/registration.py) email handling:
+
+```python
+import logging
+
+logger = logging.getLogger("obsapp")
+
+async def send_activation_email(email: str, token: str):
+    try:
+        # SMTP logic
+        logger.info(f"Activation email sent to {email}")
+    except smtplib.SMTPException as e:
+        logger.error(f"SMTP error for {email}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Email service unavailable")
+    except Exception as e:
+        logger.error(f"Unexpected email error: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Email service error")
+```
+
+---
+
+## 7.7 Backup Alerting & Monitoring
+
+Update het backup script met error notifications:
+
+```bash
+#!/bin/bash
+# /usr/local/bin/obsapp-backup.sh
+
+BACKUP_DIR="/var/backups"
+DB_USER="obsapp_user"
+DB_NAME="obsapp"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/obsapp_$DATE.sql.gz"
+RETENTION_DAYS=7
+ADMIN_EMAIL="admin@jouwdomein.be"
+
+mkdir -p "$BACKUP_DIR"
+
+# Backup maken
+/usr/bin/pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE"
+
+if [ $? -eq 0 ]; then
+    BACKUP_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+    echo "✓ Backup succesvol: $BACKUP_FILE ($BACKUP_SIZE)" | tee -a /var/log/obsapp-backup.log
+    
+    # Optioneel: stuur email bij succes
+    # echo "Backup completed at $(date)" | mail -s "ObsApp Backup Success" "$ADMIN_EMAIL"
+else
+    ERROR_MSG="Backup MISLUKT op $(date)"
+    echo "✗ $ERROR_MSG" >&2 | tee -a /var/log/obsapp-backup.log
+    
+    # KRITIEK: stuur alert email
+    echo "Database backup failed. Check /var/log/obsapp-backup.log on the server." | \
+        mail -s "ALERT: ObsApp Backup Failed" "$ADMIN_EMAIL"
+    exit 1
+fi
+
+# Opruimen
+find "$BACKUP_DIR" -name "obsapp_*.sql.gz" -mtime +$RETENTION_DAYS -delete
+RETAINED=$(ls "$BACKUP_DIR"/obsapp_*.sql.gz 2>/dev/null | wc -l)
+echo "Oude backups opgeruimd. Behouden: $RETAINED bestanden"
+```
+
+**Monitoring checklist:**
+```bash
+# Controleer laatst geslaagde backup
+ls -lh /var/backups/obsapp_*.sql.gz | tail -1
+
+# Controleer backup log op fouten
+grep -E "MISLUKT|failed" /var/log/obsapp-backup.log
+
+# Test backup alerting (handmatig)
+sudo /usr/local/bin/obsapp-backup.sh
+```
+
+---
+
+## 7.8 Deployment Rollback Strategy
+
+Voor veilige updates met rollback mogelijkheid:
+
+```bash
+# Op de server: maak backup van huidige versie
+cd /opt/obsapp
+git tag pre-update-$(date +%Y%m%d%H%M%S)
+
+# Pull nieuwe code
+git pull origin main
+
+# Test migraties (DRY RUN)
+cd backend
+uv run alembic upgrade head --sql > /tmp/migration-plan.sql
+
+# Review migratie
+cat /tmp/migration-plan.sql
+
+# Voer update uit
+cd /opt/obsapp/backend
+uv sync --no-dev
+uv run alembic upgrade head
+sudo systemctl restart obsapp-backend
+
+# Test health
+sleep 2
+curl http://localhost:8000/health
+
+# Als iets misgaat: ROLLBACK
+git reset --hard pre-update-$(date +%Y%m%d%H%M%S)
+uv run alembic downgrade -1
+sudo systemctl restart obsapp-backend
+```
+
+---
+
+## 7.9 Load Testing & Worker Optimization
+
+Bepaal het juiste aantal workers en cache strategie:
+
+```bash
+# Installeer Apache Bench
+sudo apt install -y apache2-utils
+
+# Test backend met 100 requests, 10 concurrent
+ab -n 100 -c 10 http://localhost:8000/health
+
+# Monitor performance
+watch -n 1 'ps aux | grep uvicorn | grep -v grep'
+```
+
+**Expected baseline (CX32 met 4 workers):**
+- Requests per second: 50-100 (afhankelijk van query complexity)
+- Response time: 50-200ms
+- CPU utilization: 20-40% bij normaal load
+
+**Aanpassingen:**
+- Meer workers nodig? Verhoog naar 6-8 (test eerst!)
+- Minder concurrent users? Verlaag naar 2 workers
+- Note: `--workers auto` is geen geldige uvicorn CLI vlag; gebruik eenFixed aantal workers
+
+---
+
+## 7.10 Certificate Renewal Monitoring
+
+Let's Encrypt certificaten vernieuwen automatisch, maar controleer regelmatig:
+
+```bash
+# Controleer vervaldatum
+sudo openssl x509 -in /etc/letsencrypt/live/jouwdomein.be/cert.pem -noout -dates
+
+# Test renewal (dry run)
+sudo certbot renew --dry-run
+
+# Setup renewal check in cron
+sudo crontab -e
+```
+
+Voeg toe:
+```
+# Weekly certificate renewal check
+0 12 * * 0 certbot renew --quiet && systemctl reload nginx
+```
+
+**Alert setup:** Monitor `/var/log/letsencrypt/` op errors:
+```bash
+sudo tail -f /var/log/letsencrypt/letsencrypt.log | grep -E "ERROR|CRITICAL"
+```
+
+---
+
+## 7.11 Data Retention & GDPR Compliance
+
+Voor student data:
+
+```sql
+-- Verwijder student accounts die ouder zijn dan 90 dagen (inactief)
+-- Run deze query maandelijks via cron
+
+DELETE FROM users 
+WHERE role = 'student' 
+  AND last_login < NOW() - INTERVAL '90 days'
+  AND account_type = 'demo';
+
+-- Archiveer oude uploads (student afbeeldingen ouder dan 1 jaar)
+-- Run deze script maandelijks
+-- find /opt/obsapp/backend/uploads/students -type f -mtime +365
+```
+
+**Aanbeveling:** Implement een data retention policy tabel:
+```python
+# backend/app/models/retention.py
+class DataRetentionPolicy(Base):
+    __tablename__ = "data_retention_policies"
+    
+    id = Column(Integer, primary_key=True)
+    user_role = Column(String)  # admin, teacher, student
+    days_before_delete = Column(Integer)  # 90, 365, etc
+    last_cleanup = Column(DateTime)
+```
+
+---
+
+## 7.12 Staging Environment
+
+Voordat naar productie deployen:
+
+**Setup:**
+1. Clone productie database naar staging (wekelijks):
+   ```bash
+   # On staging server
+   sudo pg_dump -U obsapp_user -h prod.server.ip obsapp | psql -U obsapp_user obsapp_staging
+   ```
+
+2. Deploy code to staging before production
+3. Run smoke tests
+4. Verify database migrations work
+5. Check performance baseline
+
+**Test checklist:**
+```bash
+# Login endpoint
+curl -X POST http://staging.obsapp.local/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@test.com", "password": "test123"}'
+
+# Create resource
+curl -X POST http://staging.obsapp.local/api/students \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"name": "Test Student"}'
+
+# File upload
+curl -X POST http://staging.obsapp.local/api/uploads \
+  -F "file=@test.jpg"
+```
+
+---
+
+## 7.13 Incident Response Playbook
+
+**Scenario: Backend is Down**
+```bash
+1. Check status
+   sudo systemctl status obsapp-backend
+
+2. Review logs
+   journalctl -u obsapp-backend -n 50 --no-pager
+
+3. Restart service
+   sudo systemctl restart obsapp-backend
+
+4. Verify health
+   curl http://localhost:8000/health
+
+5. If still failing: rollback
+   git reset --hard HEAD~1
+   sudo systemctl restart obsapp-backend
+```
+
+**Scenario: Database is Down**
+```bash
+1. Check PostgreSQL
+   sudo systemctl status postgresql
+
+2. Check disk space
+   df -h /var/lib/postgresql
+
+3. Restart database
+   sudo systemctl restart postgresql
+
+4. Restore from backup (if needed)
+   See section 3 "Restore procedure"
+```
+
+**Scenario: High CPU/Memory**
+```bash
+1. Monitor processes
+   top -b -n 1
+
+2. Kill runaway worker
+   sudo kill -9 <PID>
+
+3. Check limits in systemd service
+   grep -E "CPUQuota|MemoryLimit" /etc/systemd/system/obsapp-backend.service
+
+4. Consider scaling
+   Increase workers if CPU consistently >70%
+```
+
+---
+
+## 7.14 Enhanced Backup Strategy
+
+Upgrade naar stratified backup retention:
+
+```bash
+#!/bin/bash
+# /usr/local/bin/obsapp-backup-stratified.sh
+
+BACKUP_DIR="/var/backups"
+DB_USER="obsapp_user"
+DB_NAME="obsapp"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="$BACKUP_DIR/obsapp_$DATE.sql.gz"
+
+# Backup
+/usr/bin/pg_dump -U "$DB_USER" "$DB_NAME" | gzip > "$BACKUP_FILE"
+
+if [ $? -eq 0 ]; then
+    # Daily backups: keep 7 days
+    find "$BACKUP_DIR" -name "obsapp_*.sql.gz" -mtime +7 -delete
+    
+    # Weekly backups: keep on Sundays for 4 weeks
+    WEEK_BACKUP="$BACKUP_DIR/obsapp_weekly_$(date +%Y_week%U).sql.gz"
+    if [ "$(date +%u)" == "0" ]; then
+        cp "$BACKUP_FILE" "$WEEK_BACKUP"
+        find "$BACKUP_DIR" -name "obsapp_weekly_*.sql.gz" -mtime +28 -delete
+    fi
+    
+    # Monthly backup: keep on 1st of month for 1 year
+    if [ "$(date +%d)" == "01" ]; then
+        MONTH_BACKUP="$BACKUP_DIR/obsapp_monthly_$(date +%Y_%m).sql.gz"
+        cp "$BACKUP_FILE" "$MONTH_BACKUP"
+        find "$BACKUP_DIR" -name "obsapp_monthly_*.sql.gz" -mtime +365 -delete
+    fi
+    
+    echo "✓ Backup completed: $(du -h "$BACKUP_FILE" | cut -f1)"
+else
+    echo "✗ Backup failed!" >&2
+    exit 1
+fi
+```
+
+Update crontab:
+```
+# Backup every 6 hours
+HOME=/root 0 */6 * * * /usr/local/bin/obsapp-backup-stratified.sh >> /var/log/obsapp-backup.log 2>&1
+```
+
+| Retention Level | Frequency | Retention |
+|---|---|---|
+| Daily | Every 6 hours | 7 days |
+| Weekly | Every Sunday | 4 weeks |
+| Monthly | 1st of month | 1 year |
+| Disaster | Manual (keep offsite) | Indefinite |
+
+---
+
+## 8. Docker (Optioneel)
 
 Docker is **niet noodzakelijk** voor deze applicatie op een enkele CX32 server. Het is een handige optie voor consistentie en onderhoud, maar introduceert ook extra complexiteit.
 
@@ -734,7 +1196,7 @@ SELECT count(*) FROM pg_stat_activity WHERE datname = 'obsapp';
 - [ ] **Fail2ban** geconfigureerd voor SSH en Nginx
 - [ ] **Database** wachtwoord is sterk en uniek
 - [ ] **Admin gebruiker** wachtwoord gewijzigd na eerste login
-- [x] **Rate limiting** geïmplementeerd op login endpoint (5 requests/minuut per IP via slowapi)
+- [ ] **Rate limiting** geïmplementeerd op login endpoint
 - [ ] **Backup** strategie actief en getest
 - [ ] **.env** niet gecommit naar repository
 - [ ] **Student uploads** map heeft correcte permissions (niet wereld-leesbaar)
@@ -752,34 +1214,55 @@ SELECT count(*) FROM pg_stat_activity WHERE datname = 'obsapp';
 5. **Code klonen** naar `/opt/obsapp`
 6. **Backend .env** configureren met productie waarden
 7. **Backend dependencies** installeren (`uv sync --no-dev`)
-8. **Systemd service** aanmaken voor backend
-9. **Frontend build** uitvoeren (`npm run build`)
-10. **Nginx** configureren als reverse proxy (gebruik server IP in plaats van domeinnaam)
-11. **Backup cronjob** instellen
+8. **Database migraties setup** (Alembic)
+9. **Rate limiting** implementeren (slowapi)
+10. **Structured logging** configureren
+11. **Systemd service** aanmaken voor backend
+12. **Frontend build** uitvoeren (`npm run build`)
+13. **Nginx** configureren als reverse proxy
+14. **Let's Encrypt** SSL certificaat aanvragen
+15. **Backup cronjob** instellen met alerting
+16. **Staging environment** opzetten (optioneel maar aanbevolen)
+17. **Load testing** uitvoeren
+18. **Incident response** playbook testen
 
 > **Zonder domeinnaam:** Stappen 1-10 kunnen volledig uitgevoerd worden zonder domeinnaam. De app is bereikbaar via het server IP adres. SSL certificaat (stap 11) kan later toegevoegd worden wanneer je een domeinnaam hebt.
+
 
 ### Updates Deployen
 
 ```bash
 cd /opt/obsapp
+
+# Maak backup van huidige versie
+git tag pre-update-$(date +%Y%m%d%H%M%S)
+
+# Pull nieuwe code
 git pull origin main
 
-# Backend
+# Backend update met migraties
 cd backend
 uv sync --no-dev
-sudo systemctl restart obsapp-backend
+uv run alembic upgrade head
 
-# Frontend
+# Test health
+sudo systemctl restart obsapp-backend
+sleep 2
+curl http://localhost:8000/health
+
+# Frontend update
 cd ../frontend
 npm install
 npm run build
+
+# Reload web server
 sudo systemctl reload nginx
+
+# Logs controleren
+journalctl -u obsapp-backend -n 20 --no-pager
 ```
 
----
-
-## 12. Kosten Overzicht (Maandelijks)
+## 12. Volgende Stappen (Concrete Checklist)
 
 | Dienst | Kosten |
 |--------|--------|
@@ -792,19 +1275,65 @@ sudo systemctl reload nginx
 
 ---
 
-## 13. Volgende Stappen
+## 13. Kosten Overzicht (Maandelijks)
 
-1. [x] **Rate limiting op login** geïmplementeerd (5 requests/minuut per IP via slowapi)
-2. [ ] **Optioneel:** Koop een domeinnaam en richt deze op de server IP (voor HTTPS en custom URL)
-3. [ ] Configureer Alembic voor database migraties
-4. [ ] Genereer sterke SECRET_KEY
-5. [ ] Stel SMTP provider op (SendGrid/Mailgun)
-6. [ ] Maak `.env.example` aan voor ontwikkelaars
-7. [ ] Implementeer refresh tokens
-8. [ ] Voeg logging toe aan backend
-9. [ ] Test backup/restore procedure
-10. [ ] Configureer monitoring (UptimeRobot)
+### Week 1: Critical Security & Backup (Go-live prerequisites)
+- [ ] Implementeer **rate limiting** op login endpoint (slowapi)
+- [ ] Configureer **Alembic** voor database migraties
+- [ ] Setup **backup alerting** (email notifications)
+- [ ] Test **backup/restore procedure** end-to-end
+- [ ] Genereer sterke **SECRET_KEY** en plaats in `.env`
+- [ ] Zet **DEBUG=False** in productie config
+
+### Week 2: Logging & Monitoring
+- [ ] Voeg **structured logging** toe (JSON format)
+- [ ] Configureer **log rotation** (50MB files)
+- [ ] Extend **health check** met database connectivity
+- [ ] Setup **certificate renewal monitoring**
+- [ ] Implementeer **backup alerting** via email
+
+### Week 3: Deployment & Testing
+- [ ] Zet **staging environment** op met production data
+- [ ] Voer **load testing** uit (Apache Bench)
+- [ ] Document **incident response playbook**
+- [ ] Test **rollback procedure** in staging
+- [ ] Stel **data retention policies** in
+
+### Week 4: Final Checks & Automation
+- [ ] Maak `.env.example` aan voor ontwikkelaars
+- [ ] Stel SMTP provider op (SendGrid/Mailgun)
+- [ ] Automatiseer **stratified backups** (daily/weekly/monthly)
+- [ ] Setup **uptime monitoring** (UptimeRobot)
+- [ ] Review **security checklist** compleet
+- [ ] **Go-live!**
+
+### Post-Launch (Ongoing)
+- Monitor backup logs dagelijks
+- Review error logs wekelijks
+- Performance tuning gebaseerd op load tests
+- Plan staging synchronisatie (data refresh)
+- Dokumenteer lessons learned
 
 ---
 
-*Laatst bijgewerkt: 2026-07-20*
+## 14. Final Checklist voor Go-Live
+
+1. [ ] **Alembic setup**: `cd backend && uv run alembic init alembic && uv run alembic revision --autogenerate -m "Initial migration"`
+2. [ ] **Rate limiting**: `uv add slowapi` en implementeer limiter op `/login` endpoint
+3. [ ] **Structured logging**: Voeg JSON logger toe aan `main.py`
+4. [ ] **Health check DB**: Extend `/health` met `db.execute("SELECT 1")`
+5. [ ] **Backup alerting**: Update script met email notifications
+6. [ ] **Load testing**: Voer `ab -n 100 -c 10 http://localhost:8000/health` uit
+7. [ ] **Staging setup**: Duplicate production config op aparte server/VM
+8. [ ] **Incident playbook**: Document handover en troubleshooting procedures
+9. [ ] **Certificate renewal**: Test `certbot renew --dry-run`
+10. [ ] **Data retention**: Maak cleanup script voor inactieve student accounts
+11. [ ] **Security checklist**: Alle items groen (zie sectie 10)
+12. [ ] **DNS configured**: Domeinnaam wijst naar server IP
+13. [ ] **SSL working**: HTTPS verbinding werkt zonder fouten
+14. [ ] **Backup tested**: Restore procedure getest en werkend
+15. [ ] **Team informed**: Handover procedures geëindigd
+
+---
+
+*Laatst bijgewerkt: 2026-07-22*
