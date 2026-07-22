@@ -33,3 +33,4 @@ class Goal(Base):
     children = relationship("Goal", back_populates="parent_goal")
     koepel = relationship("Koepel", back_populates="goals")
     observation_goals = relationship("ObservationGoal", back_populates="goal")
+    activities = relationship("Activity", secondary="activity_goals", back_populates="goals")

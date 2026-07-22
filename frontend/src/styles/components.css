@@ -408,6 +408,33 @@ i/* Modern Card component */
   color: white;
 }
 
+/* Edit icon button */
+.edit-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-icon-button:hover {
+  background-color: var(--md-primary-light);
+  color: var(--md-primary);
+}
+
+.edit-icon-button:active {
+  background-color: var(--md-primary);
+  color: white;
+}
+
 /* User list */
 .user-list {
   display: flex;

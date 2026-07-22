@@ -21,5 +21,6 @@ class School(Base):
     observations = relationship("Observation", back_populates="school")
     student_observations = relationship("StudentObservation", back_populates="school")
     observation_goals = relationship("ObservationGoal", back_populates="school")
+    activities = relationship("Activity", back_populates="school")
     school_years = relationship("SchoolYear", back_populates="school", cascade="all, delete-orphan")
     koepel_ref = relationship("Koepel", back_populates="schools")

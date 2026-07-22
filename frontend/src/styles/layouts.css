@@ -117,6 +117,16 @@
   color: var(--md-text-primary);
 }
 
+.table-filter-select {
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1.5px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-surface);
+  font-weight: 500;
+  color: var(--md-text-primary);
+}
+
 .table-header h2,
 .table-header p {
   text-align: left;

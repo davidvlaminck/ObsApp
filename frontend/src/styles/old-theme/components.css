@@ -348,6 +348,32 @@
   background-color: rgba(211, 47, 47, 0.14);
 }
 
+/* Edit icon button */
+.edit-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--md-text-secondary);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.edit-icon-button:hover {
+  background-color: rgba(25, 118, 210, 0.08);
+  color: var(--md-primary);
+}
+
+.edit-icon-button:active {
+  background-color: rgba(25, 118, 210, 0.14);
+}
+
 /* User list */
 .user-list {
   display: flex;

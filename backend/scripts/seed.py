@@ -15,6 +15,7 @@ from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.student_observation import StudentObservation
 from app.models.theme import Theme
+from app.models.activity import Activity, ActivityGoal
 from app.core.security import get_password_hash
 
 
@@ -641,6 +642,35 @@ def seed_themes():
         db.close()
 
 
+def seed_activities(school_id: int, teacher_id: int):
+    db = SessionLocal()
+    try:
+        theme = db.query(Theme).filter(Theme.name == "De appel").first()
+        if not theme:
+            return
+
+        opstap_goals = db.query(Goal).filter(Goal.goal_type == "OP_STAP", Goal.subject == "Wiskunde").limit(2).all()
+
+        activity = Activity(
+            school_id=school_id,
+            name="Rekenspelletjes met appels",
+            description="Leuke activiteiten met appels om rekenvaardigheid te oefenen.",
+            theme_id=theme.id,
+        )
+        db.add(activity)
+        db.commit()
+        db.refresh(activity)
+
+        if opstap_goals:
+            activity.goals = opstap_goals
+            db.add(activity)
+            db.commit()
+
+        print("Default activities seeded.")
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     reset_database()
     seed_koepels()
@@ -649,5 +679,6 @@ if __name__ == "__main__":
     seed_vo_goals()
     seed_opstap_goals()
     seed_themes()
+    seed_activities(school_id=1, teacher_id=2)
     link_demo_observation_goal()
     seed_static_class_observations()

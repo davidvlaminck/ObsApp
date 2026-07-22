@@ -338,6 +338,91 @@ export async function deleteTheme(themeId: number): Promise<void> {
 }
 
 
+export interface ActivityGoalResponse {
+  id: number
+  code: string | null
+  title: string | null
+  goal_type: string | null
+}
+
+export interface ActivityResponse {
+  id: number
+  school_id: number
+  name: string
+  description: string | null
+  theme_id: number | null
+  theme: { id: number; name: string; description: string | null } | null
+  goals: ActivityGoalResponse[]
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface ActivityCreate {
+  name: string
+  description?: string | null
+  theme_id?: number | null
+  goal_ids: number[]
+}
+
+export interface AvailableGoal {
+  id: number
+  code: string
+  title: string
+  subject: string
+  domain: string | null
+  subdomain: string | null
+  goal_type: string
+}
+
+export async function getActivities(filters?: { theme_id?: number }): Promise<ActivityResponse[]> {
+  const response = await api.get<ActivityResponse[]>('/activities', { params: filters })
+  return response.data
+}
+
+export async function getActivity(activityId: number): Promise<ActivityResponse> {
+  const response = await api.get<ActivityResponse>(`/activities/${activityId}`)
+  return response.data
+}
+
+export async function createActivity(data: ActivityCreate): Promise<ActivityResponse> {
+  const response = await api.post<ActivityResponse>('/activities', data)
+  return response.data
+}
+
+export async function updateActivity(activityId: number, data: ActivityCreate): Promise<ActivityResponse> {
+  const response = await api.put<ActivityResponse>(`/activities/${activityId}`, data)
+  return response.data
+}
+
+export async function deleteActivity(activityId: number): Promise<void> {
+  await api.delete(`/activities/${activityId}`)
+}
+
+export async function removeActivityGoal(activityId: number, goalId: number): Promise<void> {
+  await api.delete(`/activities/${activityId}/goals/${goalId}`)
+}
+
+export async function getAvailableGoals(filters?: { subject?: string; domain?: string; subdomain?: string; q?: string }): Promise<AvailableGoal[]> {
+  const response = await api.get<AvailableGoal[]>('/activities/available-goals', { params: filters })
+  return response.data
+}
+
+export async function getActivitySubjects(): Promise<string[]> {
+  const response = await api.get<string[]>('/activities/subjects')
+  return response.data
+}
+
+export async function getActivityDomains(subject?: string): Promise<string[]> {
+  const response = await api.get<string[]>('/activities/domains', { params: { subject } })
+  return response.data
+}
+
+export async function getActivitySubdomains(subject?: string, domain?: string): Promise<string[]> {
+  const response = await api.get<string[]>('/activities/subdomains', { params: { subject, domain } })
+  return response.data
+}
+
+
 export function setToken(token: string) {
   localStorage.setItem('access_token', token)
 }
