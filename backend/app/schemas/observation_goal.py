@@ -26,7 +26,7 @@ class ObservationGoalCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     subject: str = Field(min_length=1, max_length=100)
     domain: str = Field(min_length=1, max_length=200)
-    subdomain: str = Field(min_length=1, max_length=100)
+    subdomain: str | None = Field(default=None, min_length=1, max_length=100)
     goal_id: Optional[int] = None
     class_id: Optional[int] = None
 
@@ -46,7 +46,7 @@ class ObservationGoalResponse(BaseModel):
     name: str
     subject: str
     domain: str
-    subdomain: str
+    subdomain: str | None
     goal_id: Optional[int] = None
     class_id: Optional[int] = None
     goal: Optional[GoalSummary] = None

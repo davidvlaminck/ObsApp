@@ -306,8 +306,8 @@ export default function ObservationsPage() {
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!form.subject || !form.domain || !form.subdomain) {
-      setError('Kies een vak, domein en subdomein.')
+    if (!form.subject || !form.domain) {
+      setError('Kies een vak en domein.')
       return
     }
 
@@ -371,7 +371,7 @@ export default function ObservationsPage() {
       <div className="management-grid observations-grid">
         <section className="form-card card">
           <h2>Observatiedoel aanmaken</h2>
-          <p className="text-muted">Naam, vak en subdomein zijn verplicht. Een Op Stap doel koppelen is optioneel.</p>
+          <p className="text-muted">Naam, vak en domein zijn verplicht. Subdomein en een Op Stap doel koppelen zijn optioneel.</p>
 
           <form onSubmit={handleCreate}>
             <div className="form-group">

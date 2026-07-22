@@ -54,7 +54,7 @@ export interface ObservationGoalResponse {
   name: string
   subject: string
   domain: string
-  subdomain: string
+  subdomain: string | null
   goal_id: number | null
   class_id: number | null
   goal: GoalSummary | null
@@ -66,7 +66,7 @@ export interface ObservationGoalCreate {
   name: string
   subject: string
   domain: string
-  subdomain: string
+  subdomain?: string | null
   goal_id?: number | null
   class_id?: number | null
 }
