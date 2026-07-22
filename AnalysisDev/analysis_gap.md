@@ -58,18 +58,21 @@ Na te kijken:
 - [ ] doelen verwijderen uit het observeer scherm
 - [x] leerlingen selecteren
 - [x] observatie invoeren met datum (van vandaag), status en commentaar
-- [ ] in bulk status toepassen (op alle leerlingen, of alle leerlingen zonder status, of aan te klikken)
+- [x] in bulk status toepassen (op alle leerlingen, of alle leerlingen zonder status, of aan te klikken)
+- [ ] in bulk status toepassen op alle doelen van één leerling
 - [ ] ? bekijken welke observaties zijn toegevoegd door anderen
 
 ### Dashboard
 
 - [ ] tonen welke doelen nog niet geobserveerd zijn
-- [ ] Overzicht per leerling: volgende/vorige knop voorzien naast keuzelijst
+- [x] Overzicht per leerling: volgende/vorige knop voorzien naast keuzelijst
+- [ ] Overzicht per leerling: voortgang tonen van doelen (alle kleurtjes na elkaar zetten per doel)
 
 # TODO
 
 - demo data linkt doelen fout aan omschrijven
 - thema's > activiteiten > doelen koppelen
+- schoolgebonden doelen toelaten: vak > schooleigen doelen, domein: welbevinden / betrokkeneheid, subdomein: (leeg)
 
 thema de appel
 activiteiten
@@ -95,9 +98,6 @@ poppenkamer
 hoeken
 opruimmen
 speeltijd
-
-
-
 
 activiteit label + omschrijving + doelen selecteren en koppelen
 - 
