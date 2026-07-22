@@ -306,6 +306,38 @@ export async function getMySchool(): Promise<SchoolResponse | null> {
 }
 
 
+export interface ThemeResponse {
+  id: number
+  name: string
+  description: string | null
+  created_at: string | null
+}
+
+export interface ThemeCreate {
+  name: string
+  description?: string | null
+}
+
+export async function getThemes(): Promise<ThemeResponse[]> {
+  const response = await api.get<ThemeResponse[]>('/themes')
+  return response.data
+}
+
+export async function createTheme(data: ThemeCreate): Promise<ThemeResponse> {
+  const response = await api.post<ThemeResponse>('/themes', data)
+  return response.data
+}
+
+export async function updateTheme(themeId: number, data: ThemeCreate): Promise<ThemeResponse> {
+  const response = await api.put<ThemeResponse>(`/themes/${themeId}`, data)
+  return response.data
+}
+
+export async function deleteTheme(themeId: number): Promise<void> {
+  await api.delete(`/themes/${themeId}`)
+}
+
+
 export function setToken(token: string) {
   localStorage.setItem('access_token', token)
 }

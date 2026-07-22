@@ -18,6 +18,7 @@ import RegistrationPage from './pages/RegistrationPage'
 import KoepelSelectionPage from './pages/KoepelSelectionPage'
 import DemoPage from './pages/DemoPage'
 import DemoSchoolPage from './pages/DemoSchoolPage'
+import ThemesPage from './pages/ThemesPage'
 
 function App() {
   return (
@@ -105,6 +106,14 @@ function App() {
             <SchoolAccessRoute>
               <ManagementPage />
             </SchoolAccessRoute>
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/management/themes"
+        element={
+          <AppLayout>
+            <ThemesPage />
           </AppLayout>
         }
       />

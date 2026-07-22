@@ -14,6 +14,7 @@ from app.models.user import User
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.student_observation import StudentObservation
+from app.models.theme import Theme
 from app.core.security import get_password_hash
 
 
@@ -623,6 +624,23 @@ def seed_static_class_observations():
         db.close()
 
 
+def seed_themes():
+    db = SessionLocal()
+    try:
+        defaults = [
+            ("De appel", "Een thema rond het fruit de appel, gebruikt voor verschillende leeractiviteiten."),
+            ("De mol", "Een speels thema waarin de mol centraal staat voor avontuurlijke opdrachten."),
+        ]
+        for name, description in defaults:
+            existing = db.query(Theme).filter(Theme.name == name).first()
+            if not existing:
+                db.add(Theme(name=name, description=description))
+        db.commit()
+        print("Default themes seeded.")
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     reset_database()
     seed_koepels()
@@ -630,5 +648,6 @@ if __name__ == "__main__":
     seed_mow_user()
     seed_vo_goals()
     seed_opstap_goals()
+    seed_themes()
     link_demo_observation_goal()
     seed_static_class_observations()

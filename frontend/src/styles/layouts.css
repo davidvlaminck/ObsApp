@@ -28,6 +28,15 @@
 .form-card {
   position: sticky;
   top: 24px;
+  padding: 24px;
+}
+
+.table-card .form-card {
+  position: static;
+  margin: 16px;
+  padding: 24px;
+  border-radius: var(--md-radius-md);
+  box-shadow: var(--md-shadow-sm);
 }
 
 .page-header {

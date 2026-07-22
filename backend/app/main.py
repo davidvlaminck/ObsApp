@@ -9,7 +9,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import auth, goals, observation_goals, observations, schools, student_observations, users, registration
+from app.api import auth, goals, observation_goals, observations, schools, student_observations, themes, users, registration
 from app.core.limiter import limiter
 
 app = FastAPI(
@@ -36,6 +36,7 @@ app.include_router(observations.router, prefix="/api")
 app.include_router(student_observations.router, prefix="/api")
 app.include_router(schools.router, prefix="/api")
 app.include_router(users.router, prefix="/api")
+app.include_router(themes.router, prefix="/api")
 app.include_router(registration.router, prefix="/api")
 
 # Mount static files for student images

@@ -26,6 +26,7 @@ import PeopleIcon from '@mui/icons-material/People'
 import MenuIcon from '@mui/icons-material/Menu'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
+import PaletteIcon from '@mui/icons-material/Palette'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -47,18 +48,19 @@ const menuItems: MenuItem[] = [
   { label: 'Overzicht per klas', to: '/overzicht', icon: AssignmentIcon },
   { label: 'Overzicht per kleuter', to: '/overzicht/kleuter', icon: AssignmentIcon },
   { label: 'Observeren', to: '/observeren', icon: VisibilityIcon },
-  {
-    label: 'Beheer',
-    to: '/management',
-    icon: AssignmentIcon,
-    children: [
-      { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
-      { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
-      { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
-      { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
-      { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
-    ],
-  },
+      {
+        label: 'Beheer',
+        to: '/management',
+        icon: AssignmentIcon,
+        children: [
+          { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
+          { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
+          { label: 'Thema\'s', to: '/management/themes', icon: PaletteIcon },
+          { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
+          { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
+          { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
+        ],
+      },
 ]
 
 const filterMenuItems = (items: MenuItem[], user: UserResponse | null): MenuItem[] => {
