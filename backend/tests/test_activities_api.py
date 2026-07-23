@@ -13,6 +13,7 @@ from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.school import School
 from app.models.theme import Theme
+from app.models.user import User
 from app.schemas.user import UserResponse
 
 
@@ -282,39 +283,104 @@ def test_delete_activity_observation_goal_success(activity_client: TestClient, a
     assert len(detail["goals"]) == 0
 
 
-def test_available_goals_for_katholiek_returns_opstap(activity_client: TestClient, activity_db: Session):
+def test_available_goals_includes_observation_goals(activity_client: TestClient, activity_db: Session):
     seed_school_and_theme(activity_db, 1, 1)
-    school = activity_db.query(School).filter(School.id == 1).first()
-    school.koepel = "katholiek-onderwijs-vlaanderen"
-    activity_db.add(school)
-    activity_db.commit()
 
-    opstap = Goal(id=1, code="OP-1", title="Opstap", subject="Wiskunde", goal_type="OP_STAP")
-    vo = Goal(id=2, code="VO-1", title="VO doel", subject="Wiskunde", goal_type="VO")
-    activity_db.add_all([opstap, vo])
+    goal = Goal(id=1, code="OP-1", title="Opstap", subject="Wiskunde", goal_type="OP_STAP")
+    linked_observation_goal = ObservationGoal(
+        id=1,
+        school_id=1,
+        created_by=1,
+        name="Mijn label",
+        subject="Wiskunde",
+        domain="Getallen",
+        subdomain="Telkunde",
+        goal_id=1,
+        class_id=None,
+    )
+    custom_observation_goal = ObservationGoal(
+        id=2,
+        school_id=1,
+        created_by=1,
+        name="Eigen doel",
+        subject="Schooleigen doelen",
+        domain="Welbevinden",
+        subdomain=None,
+        goal_id=None,
+        class_id=None,
+    )
+    activity_db.add_all([goal, linked_observation_goal, custom_observation_goal])
     activity_db.commit()
 
     response = activity_client.get("/api/activities/available-goals")
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 1
-    assert data[0]["goal_type"] == "OP_STAP"
+    assert len(data) == 2
+    subjects = {item["subject"] for item in data}
+    assert "Wiskunde" in subjects
+    assert "Schooleigen doelen" in subjects
 
 
-def test_available_goals_for_non_katholiek_returns_vo(activity_client: TestClient, activity_db: Session):
+def test_available_goals_is_school_scoped(activity_client: TestClient, activity_db: Session):
     seed_school_and_theme(activity_db, 1, 1)
-    school = activity_db.query(School).filter(School.id == 1).first()
-    school.koepel = "ovsg"
-    activity_db.add(school)
+    school2 = School(id=2, name="School 2", slug="school-2", is_active=True)
+    activity_db.add(school2)
+    user1 = User(id=1, email="teacher@example.com", hashed_password="hashed", name="Teacher", is_active=True, is_superuser=False, school_id=1)
+    user2 = User(id=2, email="teacher2@example.com", hashed_password="hashed", name="Teacher 2", is_active=True, is_superuser=False, school_id=2)
+    activity_db.add_all([user1, user2])
     activity_db.commit()
 
-    opstap = Goal(id=1, code="OP-1", title="Opstap", subject="Wiskunde", goal_type="OP_STAP")
-    vo = Goal(id=2, code="VO-1", title="VO doel", subject="Wiskunde", goal_type="VO")
-    activity_db.add_all([opstap, vo])
+    goal = Goal(id=1, code="OP-1", title="Opstap", subject="Wiskunde", goal_type="OP_STAP")
+    og1 = ObservationGoal(
+        id=1,
+        school_id=1,
+        created_by=1,
+        name="OG1",
+        subject="Wiskunde",
+        domain="Getallen",
+        subdomain="Telkunde",
+        goal_id=1,
+        class_id=None,
+    )
+    og2 = ObservationGoal(
+        id=2,
+        school_id=2,
+        created_by=2,
+        name="OG2",
+        subject="Nederlands",
+        domain="Lezen",
+        subdomain="Begrijpend lezen",
+        goal_id=1,
+        class_id=None,
+    )
+    activity_db.add_all([goal, og1, og2])
     activity_db.commit()
+
+    activity_client.app.dependency_overrides[auth_module.get_current_user] = lambda: UserResponse(
+        id=1,
+        email="teacher@example.com",
+        name="Teacher",
+        is_active=True,
+        is_superuser=False,
+        school_id=1,
+    )
 
     response = activity_client.get("/api/activities/available-goals")
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 1
-    assert data[0]["goal_type"] == "VO"
+    assert data[0]["subject"] == "Wiskunde"
+
+    activity_client.app.dependency_overrides[auth_module.get_current_user] = lambda: UserResponse(
+        id=2,
+        email="teacher2@example.com",
+        name="Teacher 2",
+        is_active=True,
+        is_superuser=False,
+        school_id=2,
+    )
+    response = activity_client.get("/api/activities/available-goals")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["subject"] == "Nederlands"

@@ -2,21 +2,24 @@ import { AxiosError } from 'axios'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import { FormEvent, useEffect, useState } from 'react'
+import { sortSubjects } from '../lib/subjectSort'
 import {
   createActivity,
   deleteActivity,
   getActivities,
-  getActivityDomains,
-  getActivitySubdomains,
-  getActivitySubjects,
-  getAvailableGoals,
   getThemes,
   removeActivityGoal,
   ActivityResponse,
-  AvailableGoal,
   ThemeResponse,
   updateActivity,
 } from '../services/auth'
+import {
+  getObservationGoalDomains,
+  getObservationGoalSubdomains,
+  getObservationGoalSubjects,
+  getObservationGoals,
+  ObservationGoalResponse,
+} from '../services/observations'
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   const axiosError = error as AxiosError<{ detail?: string }>
@@ -50,7 +53,7 @@ type GoalModalState = {
   subject: string
   domain: string
   subdomain: string
-  goals: AvailableGoal[]
+  goals: ObservationGoalResponse[]
   tempSelectedItems: Array<{ goal_id: number; label: string | null; observe: boolean }>
   subjects: string[]
   domains: string[]
@@ -62,7 +65,7 @@ type GoalModalState = {
 export default function ActivitiesPage() {
   const [activities, setActivities] = useState<ActivityResponse[]>([])
   const [themes, setThemes] = useState<ThemeResponse[]>([])
-  const [availableGoals, setAvailableGoals] = useState<AvailableGoal[]>([])
+  const [availableGoals, setAvailableGoals] = useState<ObservationGoalResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -96,7 +99,7 @@ export default function ActivitiesPage() {
         const [activitiesData, themesData, goalsData] = await Promise.all([
           getActivities(filterThemeId ? { theme_id: filterThemeId } : undefined),
           getThemes(),
-          getAvailableGoals(),
+          getObservationGoals(),
         ])
         setActivities(activitiesData)
         setThemes(themesData)
@@ -114,7 +117,7 @@ export default function ActivitiesPage() {
   useEffect(() => {
     const loadSubjects = async () => {
       try {
-        const subjects = await getActivitySubjects()
+        const subjects = await getObservationGoalSubjects()
         setGoalModal((current) => ({ ...current, subjects, subject: '' }))
       } catch {
         // non-blocking
@@ -130,7 +133,7 @@ export default function ActivitiesPage() {
         return
       }
       try {
-        const domains = await getActivityDomains(goalModal.subject)
+        const domains = await getObservationGoalDomains(goalModal.subject)
         setGoalModal((current) => ({ ...current, domains, domain: '', subdomains: [], subdomain: '' }))
       } catch {
         // non-blocking
@@ -146,7 +149,7 @@ export default function ActivitiesPage() {
         return
       }
       try {
-        const subdomains = await getActivitySubdomains(goalModal.subject, goalModal.domain || undefined)
+        const subdomains = await getObservationGoalSubdomains(goalModal.subject, goalModal.domain || undefined)
         setGoalModal((current) => ({ ...current, subdomains, subdomain: '' }))
       } catch {
         // non-blocking
@@ -160,7 +163,7 @@ export default function ActivitiesPage() {
       if (!goalModal.open) return
       setGoalModal((current) => ({ ...current, saving: true, error: '' }))
       try {
-        const data = await getAvailableGoals({
+        const data = await getObservationGoals({
           subject: goalModal.subject || undefined,
           domain: goalModal.domain || undefined,
           subdomain: goalModal.subdomain || undefined,
@@ -227,7 +230,8 @@ export default function ActivitiesPage() {
 
   const startLabelEdit = (goalId: number, currentLabel: string | null, fallbackTitle: string | null) => {
     setLabelEditingGoalId(goalId)
-    setLabelDraft(currentLabel || fallbackTitle || '')
+    const goal = availableGoals.find((g) => g.id === goalId)
+    setLabelDraft(currentLabel || goal?.name || goal?.goal?.title || fallbackTitle || '')
   }
 
   const commitLabelEdit = (goalId: number) => {
@@ -252,6 +256,11 @@ export default function ActivitiesPage() {
     setError('')
     setSuccess('')
     try {
+      if (!form.theme_id) {
+        setError('Selecteer een thema.')
+        setSaving(false)
+        return
+      }
       const payload = {
         name: form.name,
         description: form.description || null,
@@ -342,7 +351,18 @@ export default function ActivitiesPage() {
                   ))}
                 </select>
               </label>
-              <button className="btn btn-primary" type="button" onClick={() => { resetForm(); setFormOpen((open) => !open) }}>
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={() => {
+                  if (formOpen && !editingId) {
+                    resetForm()
+                    return
+                  }
+                  resetForm()
+                  setFormOpen(true)
+                }}
+              >
                 {formOpen && !editingId ? 'Formulier sluiten' : 'Activiteit aanmaken'}
               </button>
             </div>
@@ -414,7 +434,7 @@ export default function ActivitiesPage() {
                                     <button
                                       className="table-action"
                                       type="button"
-                                      onClick={() => startLabelEdit(goal.id, item.label, goal.title)}
+                                       onClick={() => startLabelEdit(goal.id, item.label, goal.name ?? goal.goal?.title ?? null)}
                                       disabled={saving}
                                       aria-label="Naam bewerken"
                                       title="Naam bewerken"
@@ -443,17 +463,17 @@ export default function ActivitiesPage() {
                                          disabled={saving}
                                          style={{ fontSize: 14, padding: '2px 4px', width: '100%', maxWidth: 320 }}
                                        />
-                                     ) : (
-                                       <>
-                                         <strong>{item.label || goal.title || goal.code}</strong>
-                                         {!item.label && goal.title && (
-                                           <span style={{ fontSize: 12, color: 'var(--md-text-secondary)' }}>
-                                            {' '}
-                                            {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
-                                           </span>
-                                         )}
-                                       </>
-                                     )}
+                                      ) : (
+                                        <>
+                                          <strong>{item.label || goal.name || goal.goal?.title || goal.goal?.code}</strong>
+                                          {!item.label && (goal.name || goal.goal?.title) && (
+                                            <span style={{ fontSize: 12, color: 'var(--md-text-secondary)' }}>
+                                             {' '}
+                                             {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
+                                            </span>
+                                          )}
+                                        </>
+                                      )}
                                    </span>
                                    <label
                                    style={{
@@ -631,7 +651,7 @@ export default function ActivitiesPage() {
                   }
                 >
                   <option value="">Alle vakken</option>
-                  {goalModal.subjects.map((subject) => (
+                  {sortSubjects(goalModal.subjects).map((subject) => (
                     <option key={subject} value={subject}>
                       {subject}
                     </option>
@@ -713,12 +733,15 @@ export default function ActivitiesPage() {
                         }}
                       />
                       <span>
-                        <strong>{goal.title || goal.code}</strong>
+                        <strong>{goal.goal?.title || goal.name || goal.goal?.code}</strong>
                         <span className="goal-metadata">
                           {' '}
                           {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
                         </span>
-                        <span className="goal-metadata"> {goal.goal_type}</span>
+                        <span className="goal-metadata">
+                          {' '}
+                          {goal.goal ? `Doelcode: ${goal.goal.code}` : 'Geen doelcode'}
+                        </span>
                       </span>
                     </label>
                   )

@@ -161,28 +161,37 @@ class ActivityRepository:
         }
 
         for item in goal_items:
-            goal = self.db.query(Goal).filter(Goal.id == item["goal_id"]).first()
-            if not goal:
-                continue
+            goal_id = item["goal_id"]
+            label = item.get("label")
+            observe = item.get("observe", False)
 
-            observation_goal = self._find_or_create_observation_goal(
-                activity.school_id,
-                created_by,
-                goal,
-                item.get("label"),
-            )
+            observation_goal = self.db.query(ObservationGoal).filter(ObservationGoal.id == goal_id).first()
+            if observation_goal and observation_goal.school_id == activity.school_id:
+                effective_label = label or (observation_goal.goal.title if observation_goal.goal else None) or observation_goal.name
+                linked_goal = observation_goal
+            else:
+                goal = self.db.query(Goal).filter(Goal.id == goal_id).first()
+                if not goal:
+                    continue
+                linked_goal = self._find_or_create_observation_goal(
+                    activity.school_id,
+                    created_by,
+                    goal,
+                    label,
+                )
+                effective_label = label or goal.title
 
-            current_observation_goal_ids.add(observation_goal.id)
-            existing_link = existing_links.get(observation_goal.id)
+            current_observation_goal_ids.add(linked_goal.id)
+            existing_link = existing_links.get(linked_goal.id)
             if existing_link:
-                existing_link.label = item.get("label") or goal.title
-                existing_link.observe = item.get("observe", False)
+                existing_link.label = effective_label
+                existing_link.observe = observe
             else:
                 link = ActivityObservationGoal(
                     activity_id=activity.id,
-                    observation_goal_id=observation_goal.id,
-                    label=item.get("label") or goal.title,
-                    observe=item.get("observe", False),
+                    observation_goal_id=linked_goal.id,
+                    label=effective_label,
+                    observe=observe,
                 )
                 self.db.add(link)
 
