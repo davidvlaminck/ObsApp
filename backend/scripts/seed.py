@@ -535,19 +535,19 @@ def link_demo_observation_goal():
     """Link the demo observation goals to the imported Op Stap goals."""
     demo_goal_specs = [
         # Wiskunde - Getallenkennis
-        ("rangtelwoorden", "2.1.GK3.5", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
-        ("telrij tot 20", "2.1.GK3.1", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
-        ("aantallen tot 10", "2.1.GK3.3", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+        ("rangtelwoorden", "2.1.GK3.24", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+        ("telrij tot 10", "2.1.GK3.20", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
+        ("aantallen tot 10", "2.1.GK3.15", "Wiskunde", "Getallenkennis", "Natuurlijke getallen"),
         # Wiskunde - Meetkunde
-        ("vormen herkennen", "2.1.GK3.7", "Wiskunde", "Meetkunde", "Vormen"),
+        ("vlakke figuren herkennen", "2.4.GK3.3", "Wiskunde", "Meetkunde", "Vormen"),
         # Nederlands - Lezen
-        ("klanken herkennen", "2.1.GK3.2", "Nederlands", "Lezen", "Klankbewustzijn"),
-        ("woorden lezen", "2.1.GK3.2", "Nederlands", "Lezen", "Woordlezen"),
-        ("tekst begrijpen", "2.1.GK3.4", "Nederlands", "Lezen", "Begrip"),
-        ("luisteren naar verhalen", "2.1.GK3.4", "Nederlands", "Lezen", "Luisteren"),
+        ("klanken herkennen", "1.2.GK3.3", "Nederlands", "Lezen", "Vlot en vloeiend lezen"),
+        ("klank teken koppeling", "1.2.GK3.5", "Nederlands", "Lezen", "Vlot en vloeiend lezen"),
+        ("rijmen", "1.2.GK3.1", "Nederlands", "Lezen", "Vlot en vloeiend lezen"),
+        ("luisteren naar verhalen", "1.4.GK3.1", "Nederlands", "Mondeling taalgebruik", " Luisterbegrip"),
         # Nederlands - Schrijven
-        ("letters schrijven", "2.1.GK3.2", "Nederlands", "Schrijven", "Handschrift"),
-        ("woorden schrijven", "2.1.GK3.4", "Nederlands", "Schrijven", "Spelling"),
+        # ("letters schrijven", "2.1.GK3.2", "Nederlands", "Schrijven", "Handschrift"),
+        # ("woorden schrijven", "2.1.GK3.4", "Nederlands", "Schrijven", "Spelling"),
     ]
 
     db = SessionLocal()
