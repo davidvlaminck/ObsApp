@@ -1,5 +1,5 @@
 import { AxiosError } from 'axios'
-import { DeleteIcon } from '@mui/icons-material/Delete'
+import DeleteIcon from '@mui/icons-material/Delete'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StudentAvatar } from '../components/StudentAvatar'
 import { sortSubjects, sortClasses } from '../lib/subjectSort'

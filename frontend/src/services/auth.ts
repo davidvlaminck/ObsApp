@@ -345,6 +345,7 @@ export interface ActivityGoalResponse {
   title: string | null
   goal_type: string | null
   observe: boolean
+  label: string | null
 }
 
 export interface ActivityResponse {

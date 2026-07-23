@@ -218,6 +218,29 @@ def test_update_activity_removes_all_goals_when_empty(activity_client: TestClien
     assert response.json()["goals"] == []
 
 
+def test_update_activity_goal_label(activity_client: TestClient, activity_db: Session):
+    seed_school_and_theme(activity_db, 1, 1)
+    goal = Goal(id=1, code="G1", title=" Originele titel ", subject="Wiskunde", goal_type="OP_STAP")
+    activity_db.add(goal)
+    activity_db.commit()
+
+    create_resp = activity_client.post(
+        "/api/activities",
+        json={"name": "Act", "goal_items": [{"goal_id": 1, "observe": False}]},
+    )
+    activity_id = create_resp.json()["id"]
+    assert create_resp.json()["goals"][0]["label"] == " Originele titel "
+
+    response = activity_client.put(
+        f"/api/activities/{activity_id}",
+        json={"goal_items": [{"goal_id": 1, "label": "Mijn aangepaste naam", "observe": True}]},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["goals"][0]["label"] == "Mijn aangepaste naam"
+    assert data["goals"][0]["observe"] is True
+
+
 def test_delete_activity_success(activity_client: TestClient, activity_db: Session):
     seed_school_and_theme(activity_db, 1, 1)
     create_resp = activity_client.post("/api/activities", json={"name": "Te verwijderen"})

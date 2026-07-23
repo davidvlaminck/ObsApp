@@ -42,7 +42,7 @@ type ActivityForm = {
   name: string
   description: string
   theme_id: number | null
-  goal_items: Array<{ goal_id: number; observe: boolean }>
+  goal_items: Array<{ goal_id: number; label: string | null; observe: boolean }>
 }
 
 type GoalModalState = {
@@ -51,7 +51,7 @@ type GoalModalState = {
   domain: string
   subdomain: string
   goals: AvailableGoal[]
-  tempSelectedItems: Array<{ goal_id: number; observe: boolean }>
+  tempSelectedItems: Array<{ goal_id: number; label: string | null; observe: boolean }>
   subjects: string[]
   domains: string[]
   subdomains: string[]
@@ -72,6 +72,8 @@ export default function ActivitiesPage() {
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [filterThemeId, setFilterThemeId] = useState<number | null>(null)
+  const [labelEditingGoalId, setLabelEditingGoalId] = useState<number | null>(null)
+  const [labelDraft, setLabelDraft] = useState('')
 
   const [goalModal, setGoalModal] = useState<GoalModalState>({
     open: false,
@@ -175,6 +177,8 @@ export default function ActivitiesPage() {
     setForm({ name: '', description: '', theme_id: null, goal_items: [] })
     setEditingId(null)
     setFormOpen(false)
+    setLabelEditingGoalId(null)
+    setLabelDraft('')
   }
 
   const startEdit = (activity: ActivityResponse) => {
@@ -182,7 +186,7 @@ export default function ActivitiesPage() {
       name: activity.name,
       description: activity.description || '',
       theme_id: activity.theme_id,
-      goal_items: activity.goals.map((g) => ({ goal_id: g.goal_id, observe: g.observe })),
+      goal_items: activity.goals.map((g) => ({ goal_id: g.goal_id, label: g.label ?? null, observe: g.observe })),
     })
     setEditingId(activity.id)
     setFormOpen(true)
@@ -219,6 +223,27 @@ export default function ActivitiesPage() {
         item.goal_id === goalId ? { ...item, observe: !item.observe } : item
       ),
     }))
+  }
+
+  const startLabelEdit = (goalId: number, currentLabel: string | null, fallbackTitle: string | null) => {
+    setLabelEditingGoalId(goalId)
+    setLabelDraft(currentLabel || fallbackTitle || '')
+  }
+
+  const commitLabelEdit = (goalId: number) => {
+    setForm((current) => ({
+      ...current,
+      goal_items: current.goal_items.map((item) =>
+        item.goal_id === goalId ? { ...item, label: labelDraft || null } : item
+      ),
+    }))
+    setLabelEditingGoalId(null)
+    setLabelDraft('')
+  }
+
+  const cancelLabelEdit = () => {
+    setLabelEditingGoalId(null)
+    setLabelDraft('')
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -376,23 +401,61 @@ export default function ActivitiesPage() {
                            .map((goal) => {
                              const item = form.goal_items.find((i) => i.goal_id === goal.id)!
                              return (
-                               <div
-                                 key={goal.id}
-                                 style={{
-                                   display: 'flex',
-                                   alignItems: 'center',
-                                   gap: 8,
-                                   padding: '4px 0',
-                                 }}
-                               >
-                                 <span style={{ flex: 1, minWidth: 0 }}>
-                                   <strong>{goal.title || goal.code}</strong>
-                                   <span style={{ fontSize: 12, color: 'var(--md-text-secondary)' }}>
-                                     {' '}
-                                     {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
+                                <div
+                                  key={goal.id}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    padding: '4px 0',
+                                  }}
+                                >
+                                  {editingId && labelEditingGoalId !== goal.id && (
+                                    <button
+                                      className="table-action"
+                                      type="button"
+                                      onClick={() => startLabelEdit(goal.id, item.label, goal.title)}
+                                      disabled={saving}
+                                      aria-label="Naam bewerken"
+                                      title="Naam bewerken"
+                                      style={{ flexShrink: 0 }}
+                                    >
+                                      <EditIcon fontSize="small" aria-hidden="true" />
+                                    </button>
+                                  )}
+                                   <span style={{ flex: 1, minWidth: 0 }}>
+                                     {labelEditingGoalId === goal.id ? (
+                                       <input
+                                         type="text"
+                                         value={labelDraft}
+                                         onChange={(e) => setLabelDraft(e.target.value)}
+                                         onBlur={() => commitLabelEdit(goal.id)}
+                                         onKeyDown={(e) => {
+                                           if (e.key === 'Enter') {
+                                             e.preventDefault()
+                                             commitLabelEdit(goal.id)
+                                           }
+                                           if (e.key === 'Escape') {
+                                             e.preventDefault()
+                                             cancelLabelEdit()
+                                           }
+                                         }}
+                                         disabled={saving}
+                                         style={{ fontSize: 14, padding: '2px 4px', width: '100%', maxWidth: 320 }}
+                                       />
+                                     ) : (
+                                       <>
+                                         <strong>{item.label || goal.title || goal.code}</strong>
+                                         {!item.label && goal.title && (
+                                           <span style={{ fontSize: 12, color: 'var(--md-text-secondary)' }}>
+                                            {' '}
+                                            {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
+                                           </span>
+                                         )}
+                                       </>
+                                     )}
                                    </span>
-                                 </span>
-                                 <label
+                                   <label
                                    style={{
                                      display: 'inline-flex',
                                      alignItems: 'center',
@@ -645,7 +708,7 @@ export default function ActivitiesPage() {
                             ...current,
                             tempSelectedItems: isSelected
                               ? current.tempSelectedItems.filter((item) => item.goal_id !== goal.id)
-                              : [...current.tempSelectedItems, { goal_id: goal.id, observe: true }],
+                              : [...current.tempSelectedItems, { goal_id: goal.id, label: null, observe: true }],
                           }))
                         }}
                       />
