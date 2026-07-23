@@ -231,7 +231,7 @@ export default function ThemesPage() {
                           <EditIcon fontSize="small" aria-hidden="true" />
                         </button>
                         <button
-                          className="table-action table-action-danger delete-icon-button"
+                          className="table-action danger-link delete-icon-button"
                           type="button"
                           onClick={() => handleDelete(theme.id, theme.name)}
                           aria-label="Verwijderen"

@@ -20,14 +20,11 @@
   padding: 48px 24px;
 }
 
-.form-card,
-.list-card {
+.form-card {
   margin: 0;
 }
 
 .form-card {
-  position: sticky;
-  top: 24px;
   padding: 24px;
 }
 
@@ -81,7 +78,6 @@
   background: var(--md-surface);
   border-radius: var(--md-radius-lg);
   box-shadow: var(--md-shadow);
-  overflow: hidden;
   border: 1px solid var(--md-border-light);
   transition: box-shadow 0.3s;
 }
@@ -373,7 +369,6 @@
   border: none;
   border-radius: 50%;
   background: transparent;
-  color: var(--md-primary);
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
@@ -381,9 +376,17 @@
   transition: all 0.2s;
 }
 
+.selected-goal-chip-remove {
+  color: var(--md-error);
+}
+
 .selected-goal-chip-remove:hover {
   background: var(--md-error-light);
-  color: var(--md-error);
+  color: #c92a2a;
+}
+
+.selected-goal-chip-info {
+  color: var(--md-primary);
 }
 
 .selected-goal-chip-info:hover {

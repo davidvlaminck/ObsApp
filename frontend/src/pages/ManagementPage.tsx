@@ -491,7 +491,7 @@ export default function ManagementPage() {
                                        <AddAPhotoIcon fontSize="small" aria-hidden="true" />
                                      </label>
                                      <button
-                                       className="table-action delete-icon-button"
+                                       className="table-action danger-link delete-icon-button"
                                        type="button"
                                        onClick={() => handleDeleteStudent(s.id)}
                                        aria-label={`Verwijder ${s.name}`}
@@ -513,7 +513,7 @@ export default function ManagementPage() {
                                   <li key={t.id} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <span>{t.name}</span>
                                     <button
-                                      className="table-action delete-icon-button"
+                                      className="table-action danger-link delete-icon-button"
                                       type="button"
                                       onClick={() => handleRemoveTeacher(cls.id, t.id)}
                                       aria-label={`Verwijder ${t.name} als leerkracht`}
@@ -583,7 +583,7 @@ export default function ManagementPage() {
                       </td>
                       <td>
                         <button
-                          className="table-action delete-icon-button"
+                          className="table-action danger-link delete-icon-button"
                           type="button"
                           onClick={() => handleRemovePreviewItem(index)}
                           aria-label={`Verwijder importrij ${item.row_number}`}

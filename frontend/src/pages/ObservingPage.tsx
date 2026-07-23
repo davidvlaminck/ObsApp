@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios'
+import { DeleteIcon } from '@mui/icons-material/Delete'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { StudentAvatar } from '../components/StudentAvatar'
 import { sortSubjects, sortClasses } from '../lib/subjectSort'
@@ -740,11 +741,11 @@ export default function ObservingPage() {
                 <span className="selected-goal-chip-name">{goal.name}</span>
                 <button
                   type="button"
-                  className="selected-goal-chip-remove"
+                  className="selected-goal-chip-remove danger-link"
                   onClick={() => removeGoal(goal.id)}
                   aria-label={`Verwijder ${goal.name}`}
                 >
-                  ×
+                  <DeleteIcon fontSize="small" aria-hidden="true" />
                 </button>
                 <button
                   type="button"

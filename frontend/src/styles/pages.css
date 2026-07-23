@@ -204,8 +204,6 @@
 .observations-grid .form-card {
   max-width: none;
   padding: 28px;
-  position: sticky;
-  top: 24px;
 }
 
 .observation-form-modal {
