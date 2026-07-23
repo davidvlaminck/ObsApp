@@ -568,15 +568,38 @@ def test_update_managed_domain_changes_name(
     observation_goal_db.add(
         SchoolGoalDomain(id=1, school_id=1, name="Oude naam"),
     )
+    observation_goal_db.add(
+        ObservationGoal(
+            id=1,
+            school_id=1,
+            created_by=1,
+            name="Doel 1",
+            subject="Schooleigen doelen",
+            domain="Oude naam",
+            subdomain=None,
+            goal_id=None,
+            class_id=None,
+        ),
+    )
     observation_goal_db.commit()
 
     response = observation_goal_client.put(
         "/api/observation-goals/managed-domains/1",
         json={"name": "Nieuwe naam"},
     )
-
     assert response.status_code == 200
     assert response.json()["name"] == "Nieuwe naam"
+
+    domains_response = observation_goal_client.get("/api/observation-goals/domains")
+    assert domains_response.status_code == 200
+    assert domains_response.json() == ["Nieuwe naam"]
+
+    updated_goal = (
+        observation_goal_db.query(ObservationGoal)
+        .filter(ObservationGoal.id == 1)
+        .first()
+    )
+    assert updated_goal.domain == "Nieuwe naam"
 
 
 def test_delete_managed_domain_removes_domain(

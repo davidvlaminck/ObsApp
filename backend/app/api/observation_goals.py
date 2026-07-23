@@ -222,7 +222,13 @@ def update_managed_domain(
     if not domain:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domein niet gevonden")
 
-    return repo.update(domain, payload)
+    old_name = domain.name
+    updated_domain = repo.update(domain, payload)
+
+    if old_name != updated_domain.name:
+        ObservationGoalRepository(db).update_domain_for_school(school_id, old_name, updated_domain.name)
+
+    return updated_domain
 
 
 @router.delete("/managed-domains/{domain_id}", status_code=status.HTTP_204_NO_CONTENT)

@@ -280,3 +280,17 @@ class ObservationGoalRepository:
                 )
             )
         return query.order_by(Goal.subject, Goal.level, Goal.code).all()
+
+    def update_domain_for_school(self, school_id: int, old_domain: str, new_domain: str) -> int:
+        goals = (
+            self.db.query(ObservationGoal)
+            .filter(
+                ObservationGoal.school_id == school_id,
+                ObservationGoal.domain == old_domain,
+            )
+            .all()
+        )
+        for goal in goals:
+            goal.domain = new_domain
+        self.db.commit()
+        return len(goals)
