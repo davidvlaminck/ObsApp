@@ -15,6 +15,7 @@ from app.models.school_year import Student
 from app.models.user import User
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
+from app.models.school_goal_domain import SchoolGoalDomain
 from app.models.student_observation import StudentObservation
 from app.models.theme import Theme
 from app.models.activity import Activity, ActivityObservationGoal
@@ -174,6 +175,111 @@ def seed_mow_user():
         print(f"Demo user created: demo@example.com / demo (no koepel selected)")
     finally:
         db.close()
+
+def seed_school_goal_domain_and_goals():
+    goals = [
+        "Vat een taak of spel spontaan aan",
+        "Heeft doorzetting om een taak vol te houden",
+        "Werkt nauwkeurig",
+        "Kan zich concentreren",
+        "Is gemotiveerd en geboeid",
+        "Heeft een gezonde exploratiedrang",
+        "Werkt rustig",
+        "Heeft een goed werktempo",
+        "Weet hoe een taak aan te pakken",
+        "Kan luisteren zonder afgeleid te zijn",
+        "Kan luisteren zonder tussen te komen",
+    ]
+
+    db = SessionLocal()
+    try:
+        school = db.query(School).filter_by(slug="demo-school").first()
+        teacher = db.query(User).filter_by(email="lieve@example.com").first() if school else None
+
+        if not school or not teacher:
+            print("School goal domain and goals skipped: required school or teacher not found.")
+            return
+
+        domain = db.query(SchoolGoalDomain).filter_by(school_id=school.id, name="Betrokkenheid").first()
+        if not domain:
+            domain = SchoolGoalDomain(school_id=school.id, name="Betrokkenheid")
+            db.add(domain)
+            db.commit()
+            db.refresh(domain)
+
+        for title in goals:
+            existing = db.query(ObservationGoal).filter_by(
+                school_id=school.id, name=title, domain="Betrokkenheid"
+            ).first()
+            if not existing:
+                db.add(
+                    ObservationGoal(
+                        school_id=school.id,
+                        created_by=teacher.id,
+                        name=title,
+                        subject="Schooleigen doelen",
+                        domain="Betrokkenheid",
+                        subdomain=None,
+                    )
+                )
+
+        db.commit()
+        print(f"School goal domain seeded: Betrokkenheid ({len(goals)} goals)")
+    finally:
+        db.close()
+
+
+def seed_welbevinden_domain_and_goals():
+    goals = [
+        "Lijkt ontspannen",
+        "Vertoont voldoende vitaliteit",
+        "Is open en ontvankelijk",
+        "Is spontaan",
+        "Durft zichzelf te zijn",
+        "Heeft zelfvertrouwen",
+        "Heeft een positief zelfbeeld",
+        "Legt spontaan contact met vriendjes",
+        "Legt spontaan contact met andere juffen",
+        "Heeft een emotionele stabiliteit (kan plotse en grote veranderinge aan)",
+    ]
+
+    db = SessionLocal()
+    try:
+        school = db.query(School).filter_by(slug="demo-school").first()
+        teacher = db.query(User).filter_by(email="lieve@example.com").first() if school else None
+
+        if not school or not teacher:
+            print("School goal domain and goals skipped: required school or teacher not found.")
+            return
+
+        domain = db.query(SchoolGoalDomain).filter_by(school_id=school.id, name="Welbevinden").first()
+        if not domain:
+            domain = SchoolGoalDomain(school_id=school.id, name="Welbevinden")
+            db.add(domain)
+            db.commit()
+            db.refresh(domain)
+
+        for title in goals:
+            existing = db.query(ObservationGoal).filter_by(
+                school_id=school.id, name=title, domain="Welbevinden"
+            ).first()
+            if not existing:
+                db.add(
+                    ObservationGoal(
+                        school_id=school.id,
+                        created_by=teacher.id,
+                        name=title,
+                        subject="Schooleigen doelen",
+                        domain="Welbevinden",
+                        subdomain=None,
+                    )
+                )
+
+        db.commit()
+        print(f"School goal domain seeded: Welbevinden ({len(goals)} goals)")
+    finally:
+        db.close()
+
 
 def _clean_text(value) -> str | None:
     if value is None:
@@ -706,6 +812,8 @@ if __name__ == "__main__":
     seed_koepels()
     seed_school_and_admin()
     seed_mow_user()
+    seed_school_goal_domain_and_goals()
+    seed_welbevinden_domain_and_goals()
     seed_vo_goals()
     seed_opstap_goals()
     seed_themes()

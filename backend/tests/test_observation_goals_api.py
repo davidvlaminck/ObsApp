@@ -637,3 +637,90 @@ def test_managed_domain_404_for_unknown_domain(
     )
 
     assert response.status_code == 404
+
+
+BETROKKENHEID_GOALS = [
+    "Vat een taak of spel spontaan aan",
+    "Heeft doorzetting om een taak vol te houden",
+    "Werkt nauwkeurig",
+    "Kan zich concentreren",
+    "Is gemotiveerd en geboeid",
+    "Heeft een gezonde exploratiedrang",
+    "Werkt rustig",
+    "Heeft een goed werktempo",
+    "Weet hoe een taak aan te pakken",
+    "Kan luisteren zonder afgeleid te zijn",
+    "Kan luisteren zonder tussen te komen",
+]
+
+
+def test_betrokkenheid_goals_can_be_created_and_listed(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "lieve@example.com")
+
+    for goal_name in BETROKKENHEID_GOALS:
+        response = observation_goal_client.post(
+            "/api/observation-goals",
+            json={
+                "name": goal_name,
+                "subject": "Schooleigen doelen",
+                "domain": "Betrokkenheid",
+                "subdomain": None,
+                "goal_id": None,
+            },
+        )
+        assert response.status_code == 201
+
+    response = observation_goal_client.get(
+        "/api/observation-goals", params={"domain": "Betrokkenheid"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == len(BETROKKENHEID_GOALS)
+    returned_names = {goal["name"] for goal in data}
+    assert returned_names == set(BETROKKENHEID_GOALS)
+
+
+WELBEVINDEN_GOALS = [
+    "Lijkt ontspannen",
+    "Vertoont voldoende vitaliteit",
+    "Is open en ontvankelijk",
+    "Is spontaan",
+    "Durft zichzelf te zijn",
+    "Heeft zelfvertrouwen",
+    "Heeft een positief zelfbeeld",
+    "Legt spontaan contact met vriendjes",
+    "Legt spontaan contact met andere juffen",
+    "Heeft een emotionele stabiliteit (kan plotse en grote veranderinge aan)",
+]
+
+
+def test_welbevinden_goals_can_be_created_and_listed(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "lieve@example.com")
+
+    for goal_name in WELBEVINDEN_GOALS:
+        response = observation_goal_client.post(
+            "/api/observation-goals",
+            json={
+                "name": goal_name,
+                "subject": "Schooleigen doelen",
+                "domain": "Welbevinden",
+                "subdomain": None,
+                "goal_id": None,
+            },
+        )
+        assert response.status_code == 201
+
+    response = observation_goal_client.get(
+        "/api/observation-goals", params={"domain": "Welbevinden"}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == len(WELBEVINDEN_GOALS)
+    returned_names = {goal["name"] for goal in data}
+    assert returned_names == set(WELBEVINDEN_GOALS)
