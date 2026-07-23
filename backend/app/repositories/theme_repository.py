@@ -1,7 +1,7 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models.theme import Theme
-from app.schemas.theme import ThemeResponse
+from app.schemas.theme import ThemeActivityMinimal, ThemeResponse
 
 
 class ThemeRepository:
@@ -16,13 +16,23 @@ class ThemeRepository:
         return theme
 
     def get_by_id(self, theme_id: int) -> Theme | None:
-        return self.db.query(Theme).filter(Theme.id == theme_id).first()
+        return (
+            self.db.query(Theme)
+            .options(selectinload(Theme.activities))
+            .filter(Theme.id == theme_id)
+            .first()
+        )
 
     def get_by_name(self, name: str) -> Theme | None:
         return self.db.query(Theme).filter(Theme.name == name).first()
 
     def get_all(self) -> list[Theme]:
-        return self.db.query(Theme).order_by(Theme.name).all()
+        return (
+            self.db.query(Theme)
+            .options(selectinload(Theme.activities))
+            .order_by(Theme.name)
+            .all()
+        )
 
     def update(self, theme: Theme, name: str | None = None, description: str | None = None) -> Theme:
         if name is not None:
@@ -44,4 +54,8 @@ class ThemeRepository:
             name=theme.name,
             description=theme.description,
             created_at=theme.created_at,
+            activities=[
+                ThemeActivityMinimal(id=activity.id, name=activity.name)
+                for activity in theme.activities
+            ],
         )

@@ -311,6 +311,7 @@ export interface ThemeResponse {
   name: string
   description: string | null
   created_at: string | null
+  activities: { id: number; name: string }[]
 }
 
 export interface ThemeCreate {
@@ -369,7 +370,7 @@ export interface ActivityGoalItem {
 export interface ActivityCreate {
   name: string
   description?: string | null
-  theme_id?: number | null
+  theme_id: number
   goal_items: ActivityGoalItem[]
 }
 

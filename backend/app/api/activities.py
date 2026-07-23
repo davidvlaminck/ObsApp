@@ -125,7 +125,7 @@ def create_activity(
     repo = ActivityRepository(db)
     theme_repo = ThemeRepository(db)
 
-    if payload.theme_id and not theme_repo.get_by_id(payload.theme_id):
+    if not theme_repo.get_by_id(payload.theme_id):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thema niet gevonden")
 
     activity = repo.create(
@@ -164,7 +164,7 @@ def update_activity(
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activiteit niet gevonden")
 
-    if payload.theme_id and payload.theme_id != activity.theme_id:
+    if payload.theme_id != activity.theme_id:
         theme_repo = ThemeRepository(db)
         if not theme_repo.get_by_id(payload.theme_id):
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Thema niet gevonden")

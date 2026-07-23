@@ -4,6 +4,11 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class ThemeActivityMinimal(BaseModel):
+    id: int
+    name: str
+
+
 class ThemeCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=1000)
@@ -19,6 +24,7 @@ class ThemeResponse(BaseModel):
     name: str
     description: Optional[str] = None
     created_at: Optional[datetime] = None
+    activities: list[ThemeActivityMinimal] = []
 
     class Config:
         from_attributes = True

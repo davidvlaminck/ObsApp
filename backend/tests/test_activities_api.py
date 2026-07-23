@@ -98,6 +98,16 @@ def test_create_activity_success(activity_client: TestClient, activity_db: Sessi
     assert data["goals"][0]["observe"] is False
 
 
+def test_create_activity_requires_theme_id(activity_client: TestClient, activity_db: Session):
+    seed_school_and_theme(activity_db, 1, 1)
+
+    response = activity_client.post(
+        "/api/activities",
+        json={"name": "Rekenen", "goal_items": [{"goal_id": 1, "observe": True}]},
+    )
+    assert response.status_code == 422
+
+
 def test_create_activity_with_observe_creates_observation_goal(activity_client: TestClient, activity_db: Session):
     seed_school_and_theme(activity_db, 1, 1)
 
@@ -107,7 +117,7 @@ def test_create_activity_with_observe_creates_observation_goal(activity_client: 
 
     response = activity_client.post(
         "/api/activities",
-        json={"name": "Rekenen", "goal_items": [{"goal_id": 1, "observe": True}]},
+        json={"name": "Rekenen", "theme_id": 1, "goal_items": [{"goal_id": 1, "observe": True}]},
     )
     assert response.status_code == 201
     data = response.json()
@@ -129,7 +139,7 @@ def test_create_activity_with_custom_label(activity_client: TestClient, activity
 
     response = activity_client.post(
         "/api/activities",
-        json={"name": "Rekenen", "goal_items": [{"goal_id": 1, "label": "Mijn label", "observe": False}]},
+        json={"name": "Rekenen", "theme_id": 1, "goal_items": [{"goal_id": 1, "label": "Mijn label", "observe": False}]},
     )
     assert response.status_code == 201
     data = response.json()
@@ -157,10 +167,10 @@ def test_list_activities_filters_by_theme(activity_client: TestClient, activity_
 
 def test_update_activity_success(activity_client: TestClient, activity_db: Session):
     seed_school_and_theme(activity_db, 1, 1)
-    create_resp = activity_client.post("/api/activities", json={"name": "Oud"})
+    create_resp = activity_client.post("/api/activities", json={"name": "Oud", "theme_id": 1})
     activity_id = create_resp.json()["id"]
 
-    response = activity_client.put(f"/api/activities/{activity_id}", json={"name": "Nieuw"})
+    response = activity_client.put(f"/api/activities/{activity_id}", json={"name": "Nieuw", "theme_id": 1})
     assert response.status_code == 200
     assert response.json()["name"] == "Nieuw"
 
@@ -177,6 +187,7 @@ def test_update_activity_goals_replaces_links(activity_client: TestClient, activ
         "/api/activities",
         json={
             "name": "Act",
+            "theme_id": 1,
             "goal_items": [{"goal_id": 1, "observe": False}, {"goal_id": 2, "observe": True}],
         },
     )
@@ -187,7 +198,7 @@ def test_update_activity_goals_replaces_links(activity_client: TestClient, activ
 
     response = activity_client.put(
         f"/api/activities/{activity_id}",
-        json={"goal_items": [{"goal_id": 2, "observe": False}, {"goal_id": 3, "observe": True}]},
+        json={"goal_items": [{"goal_id": 2, "observe": False}, {"goal_id": 3, "observe": True}], "theme_id": 1},
     )
     assert response.status_code == 200
     data = response.json()
@@ -205,14 +216,14 @@ def test_update_activity_removes_all_goals_when_empty(activity_client: TestClien
 
     create_resp = activity_client.post(
         "/api/activities",
-        json={"name": "Act", "goal_items": [{"goal_id": 1, "observe": False}]},
+        json={"name": "Act", "theme_id": 1, "goal_items": [{"goal_id": 1, "observe": False}]},
     )
     activity_id = create_resp.json()["id"]
     assert len(create_resp.json()["goals"]) == 1
 
     response = activity_client.put(
         f"/api/activities/{activity_id}",
-        json={"goal_items": []},
+        json={"goal_items": [], "theme_id": 1},
     )
     assert response.status_code == 200
     assert response.json()["goals"] == []
@@ -226,14 +237,14 @@ def test_update_activity_goal_label(activity_client: TestClient, activity_db: Se
 
     create_resp = activity_client.post(
         "/api/activities",
-        json={"name": "Act", "goal_items": [{"goal_id": 1, "observe": False}]},
+        json={"name": "Act", "theme_id": 1, "goal_items": [{"goal_id": 1, "observe": False}]},
     )
     activity_id = create_resp.json()["id"]
     assert create_resp.json()["goals"][0]["label"] == " Originele titel "
 
     response = activity_client.put(
         f"/api/activities/{activity_id}",
-        json={"goal_items": [{"goal_id": 1, "label": "Mijn aangepaste naam", "observe": True}]},
+        json={"goal_items": [{"goal_id": 1, "label": "Mijn aangepaste naam", "observe": True}], "theme_id": 1},
     )
     assert response.status_code == 200
     data = response.json()
@@ -243,7 +254,7 @@ def test_update_activity_goal_label(activity_client: TestClient, activity_db: Se
 
 def test_delete_activity_success(activity_client: TestClient, activity_db: Session):
     seed_school_and_theme(activity_db, 1, 1)
-    create_resp = activity_client.post("/api/activities", json={"name": "Te verwijderen"})
+    create_resp = activity_client.post("/api/activities", json={"name": "Te verwijderen", "theme_id": 1})
     activity_id = create_resp.json()["id"]
 
     response = activity_client.delete(f"/api/activities/{activity_id}")
@@ -259,7 +270,7 @@ def test_delete_activity_observation_goal_success(activity_client: TestClient, a
 
     create_resp = activity_client.post(
         "/api/activities",
-        json={"name": "Act", "goal_items": [{"goal_id": 1, "label": None, "observe": False}]},
+        json={"name": "Act", "theme_id": 1, "goal_items": [{"goal_id": 1, "label": None, "observe": False}]},
     )
     activity_id = create_resp.json()["id"]
     observation_goal_id = create_resp.json()["goals"][0]["id"]

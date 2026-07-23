@@ -210,6 +210,7 @@ export default function ThemesPage() {
                   <tr>
                     <th>Naam</th>
                     <th>Omschrijving</th>
+                    <th>Activiteiten</th>
                     <th>Acties</th>
                   </tr>
                 </thead>
@@ -220,6 +221,17 @@ export default function ThemesPage() {
                         <strong>{theme.name}</strong>
                       </td>
                       <td>{theme.description || '-'}</td>
+                      <td>
+                        {theme.activities.length > 0 ? (
+                          <ul style={{ margin: 0, paddingLeft: 16 }}>
+                            {theme.activities.map((a) => (
+                              <li key={a.id}>{a.name}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
                       <td>
                         <button
                           className="table-action edit-icon-button"

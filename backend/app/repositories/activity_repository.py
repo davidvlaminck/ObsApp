@@ -13,7 +13,7 @@ class ActivityRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def create(self, school_id: int, name: str, description: str | None, theme_id: int | None, goal_items: list[dict], created_by: int | None = None) -> Activity:
+    def create(self, school_id: int, name: str, description: str | None, theme_id: int, goal_items: list[dict], created_by: int | None = None) -> Activity:
         activity = Activity(
             school_id=school_id,
             name=name,

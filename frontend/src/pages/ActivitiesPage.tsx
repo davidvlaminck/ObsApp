@@ -174,7 +174,7 @@ export default function ActivitiesPage() {
   }, [goalModal.open, goalModal.subject, goalModal.domain, goalModal.subdomain])
 
   const resetForm = () => {
-    setForm({ name: '', description: '', theme_id: null, goal_items: [] })
+    setForm({ name: '', description: '', theme_id: themes[0]?.id ?? null, goal_items: [] })
     setEditingId(null)
     setFormOpen(false)
     setLabelEditingGoalId(null)
@@ -255,7 +255,7 @@ export default function ActivitiesPage() {
       const payload = {
         name: form.name,
         description: form.description || null,
-        theme_id: form.theme_id ?? undefined,
+        theme_id: form.theme_id,
         goal_items: form.goal_items,
       }
       if (editingId) {
@@ -380,8 +380,8 @@ export default function ActivitiesPage() {
                     value={form.theme_id ?? ''}
                     onChange={(event) => setForm((current) => ({ ...current, theme_id: event.target.value ? Number(event.target.value) : null }))}
                     disabled={saving}
+                    required
                   >
-                    <option value="">Geen thema</option>
                     {themes.map((theme) => (
                       <option key={theme.id} value={theme.id}>
                         {theme.name}

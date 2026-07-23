@@ -12,7 +12,7 @@ class Activity(Base):
     school_id = Column(Integer, ForeignKey("schools.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     description = Column(Text, nullable=True)
-    theme_id = Column(Integer, ForeignKey("themes.id"), nullable=True, index=True)
+    theme_id = Column(Integer, ForeignKey("themes.id"), nullable=False, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 

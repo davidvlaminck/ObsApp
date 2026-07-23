@@ -8,6 +8,7 @@ from sqlalchemy.pool import StaticPool
 from app.api import auth as auth_module
 from app.api import themes as themes_router_module
 from app.core.database import Base
+from app.models.activity import Activity
 from app.models.theme import Theme
 from app.schemas.user import UserResponse
 
@@ -94,6 +95,24 @@ def test_list_themes_returns_all(theme_client: TestClient, theme_db: Session):
     assert {t["name"] for t in data} == {"De appel", "De mol"}
 
 
+def test_list_themes_includes_activities(theme_client: TestClient, theme_db: Session):
+    theme = Theme(name="De appel", description="Fruit")
+    theme_db.add(theme)
+    theme_db.commit()
+    theme_db.refresh(theme)
+
+    theme_db.add(Activity(name="Snoepen", school_id=1, theme_id=theme.id))
+    theme_db.add(Activity(name="Koken", school_id=1, theme_id=theme.id))
+    theme_db.commit()
+
+    response = theme_client.get("/api/themes")
+    assert response.status_code == 200
+    data = response.json()
+    apple = next(t for t in data if t["name"] == "De appel")
+    assert len(apple["activities"]) == 2
+    assert [a["name"] for a in apple["activities"]] == ["Snoepen", "Koken"]
+
+
 def test_update_theme_success(theme_client: TestClient, theme_db: Session):
     theme = Theme(name="De appel", description="Oud")
     theme_db.add(theme)
@@ -117,6 +136,22 @@ def test_delete_theme_success(theme_client: TestClient, theme_db: Session):
     response = theme_client.delete(f"/api/themes/{theme.id}")
     assert response.status_code == 204
     assert theme_db.query(Theme).count() == 0
+
+
+def test_get_theme_includes_activities(theme_client: TestClient, theme_db: Session):
+    theme = Theme(name="De appel", description="Fruit")
+    theme_db.add(theme)
+    theme_db.commit()
+    theme_db.refresh(theme)
+
+    theme_db.add(Activity(name="Snoepen", school_id=1, theme_id=theme.id))
+    theme_db.commit()
+
+    response = theme_client.get(f"/api/themes/{theme.id}")
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["activities"]) == 1
+    assert data["activities"][0]["name"] == "Snoepen"
 
 
 def test_get_theme_not_found(theme_client: TestClient):

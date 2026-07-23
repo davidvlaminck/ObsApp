@@ -13,14 +13,14 @@ class ActivityGoalItem(BaseModel):
 class ActivityCreate(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=1000)
-    theme_id: int | None = None
+    theme_id: int = Field(ge=1)
     goal_items: list[ActivityGoalItem] = Field(default_factory=list, max_length=50)
 
 
 class ActivityUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=200)
     description: str | None = Field(default=None, max_length=1000)
-    theme_id: int | None = None
+    theme_id: int = Field(ge=1)
     goal_items: list[ActivityGoalItem] | None = Field(default=None, max_length=50)
 
 
