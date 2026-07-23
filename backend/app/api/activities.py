@@ -180,10 +180,10 @@ def update_activity(
     return repo.to_response(updated)
 
 
-@router.delete("/{activity_id}/goals/{goal_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_activity_goal(
+@router.delete("/{activity_id}/observation-goals/{observation_goal_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_activity_observation_goal(
     activity_id: int,
-    goal_id: int,
+    observation_goal_id: int,
     db=Depends(get_db),
     current_user: UserResponse = Depends(get_current_school_user),
 ):
@@ -191,7 +191,7 @@ def delete_activity_goal(
     activity = repo.get_by_id(activity_id, current_user.school_id)
     if not activity:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activiteit niet gevonden")
-    repo.delete_goal(activity, goal_id)
+    repo.delete_observation_goal_link(activity, observation_goal_id)
 
 
 @router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)

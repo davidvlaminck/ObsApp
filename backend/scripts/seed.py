@@ -5,6 +5,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from sqlalchemy import text
+
 from app.core.database import Base, engine, SessionLocal
 from app.models.koepel import Koepel
 from app.models.school import School
@@ -15,12 +17,17 @@ from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.student_observation import StudentObservation
 from app.models.theme import Theme
-from app.models.activity import Activity, ActivityGoal
+from app.models.activity import Activity, ActivityObservationGoal
+from app.models.observation_goal import ObservationGoal
+from app.core.security import get_password_hash
 from app.core.security import get_password_hash
 
 
 def reset_database():
     """Drop all tables and recreate them."""
+    with engine.connect() as conn:
+        conn.execute(text("DROP TABLE IF EXISTS activity_goals CASCADE"))
+        conn.commit()
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     print("Database reset complete.")
@@ -648,8 +655,13 @@ def seed_activities(school_id: int, teacher_id: int):
         theme = db.query(Theme).filter(Theme.name == "De appel").first()
         if not theme:
             return
+        school = db.query(School).filter(School.id == school_id).first()
+        if not school:
+            return
 
         opstap_goals = db.query(Goal).filter(Goal.goal_type == "OP_STAP", Goal.subject == "Wiskunde").limit(2).all()
+        if not opstap_goals:
+            return
 
         activity = Activity(
             school_id=school_id,
@@ -661,11 +673,29 @@ def seed_activities(school_id: int, teacher_id: int):
         db.commit()
         db.refresh(activity)
 
-        if opstap_goals:
-            activity.goals = opstap_goals
-            db.add(activity)
+        for goal in opstap_goals:
+            observation_goal = ObservationGoal(
+                school_id=school_id,
+                created_by=teacher_id,
+                name=goal.title,
+                subject=goal.subject,
+                domain=goal.domain,
+                subdomain=goal.subdomain,
+                goal_id=goal.id,
+            )
+            db.add(observation_goal)
             db.commit()
+            db.refresh(observation_goal)
 
+            link = ActivityObservationGoal(
+                activity_id=activity.id,
+                observation_goal_id=observation_goal.id,
+                label=goal.title,
+                observe=False,
+            )
+            db.add(link)
+
+        db.commit()
         print("Default activities seeded.")
     finally:
         db.close()

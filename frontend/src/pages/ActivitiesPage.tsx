@@ -42,7 +42,7 @@ type ActivityForm = {
   name: string
   description: string
   theme_id: number | null
-  goal_ids: number[]
+  goal_items: Array<{ goal_id: number; observe: boolean }>
 }
 
 type GoalModalState = {
@@ -51,7 +51,7 @@ type GoalModalState = {
   domain: string
   subdomain: string
   goals: AvailableGoal[]
-  tempSelectedIds: number[]
+  tempSelectedItems: Array<{ goal_id: number; observe: boolean }>
   subjects: string[]
   domains: string[]
   subdomains: string[]
@@ -67,7 +67,7 @@ export default function ActivitiesPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const [form, setForm] = useState<ActivityForm>({ name: '', description: '', theme_id: null, goal_ids: [] })
+  const [form, setForm] = useState<ActivityForm>({ name: '', description: '', theme_id: null, goal_items: [] })
   const [saving, setSaving] = useState(false)
   const [formOpen, setFormOpen] = useState(false)
   const [editingId, setEditingId] = useState<number | null>(null)
@@ -79,7 +79,7 @@ export default function ActivitiesPage() {
     domain: '',
     subdomain: '',
     goals: [],
-    tempSelectedIds: [],
+    tempSelectedItems: [],
     subjects: [],
     domains: [],
     subdomains: [],
@@ -172,7 +172,7 @@ export default function ActivitiesPage() {
   }, [goalModal.open, goalModal.subject, goalModal.domain, goalModal.subdomain])
 
   const resetForm = () => {
-    setForm({ name: '', description: '', theme_id: null, goal_ids: [] })
+    setForm({ name: '', description: '', theme_id: null, goal_items: [] })
     setEditingId(null)
     setFormOpen(false)
   }
@@ -182,7 +182,7 @@ export default function ActivitiesPage() {
       name: activity.name,
       description: activity.description || '',
       theme_id: activity.theme_id,
-      goal_ids: activity.goals.map((g) => g.id),
+      goal_items: activity.goals.map((g) => ({ goal_id: g.id, observe: g.observe })),
     })
     setEditingId(activity.id)
     setFormOpen(true)
@@ -192,7 +192,7 @@ export default function ActivitiesPage() {
     setGoalModal((current) => ({
       ...current,
       open: true,
-      tempSelectedIds: form.goal_ids,
+      tempSelectedItems: form.goal_items,
     }))
   }
 
@@ -201,16 +201,23 @@ export default function ActivitiesPage() {
   }
 
   const confirmGoalSelection = () => {
-    setForm((current) => ({ ...current, goal_ids: goalModal.tempSelectedIds }))
+    setForm((current) => ({ ...current, goal_items: goalModal.tempSelectedItems }))
     closeGoalModal()
   }
 
   const toggleGoal = (goalId: number) => {
     setForm((current) => ({
       ...current,
-      goal_ids: current.goal_ids.includes(goalId)
-        ? current.goal_ids.filter((id) => id !== goalId)
-        : [...current.goal_ids, goalId],
+      goal_items: current.goal_items.filter((item) => item.goal_id !== goalId),
+    }))
+  }
+
+  const toggleObserve = (goalId: number) => {
+    setForm((current) => ({
+      ...current,
+      goal_items: current.goal_items.map((item) =>
+        item.goal_id === goalId ? { ...item, observe: !item.observe } : item
+      ),
     }))
   }
 
@@ -224,7 +231,7 @@ export default function ActivitiesPage() {
         name: form.name,
         description: form.description || null,
         theme_id: form.theme_id ?? undefined,
-        goal_ids: form.goal_ids,
+        goal_items: form.goal_items,
       }
       if (editingId) {
         const updated = await updateActivity(editingId, payload)
@@ -362,33 +369,64 @@ export default function ActivitiesPage() {
                   <button className="btn btn-outline" type="button" onClick={openGoalModal} disabled={saving}>
                     Doelen kiezen
                   </button>
-                  {form.goal_ids.length > 0 && (
-                    <div className="goal-select-list" style={{ marginTop: 8 }}>
-                      {availableGoals
-                        .filter((goal) => form.goal_ids.includes(goal.id))
-                        .map((goal) => (
-                          <label key={goal.id} className="goal-select-item" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0' }}>
-                            <span style={{ flex: 1 }}>
-                              <strong>{goal.title || goal.code}</strong>
-                              <span className="goal-metadata">
-                                {' '}
-                                {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
-                              </span>
-                            </span>
-                            <button
-                              className="table-action danger-link delete-icon-button"
-                              type="button"
-                              onClick={() => toggleGoal(goal.id)}
-                              disabled={saving}
-                              aria-label="Verwijder doel"
-                              title="Verwijder doel"
-                            >
-                              <DeleteIcon fontSize="small" aria-hidden="true" />
-                            </button>
-                          </label>
-                        ))}
-                    </div>
-                  )}
+                     {form.goal_items.length > 0 && (
+                       <div className="goal-select-list" style={{ marginTop: 8 }}>
+                         {availableGoals
+                           .filter((goal) => form.goal_items.some((item) => item.goal_id === goal.id))
+                           .map((goal) => {
+                             const item = form.goal_items.find((i) => i.goal_id === goal.id)!
+                             return (
+                               <div
+                                 key={goal.id}
+                                 style={{
+                                   display: 'flex',
+                                   alignItems: 'center',
+                                   gap: 8,
+                                   padding: '4px 0',
+                                 }}
+                               >
+                                 <span style={{ flex: 1, minWidth: 0 }}>
+                                   <strong>{goal.title || goal.code}</strong>
+                                   <span style={{ fontSize: 12, color: 'var(--md-text-secondary)' }}>
+                                     {' '}
+                                     {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
+                                   </span>
+                                 </span>
+                                 <label
+                                   style={{
+                                     display: 'inline-flex',
+                                     alignItems: 'center',
+                                     gap: 4,
+                                     cursor: 'pointer',
+                                     userSelect: 'none',
+                                     flexShrink: 0,
+                                   }}
+                                   onClick={(e) => e.stopPropagation()}
+                                 >
+                                   <input
+                                     type="checkbox"
+                                     checked={item.observe}
+                                     onChange={() => toggleObserve(goal.id)}
+                                     disabled={saving}
+                                   />
+                                   <span style={{ fontSize: 13, whiteSpace: 'nowrap' }}>Observeren</span>
+                                 </label>
+                                 <button
+                                   className="table-action danger-link delete-icon-button"
+                                   type="button"
+                                   onClick={() => toggleGoal(goal.id)}
+                                   disabled={saving}
+                                   aria-label="Verwijder doel"
+                                   title="Verwijder doel"
+                                   style={{ flexShrink: 0 }}
+                                 >
+                                   <DeleteIcon fontSize="small" aria-hidden="true" />
+                                 </button>
+                               </div>
+                             )
+                           })}
+                       </div>
+                     )}
                 </div>
                 <button className="btn btn-primary" type="submit" disabled={saving} style={{ width: editingId ? 'auto' : undefined }}>
                   {saving ? 'Opslaan...' : editingId ? 'Bijwerken' : 'Aanmaken'}
@@ -455,7 +493,7 @@ export default function ActivitiesPage() {
                                     if (editingId === activity.id) {
                                       setForm((current) => ({
                                         ...current,
-                                        goal_ids: current.goal_ids.filter((id) => id !== goal.id),
+                                        goal_items: current.goal_items.filter((item) => item.goal_id !== goal.id),
                                       }))
                                     }
                                   } catch (err) {
@@ -592,7 +630,8 @@ export default function ActivitiesPage() {
                 </div>
               ) : (
                 goalModal.goals.map((goal) => {
-                  const isSelected = goalModal.tempSelectedIds.includes(goal.id)
+                  const selectedItem = goalModal.tempSelectedItems.find((item) => item.goal_id === goal.id)
+                  const isSelected = !!selectedItem
                   return (
                     <label
                       key={goal.id}
@@ -604,9 +643,9 @@ export default function ActivitiesPage() {
                         onChange={() => {
                           setGoalModal((current) => ({
                             ...current,
-                            tempSelectedIds: isSelected
-                              ? current.tempSelectedIds.filter((id) => id !== goal.id)
-                              : [...current.tempSelectedIds, goal.id],
+                            tempSelectedItems: isSelected
+                              ? current.tempSelectedItems.filter((item) => item.goal_id !== goal.id)
+                              : [...current.tempSelectedItems, { goal_id: goal.id, observe: true }],
                           }))
                         }}
                       />
@@ -632,9 +671,9 @@ export default function ActivitiesPage() {
                 className="btn btn-primary"
                 type="button"
                 onClick={confirmGoalSelection}
-                disabled={goalModal.tempSelectedIds.length === 0}
+                disabled={goalModal.tempSelectedItems.length === 0}
               >
-                Toevoegen ({goalModal.tempSelectedIds.length})
+                Toevoegen ({goalModal.tempSelectedItems.length})
               </button>
             </div>
           </section>

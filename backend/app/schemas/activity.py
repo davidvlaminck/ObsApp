@@ -26,10 +26,11 @@ class ActivityUpdate(BaseModel):
 
 class ActivityGoalResponse(BaseModel):
     id: int
+    label: str | None = None
+    observe: bool = False
     code: str | None = None
     title: str | None = None
     goal_type: str | None = None
-    label: str | None = None
 
 
 class ActivityResponse(BaseModel):

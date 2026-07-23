@@ -1,7 +1,7 @@
 from sqlalchemy import not_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from app.models.activity import Activity, ActivityGoal
+from app.models.activity import Activity, ActivityObservationGoal
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.theme import Theme
@@ -25,14 +25,17 @@ class ActivityRepository:
         self.db.refresh(activity)
 
         if goal_items:
-            self._sync_goal_items(activity, goal_items, created_by)
+            self._sync_observation_goal_links(activity, goal_items, created_by)
 
         return activity
 
     def get_by_id(self, activity_id: int, school_id: int) -> Activity | None:
         return (
             self.db.query(Activity)
-            .options(joinedload(Activity.theme), selectinload(Activity.goals))
+            .options(
+                joinedload(Activity.theme),
+                selectinload(Activity.observation_goal_links).selectinload(ActivityObservationGoal.observation_goal),
+            )
             .filter(Activity.id == activity_id, Activity.school_id == school_id)
             .first()
         )
@@ -40,7 +43,10 @@ class ActivityRepository:
     def get_all(self, school_id: int, theme_id: int | None = None) -> list[Activity]:
         query = (
             self.db.query(Activity)
-            .options(joinedload(Activity.theme), selectinload(Activity.goals))
+            .options(
+                joinedload(Activity.theme),
+                selectinload(Activity.observation_goal_links).selectinload(ActivityObservationGoal.observation_goal),
+            )
             .filter(Activity.school_id == school_id)
         )
         if theme_id:
@@ -56,7 +62,7 @@ class ActivityRepository:
             activity.theme_id = theme_id
 
         if goal_items is not None:
-            self._sync_goal_items(activity, goal_items, created_by)
+            self._sync_observation_goal_links(activity, goal_items, created_by)
 
         self.db.add(activity)
         self.db.commit()
@@ -68,22 +74,20 @@ class ActivityRepository:
         self.db.commit()
 
     def to_response(self, activity: Activity) -> ActivityResponse:
-        goal_labels = {
-            ag.goal_id: ag.label
-            for ag in self.db.query(ActivityGoal)
-            .filter(ActivityGoal.activity_id == activity.id)
-            .all()
-        }
-        goals = [
-            ActivityGoalResponse(
-                id=goal.id,
-                code=goal.code,
-                title=goal.title,
-                goal_type=goal.goal_type,
-                label=goal_labels.get(goal.id),
+        goals = []
+        for link in activity.observation_goal_links:
+            observation_goal = link.observation_goal
+            goal = observation_goal.goal if observation_goal else None
+            goals.append(
+                ActivityGoalResponse(
+                    id=observation_goal.id if observation_goal else 0,
+                    label=link.label or (observation_goal.name if observation_goal else None),
+                    observe=link.observe,
+                    code=goal.code if goal else None,
+                    title=goal.title if goal else None,
+                    goal_type=goal.goal_type if goal else None,
+                )
             )
-            for goal in activity.goals
-        ]
 
         return ActivityResponse(
             id=activity.id,
@@ -101,13 +105,13 @@ class ActivityRepository:
             updated_at=activity.updated_at,
         )
 
-    def delete_goal(self, activity: Activity, goal_id: int) -> None:
-        existing = self.db.query(ActivityGoal).filter(
-            ActivityGoal.activity_id == activity.id,
-            ActivityGoal.goal_id == goal_id,
+    def delete_observation_goal_link(self, activity: Activity, observation_goal_id: int) -> None:
+        link = self.db.query(ActivityObservationGoal).filter(
+            ActivityObservationGoal.activity_id == activity.id,
+            ActivityObservationGoal.observation_goal_id == observation_goal_id,
         ).first()
-        if existing:
-            self.db.delete(existing)
+        if link:
+            self.db.delete(link)
             self.db.commit()
 
     def get_available_goals(self, school_id: int, koepel_slug: str | None) -> list[Goal]:
@@ -118,45 +122,71 @@ class ActivityRepository:
             query = query.filter(Goal.goal_type == "VO")
         return query.order_by(Goal.subject, Goal.code).all()
 
-    def _sync_goal_items(self, activity: Activity, goal_items: list[dict], created_by: int | None = None) -> None:
-        current_ids = {item["goal_id"] for item in goal_items if item.get("goal_id")}
-        existing_items = {ag.goal_id: ag for ag in self.db.query(ActivityGoal).filter(ActivityGoal.activity_id == activity.id).all()}
+    def _find_or_create_observation_goal(self, school_id: int, created_by: int | None, goal: Goal, label: str | None) -> ObservationGoal:
+        name = label or goal.title
+        observation_goal = (
+            self.db.query(ObservationGoal)
+            .filter(
+                ObservationGoal.school_id == school_id,
+                ObservationGoal.goal_id == goal.id,
+                ObservationGoal.name == name,
+            )
+            .first()
+        )
+        if observation_goal:
+            return observation_goal
 
-        for goal_id in existing_items.keys() - current_ids:
-            self.db.delete(existing_items[goal_id])
+        observation_goal = ObservationGoal(
+            school_id=school_id,
+            created_by=created_by or 0,
+            name=name,
+            subject=goal.subject,
+            domain=goal.domain,
+            subdomain=goal.subdomain,
+            goal_id=goal.id,
+        )
+        self.db.add(observation_goal)
+        self.db.commit()
+        self.db.refresh(observation_goal)
+        return observation_goal
+
+    def _sync_observation_goal_links(self, activity: Activity, goal_items: list[dict], created_by: int | None = None) -> None:
+        current_observation_goal_ids = set()
+        existing_links = {
+            link.observation_goal_id: link
+            for link in self.db.query(ActivityObservationGoal)
+            .filter(ActivityObservationGoal.activity_id == activity.id)
+            .all()
+        }
 
         for item in goal_items:
             goal = self.db.query(Goal).filter(Goal.id == item["goal_id"]).first()
             if not goal:
                 continue
 
-            existing = existing_items.get(goal.id)
-            if existing:
-                existing.label = item.get("label") or goal.title
-            else:
-                ag = ActivityGoal(
-                    activity_id=activity.id,
-                    goal_id=goal.id,
-                    label=item.get("label") or goal.title,
-                )
-                self.db.add(ag)
+            observation_goal = self._find_or_create_observation_goal(
+                activity.school_id,
+                created_by,
+                goal,
+                item.get("label"),
+            )
 
-            if item.get("observe") and created_by is not None:
-                existing_og = self.db.query(ObservationGoal).filter(
-                    ObservationGoal.school_id == activity.school_id,
-                    ObservationGoal.goal_id == goal.id,
-                    ObservationGoal.name == (item.get("label") or goal.title),
-                ).first()
-                if not existing_og:
-                    og = ObservationGoal(
-                        school_id=activity.school_id,
-                        created_by=created_by,
-                        name=item.get("label") or goal.title,
-                        subject=goal.subject,
-                        domain=goal.domain,
-                        subdomain=goal.subdomain,
-                        goal_id=goal.id,
-                    )
-                    self.db.add(og)
+            current_observation_goal_ids.add(observation_goal.id)
+            existing_link = existing_links.get(observation_goal.id)
+            if existing_link:
+                existing_link.label = item.get("label") or goal.title
+                existing_link.observe = item.get("observe", False)
+            else:
+                link = ActivityObservationGoal(
+                    activity_id=activity.id,
+                    observation_goal_id=observation_goal.id,
+                    label=item.get("label") or goal.title,
+                    observe=item.get("observe", False),
+                )
+                self.db.add(link)
+
+        for og_id, link in existing_links.items():
+            if og_id not in current_observation_goal_ids:
+                self.db.delete(link)
 
         self.db.commit()

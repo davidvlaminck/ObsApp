@@ -343,6 +343,7 @@ export interface ActivityGoalResponse {
   code: string | null
   title: string | null
   goal_type: string | null
+  observe: boolean
 }
 
 export interface ActivityResponse {
@@ -357,11 +358,17 @@ export interface ActivityResponse {
   updated_at: string | null
 }
 
+export interface ActivityGoalItem {
+  goal_id: number
+  label?: string | null
+  observe: boolean
+}
+
 export interface ActivityCreate {
   name: string
   description?: string | null
   theme_id?: number | null
-  goal_ids: number[]
+  goal_items: ActivityGoalItem[]
 }
 
 export interface AvailableGoal {

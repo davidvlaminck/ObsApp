@@ -1,5 +1,7 @@
 import { AxiosError } from 'axios'
 import { FormEvent, useEffect, useState } from 'react'
+import EditIcon from '@mui/icons-material/Edit'
+import DeleteIcon from '@mui/icons-material/Delete'
 import {
   createTheme,
   deleteTheme,
@@ -219,11 +221,23 @@ export default function ThemesPage() {
                       </td>
                       <td>{theme.description || '-'}</td>
                       <td>
-                        <button className="table-action" type="button" onClick={() => startEdit(theme)}>
-                          Bewerken
+                        <button
+                          className="table-action edit-icon-button"
+                          type="button"
+                          onClick={() => startEdit(theme)}
+                          aria-label="Bewerken"
+                          title="Bewerken"
+                        >
+                          <EditIcon fontSize="small" aria-hidden="true" />
                         </button>
-                        <button className="table-action table-action-danger" type="button" onClick={() => handleDelete(theme.id, theme.name)}>
-                          Verwijderen
+                        <button
+                          className="table-action table-action-danger delete-icon-button"
+                          type="button"
+                          onClick={() => handleDelete(theme.id, theme.name)}
+                          aria-label="Verwijderen"
+                          title="Verwijderen"
+                        >
+                          <DeleteIcon fontSize="small" aria-hidden="true" />
                         </button>
                       </td>
                     </tr>

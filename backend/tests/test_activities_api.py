@@ -10,9 +10,9 @@ from app.api import auth as auth_module
 from app.core.database import Base, get_db
 from app.models.activity import Activity
 from app.models.goal import Goal
+from app.models.observation_goal import ObservationGoal
 from app.models.school import School
 from app.models.theme import Theme
-from app.models.observation_goal import ObservationGoal
 from app.schemas.user import UserResponse
 
 
@@ -95,6 +95,7 @@ def test_create_activity_success(activity_client: TestClient, activity_db: Sessi
     assert data["theme_id"] == 1
     assert len(data["goals"]) == 1
     assert data["goals"][0]["label"] == "Getallen"
+    assert data["goals"][0]["observe"] is False
 
 
 def test_create_activity_with_observe_creates_observation_goal(activity_client: TestClient, activity_db: Session):
@@ -112,6 +113,7 @@ def test_create_activity_with_observe_creates_observation_goal(activity_client: 
     data = response.json()
     assert len(data["goals"]) == 1
     assert data["goals"][0]["label"] == "Getallen"
+    assert data["goals"][0]["observe"] is True
 
     observation_goals = activity_db.query(ObservationGoal).filter(ObservationGoal.goal_id == 1).all()
     assert len(observation_goals) == 1
@@ -132,6 +134,11 @@ def test_create_activity_with_custom_label(activity_client: TestClient, activity
     assert response.status_code == 201
     data = response.json()
     assert data["goals"][0]["label"] == "Mijn label"
+    assert data["goals"][0]["observe"] is False
+
+    observation_goals = activity_db.query(ObservationGoal).filter(ObservationGoal.goal_id == 1).all()
+    assert len(observation_goals) == 1
+    assert observation_goals[0].name == "Mijn label"
 
 
 def test_list_activities_filters_by_theme(activity_client: TestClient, activity_db: Session):
@@ -168,16 +175,20 @@ def test_delete_activity_success(activity_client: TestClient, activity_db: Sessi
     assert activity_db.query(Activity).count() == 0
 
 
-def test_delete_activity_goal_success(activity_client: TestClient, activity_db: Session):
+def test_delete_activity_observation_goal_success(activity_client: TestClient, activity_db: Session):
     seed_school_and_theme(activity_db, 1, 1)
     goal = Goal(id=1, code="WIS-K3-1.1", title="Getallen", subject="Wiskunde", goal_type="OP_STAP")
     activity_db.add(goal)
     activity_db.commit()
 
-    create_resp = activity_client.post("/api/activities", json={"name": "Act", "goal_items": [{"goal_id": 1, "label": None, "observe": False}]})
+    create_resp = activity_client.post(
+        "/api/activities",
+        json={"name": "Act", "goal_items": [{"goal_id": 1, "label": None, "observe": False}]},
+    )
     activity_id = create_resp.json()["id"]
+    observation_goal_id = create_resp.json()["goals"][0]["id"]
 
-    response = activity_client.delete(f"/api/activities/{activity_id}/goals/1")
+    response = activity_client.delete(f"/api/activities/{activity_id}/observation-goals/{observation_goal_id}")
     assert response.status_code == 204
 
     detail = activity_client.get(f"/api/activities/{activity_id}").json()

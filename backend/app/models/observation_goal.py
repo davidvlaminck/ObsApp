@@ -24,3 +24,4 @@ class ObservationGoal(Base):
     creator = relationship("User", back_populates="observation_goals")
     goal = relationship("Goal", back_populates="observation_goals")
     student_observations = relationship("StudentObservation", back_populates="observation_goal")
+    activity_links = relationship("ActivityObservationGoal", back_populates="observation_goal", cascade="all, delete-orphan")
