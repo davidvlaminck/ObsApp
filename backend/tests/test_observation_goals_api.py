@@ -12,7 +12,8 @@ from app.core.database import Base
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.school import School
-from app.models.school_year import SchoolYear, Class as ClassModel
+from app.models.school_goal_domain import SchoolGoalDomain
+from app.models.school_year import Class as ClassModel
 from app.models.user import User
 from app.schemas.user import UserResponse
 
@@ -396,3 +397,243 @@ def test_demo_user_cannot_create_more_than_20_goals(
     )
     assert response.status_code == 403
     assert "Als demo gebruiker kan je tot 10 doelen zelf aanmaken" in response.json()["detail"]
+
+
+def test_school_goals_subject_is_included_in_subjects_list(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    observation_goal_client.post(
+        "/api/observation-goals",
+        json={
+            "name": "Teamwerk",
+            "subject": "Schooleigen doelen",
+            "domain": "Sociale vaardigheden",
+            "subdomain": None,
+            "goal_id": None,
+        },
+    )
+
+    response = observation_goal_client.get("/api/observation-goals/subjects")
+
+    assert response.status_code == 200
+    subjects = response.json()
+    assert "Schooleigen doelen" in subjects
+
+
+def test_school_goals_can_be_filtered_by_subject(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    observation_goal_client.post(
+        "/api/observation-goals",
+        json={
+            "name": "Teamwerk",
+            "subject": "Schooleigen doelen",
+            "domain": "Sociale vaardigheden",
+            "subdomain": None,
+            "goal_id": None,
+        },
+    )
+    observation_goal_client.post(
+        "/api/observation-goals",
+        json={
+            "name": "Lezen",
+            "subject": "Wiskunde",
+            "domain": "Getallen",
+            "subdomain": "K-",
+            "goal_id": None,
+        },
+    )
+
+    response = observation_goal_client.get("/api/observation-goals", params={"subject": "Schooleigen doelen"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "Teamwerk"
+    assert data[0]["subject"] == "Schooleigen doelen"
+
+
+def test_school_goals_domains_are_returned(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    observation_goal_client.post(
+        "/api/observation-goals",
+        json={
+            "name": "Teamwerk",
+            "subject": "Schooleigen doelen",
+            "domain": "Sociale vaardigheden",
+            "subdomain": None,
+            "goal_id": None,
+        },
+    )
+    observation_goal_client.post(
+        "/api/observation-goals",
+        json={
+            "name": "Muziek begrijpen",
+            "subject": "Schooleigen doelen",
+            "domain": "Cultuur",
+            "subdomain": None,
+            "goal_id": None,
+        },
+    )
+
+    response = observation_goal_client.get("/api/observation-goals/domains", params={"subject": "Schooleigen doelen"})
+
+    assert response.status_code == 200
+    domains = response.json()
+    assert "Sociale vaardigheden" in domains
+    assert "Cultuur" in domains
+
+
+def test_school_goals_can_have_null_subdomain(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    response = observation_goal_client.post(
+        "/api/observation-goals",
+        json={
+            "name": "Teamwerk",
+            "subject": "Schooleigen doelen",
+            "domain": "Sociale vaardigheden",
+            "subdomain": None,
+            "goal_id": None,
+        },
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["subdomain"] is None
+
+
+def test_create_managed_domain_returns_created_domain(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+
+    response = observation_goal_client.post(
+        "/api/observation-goals/managed-domains",
+        json={"name": "Sociale vaardigheden"},
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["name"] == "Sociale vaardigheden"
+    assert data["school_id"] == 1
+
+
+def test_list_managed_domains_is_school_scoped(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    seed_school_and_user(observation_goal_db, 2, 2, "teacher2@example.com")
+    observation_goal_db.add(
+        SchoolGoalDomain(id=1, school_id=1, name="Domein school 1"),
+    )
+    observation_goal_db.add(
+        SchoolGoalDomain(id=2, school_id=2, name="Domein school 2"),
+    )
+    observation_goal_db.commit()
+
+    observation_goal_client.app.dependency_overrides[auth_module.get_current_user] = lambda: UserResponse(
+        id=1,
+        email="teacher@example.com",
+        name="Teacher",
+        is_active=True,
+        is_superuser=False,
+        school_id=1,
+    )
+
+    response = observation_goal_client.get("/api/observation-goals/managed-domains")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["name"] == "Domein school 1"
+
+
+def test_update_managed_domain_changes_name(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    observation_goal_db.add(
+        SchoolGoalDomain(id=1, school_id=1, name="Oude naam"),
+    )
+    observation_goal_db.commit()
+
+    response = observation_goal_client.put(
+        "/api/observation-goals/managed-domains/1",
+        json={"name": "Nieuwe naam"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["name"] == "Nieuwe naam"
+
+
+def test_delete_managed_domain_removes_domain(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    observation_goal_db.add(
+        SchoolGoalDomain(id=1, school_id=1, name="Te verwijderen"),
+    )
+    observation_goal_db.commit()
+
+    response = observation_goal_client.delete("/api/observation-goals/managed-domains/1")
+
+    assert response.status_code == 204
+    assert observation_goal_db.query(SchoolGoalDomain).count() == 0
+
+
+def test_delete_managed_domain_fails_when_goals_attached(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    observation_goal_db.add(
+        SchoolGoalDomain(id=1, school_id=1, name="Hele domein"),
+    )
+    observation_goal_db.add(
+        ObservationGoal(
+            id=1,
+            school_id=1,
+            created_by=1,
+            name="Doel",
+            subject="Schooleigen doelen",
+            domain="Hele domein",
+            subdomain=None,
+            goal_id=None,
+            class_id=None,
+        ),
+    )
+    observation_goal_db.commit()
+
+    response = observation_goal_client.delete("/api/observation-goals/managed-domains/1")
+
+    assert response.status_code == 409
+    assert "observatiedoelen" in response.json()["detail"]
+    assert observation_goal_db.query(SchoolGoalDomain).count() == 1
+
+
+def test_managed_domain_404_for_unknown_domain(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+
+    response = observation_goal_client.put(
+        "/api/observation-goals/managed-domains/999",
+        json={"name": "Nieuwe naam"},
+    )
+
+    assert response.status_code == 404

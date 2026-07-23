@@ -28,6 +28,7 @@ import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import PaletteIcon from '@mui/icons-material/Palette'
 import SportsIcon from '@mui/icons-material/Sports'
+import FlagIcon from '@mui/icons-material/Flag'
 
 interface AppLayoutProps {
   children: ReactNode
@@ -53,15 +54,16 @@ const menuItems: MenuItem[] = [
         label: 'Beheer',
         to: '/management',
         icon: AssignmentIcon,
-        children: [
-          { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
-          { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
-          { label: 'Thema\'s', to: '/management/themes', icon: PaletteIcon },
-          { label: 'Activiteiten', to: '/management/activities', icon: SportsIcon },
-          { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
-          { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
-          { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
-        ],
+          children: [
+           { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
+           { label: 'Schooleigen doelen', to: '/management/school-goals', icon: FlagIcon },
+           { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
+           { label: 'Thema\'s', to: '/management/themes', icon: PaletteIcon },
+           { label: 'Activiteiten', to: '/management/activities', icon: SportsIcon },
+           { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
+           { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
+           { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
+         ],
       },
 ]
 

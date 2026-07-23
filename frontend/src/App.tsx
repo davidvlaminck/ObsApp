@@ -20,6 +20,7 @@ import DemoPage from './pages/DemoPage'
 import DemoSchoolPage from './pages/DemoSchoolPage'
 import ThemesPage from './pages/ThemesPage'
 import ActivitiesPage from './pages/ActivitiesPage'
+import SchoolGoalsPage from './pages/SchoolGoalsPage'
 
 function App() {
   return (
@@ -123,6 +124,14 @@ function App() {
         element={
           <AppLayout>
             <ActivitiesPage />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/management/school-goals"
+        element={
+          <AppLayout>
+            <SchoolGoalsPage />
           </AppLayout>
         }
       />

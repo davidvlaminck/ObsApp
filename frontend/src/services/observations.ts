@@ -100,6 +100,32 @@ export async function getObservationGoalDomains(subject?: string): Promise<strin
   return response.data
 }
 
+export interface SchoolGoalDomainResponse {
+  id: number
+  school_id: number
+  name: string
+  created_at: string | null
+}
+
+export async function getManagedDomains(): Promise<SchoolGoalDomainResponse[]> {
+  const response = await api.get<SchoolGoalDomainResponse[]>('/observation-goals/managed-domains')
+  return response.data
+}
+
+export async function createManagedDomain(name: string): Promise<SchoolGoalDomainResponse> {
+  const response = await api.post<SchoolGoalDomainResponse>('/observation-goals/managed-domains', { name })
+  return response.data
+}
+
+export async function updateManagedDomain(id: number, name: string): Promise<SchoolGoalDomainResponse> {
+  const response = await api.put<SchoolGoalDomainResponse>(`/observation-goals/managed-domains/${id}`, { name })
+  return response.data
+}
+
+export async function deleteManagedDomain(id: number): Promise<void> {
+  await api.delete(`/observation-goals/managed-domains/${id}`)
+}
+
 export async function getObservationGoalSubdomains(subject?: string, domain?: string): Promise<string[]> {
   const response = await api.get<string[]>('/observation-goals/subdomains', { params: { subject, domain } })
   return response.data

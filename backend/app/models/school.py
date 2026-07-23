@@ -24,3 +24,4 @@ class School(Base):
     activities = relationship("Activity", back_populates="school")
     school_years = relationship("SchoolYear", back_populates="school", cascade="all, delete-orphan")
     koepel_ref = relationship("Koepel", back_populates="schools")
+    school_goal_domains = relationship("SchoolGoalDomain", back_populates="school")

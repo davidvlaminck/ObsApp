@@ -482,6 +482,14 @@ i/* Modern Card component */
   white-space: nowrap;
 }
 
+.domain-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
 /* Empty state */
 .empty-state {
   background: var(--md-surface);

@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
+from app.models.school_goal_domain import SchoolGoalDomain
 from app.models.school_year import Class as ClassModel
 from app.schemas.observation_goal import GoalSummary, ObservationGoalCreate, ObservationGoalResponse, ObservationGoalUpdate
 
@@ -170,8 +171,15 @@ class ObservationGoalRepository:
             }
             goal_domain_query = goal_domain_query.filter(Goal.subject.ilike(subject))
         goal_domains = {row[0] for row in goal_domain_query.distinct().all()}
+        managed_domains = {
+            row[0]
+            for row in self.db.query(SchoolGoalDomain.name)
+            .filter(SchoolGoalDomain.school_id == school_id)
+            .distinct()
+            .all()
+        }
 
-        return sorted(domain for domain in observation_goal_domains | goal_domains if domain)
+        return sorted(domain for domain in observation_goal_domains | goal_domains | managed_domains if domain)
 
     def get_subdomains(self, school_id: int, subject: str | None = None, domain: str | None = None) -> list[str]:
         query = self.db.query(ObservationGoal.subdomain).filter(

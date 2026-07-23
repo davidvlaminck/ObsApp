@@ -4,6 +4,7 @@ from app.api.auth import get_current_user
 from app.core.database import get_db
 from app.repositories.goal_repository import GoalRepository
 from app.repositories.observation_goal_repository import ObservationGoalRepository
+from app.repositories.school_goal_domain_repository import SchoolGoalDomainRepository
 from app.repositories.school_repository import SchoolRepository
 from app.repositories.school_year_repository import (
     ClassRepository,
@@ -14,6 +15,7 @@ from app.repositories.student_observation_repository import StudentObservationRe
 from app.schemas.goal import GoalResponse
 from app.schemas.observation_goal import ObservationGoalCreate, ObservationGoalResponse
 from app.schemas.school import ClassResponse
+from app.schemas.school_goal_domain import SchoolGoalDomainCreate, SchoolGoalDomainResponse, SchoolGoalDomainUpdate
 from app.schemas.student_observation import ObservationContextResponse, OverviewResponse
 from app.schemas.user import UserResponse
 
@@ -181,6 +183,69 @@ def list_observation_goal_subdomains(
 ):
     school_id = _ensure_school_user(current_user)
     return ObservationGoalRepository(db).get_subdomains(school_id, subject=subject, domain=domain)
+
+
+@router.get("/managed-domains", response_model=list[SchoolGoalDomainResponse])
+def list_managed_domains(
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    school_id = _ensure_school_user(current_user)
+    return SchoolGoalDomainRepository(db).get_all(school_id)
+
+
+@router.post("/managed-domains", response_model=SchoolGoalDomainResponse, status_code=status.HTTP_201_CREATED)
+def create_managed_domain(
+    payload: SchoolGoalDomainCreate,
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    school_id = _ensure_school_user(current_user)
+    if not SchoolRepository(db).get_by_id(school_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="School niet gevonden")
+
+    repo = SchoolGoalDomainRepository(db)
+    domain = repo.create(payload, school_id)
+    return repo.to_response(domain)
+
+
+@router.put("/managed-domains/{domain_id}", response_model=SchoolGoalDomainResponse)
+def update_managed_domain(
+    domain_id: int,
+    payload: SchoolGoalDomainUpdate,
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    school_id = _ensure_school_user(current_user)
+    repo = SchoolGoalDomainRepository(db)
+    domain = repo.get_by_id(domain_id, school_id)
+    if not domain:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domein niet gevonden")
+
+    return repo.update(domain, payload)
+
+
+@router.delete("/managed-domains/{domain_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_managed_domain(
+    domain_id: int,
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    school_id = _ensure_school_user(current_user)
+    repo = SchoolGoalDomainRepository(db)
+    domain = repo.get_by_id(domain_id, school_id)
+    if not domain:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domein niet gevonden")
+
+    goal_repo = ObservationGoalRepository(db)
+    attached_goals = goal_repo.get_all(school_id=school_id, domain=domain.name)
+    if attached_goals:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Kan dit domein niet verwijderen omdat er nog observatiedoelen aan gekoppeld zijn.",
+        )
+
+    repo.delete(domain)
 
 
 @router.delete("/{observation_goal_id}", status_code=status.HTTP_204_NO_CONTENT)
