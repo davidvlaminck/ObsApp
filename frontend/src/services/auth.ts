@@ -340,6 +340,7 @@ export async function deleteTheme(themeId: number): Promise<void> {
 
 export interface ActivityGoalResponse {
   id: number
+  goal_id: number
   code: string | null
   title: string | null
   goal_type: string | null

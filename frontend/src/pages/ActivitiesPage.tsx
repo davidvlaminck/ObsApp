@@ -182,7 +182,7 @@ export default function ActivitiesPage() {
       name: activity.name,
       description: activity.description || '',
       theme_id: activity.theme_id,
-      goal_items: activity.goals.map((g) => ({ goal_id: g.id, observe: g.observe })),
+      goal_items: activity.goals.map((g) => ({ goal_id: g.goal_id, observe: g.observe })),
     })
     setEditingId(activity.id)
     setFormOpen(true)
@@ -471,40 +471,40 @@ export default function ActivitiesPage() {
                             <span key={goal.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
                               <span style={{ fontWeight: 500 }}>{goal.title || goal.code}</span>
                               <span className="goal-metadata">{goal.goal_type}</span>
-                              <button
-                                className="table-action danger-link delete-icon-button"
-                                type="button"
-                                onClick={async () => {
-                                  setError('')
-                                  setSuccess('')
-                                  try {
-                                    await removeActivityGoal(activity.id, goal.id)
-                                    setSuccess(`Doel verwijderd uit activiteit.`)
-                                    setActivities((current) =>
-                                      current.map((a) =>
-                                        a.id === activity.id
-                                          ? {
-                                              ...a,
-                                              goals: a.goals.filter((g) => g.id !== goal.id),
-                                            }
-                                          : a,
-                                      ),
-                                    )
-                                    if (editingId === activity.id) {
+                              {editingId === activity.id && (
+                                <button
+                                  className="table-action danger-link delete-icon-button"
+                                  type="button"
+                                  onClick={async () => {
+                                    setError('')
+                                    setSuccess('')
+                                    try {
+                                      await removeActivityGoal(activity.id, goal.id)
+                                      setSuccess(`Doel verwijderd uit activiteit.`)
+                                      setActivities((current) =>
+                                        current.map((a) =>
+                                          a.id === activity.id
+                                            ? {
+                                                ...a,
+                                                goals: a.goals.filter((g) => g.id !== goal.id),
+                                              }
+                                            : a,
+                                        ),
+                                      )
                                       setForm((current) => ({
                                         ...current,
-                                        goal_items: current.goal_items.filter((item) => item.goal_id !== goal.id),
+                                        goal_items: current.goal_items.filter((item) => item.goal_id !== goal.goal_id),
                                       }))
+                                    } catch (err) {
+                                      setError(getErrorMessage(err, 'Kan doel niet verwijderen.'))
                                     }
-                                  } catch (err) {
-                                    setError(getErrorMessage(err, 'Kan doel niet verwijderen.'))
-                                  }
-                                }}
-                                aria-label="Verwijder doel"
-                                title="Verwijder doel"
-                              >
-                                <DeleteIcon fontSize="small" aria-hidden="true" />
-                              </button>
+                                  }}
+                                  aria-label="Verwijder doel"
+                                  title="Verwijder doel"
+                                >
+                                  <DeleteIcon fontSize="small" aria-hidden="true" />
+                                </button>
+                              )}
                             </span>
                           ))}
                           {activity.goals.length === 0 && <span className="text-muted">Geen doelen</span>}

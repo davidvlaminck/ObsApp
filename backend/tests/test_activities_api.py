@@ -165,6 +165,59 @@ def test_update_activity_success(activity_client: TestClient, activity_db: Sessi
     assert response.json()["name"] == "Nieuw"
 
 
+def test_update_activity_goals_replaces_links(activity_client: TestClient, activity_db: Session):
+    seed_school_and_theme(activity_db, 1, 1)
+    goal1 = Goal(id=1, code="G1", title="Eerste", subject="Wiskunde", goal_type="OP_STAP")
+    goal2 = Goal(id=2, code="G2", title="Tweede", subject="Wiskunde", goal_type="OP_STAP")
+    goal3 = Goal(id=3, code="G3", title="Derde", subject="Wiskunde", goal_type="OP_STAP")
+    activity_db.add_all([goal1, goal2, goal3])
+    activity_db.commit()
+
+    create_resp = activity_client.post(
+        "/api/activities",
+        json={
+            "name": "Act",
+            "goal_items": [{"goal_id": 1, "observe": False}, {"goal_id": 2, "observe": True}],
+        },
+    )
+    activity_id = create_resp.json()["id"]
+    assert len(create_resp.json()["goals"]) == 2
+    assert create_resp.json()["goals"][0]["goal_id"] == 1
+    assert create_resp.json()["goals"][1]["goal_id"] == 2
+
+    response = activity_client.put(
+        f"/api/activities/{activity_id}",
+        json={"goal_items": [{"goal_id": 2, "observe": False}, {"goal_id": 3, "observe": True}]},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["goals"]) == 2
+    goal_ids = {g["goal_id"] for g in data["goals"]}
+    assert goal_ids == {2, 3}
+    assert data["goals"][0]["observe"] is not True or data["goals"][1]["observe"] is True
+
+
+def test_update_activity_removes_all_goals_when_empty(activity_client: TestClient, activity_db: Session):
+    seed_school_and_theme(activity_db, 1, 1)
+    goal = Goal(id=1, code="G1", title="Eerste", subject="Wiskunde", goal_type="OP_STAP")
+    activity_db.add(goal)
+    activity_db.commit()
+
+    create_resp = activity_client.post(
+        "/api/activities",
+        json={"name": "Act", "goal_items": [{"goal_id": 1, "observe": False}]},
+    )
+    activity_id = create_resp.json()["id"]
+    assert len(create_resp.json()["goals"]) == 1
+
+    response = activity_client.put(
+        f"/api/activities/{activity_id}",
+        json={"goal_items": []},
+    )
+    assert response.status_code == 200
+    assert response.json()["goals"] == []
+
+
 def test_delete_activity_success(activity_client: TestClient, activity_db: Session):
     seed_school_and_theme(activity_db, 1, 1)
     create_resp = activity_client.post("/api/activities", json={"name": "Te verwijderen"})

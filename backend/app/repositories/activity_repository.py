@@ -81,6 +81,7 @@ class ActivityRepository:
             goals.append(
                 ActivityGoalResponse(
                     id=observation_goal.id if observation_goal else 0,
+                    goal_id=goal.id if goal else None,
                     label=link.label or (observation_goal.name if observation_goal else None),
                     observe=link.observe,
                     code=goal.code if goal else None,
