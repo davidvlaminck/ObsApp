@@ -217,7 +217,7 @@ def seed_school_goal_domain_and_goals():
                         school_id=school.id,
                         created_by=teacher.id,
                         name=title,
-                        subject="Schooleigen doelen",
+                        subject=ObservationGoal.SCHOOL_GOALS_SUBJECT,
                         domain="Betrokkenheid",
                         subdomain=None,
                     )
@@ -269,7 +269,7 @@ def seed_welbevinden_domain_and_goals():
                         school_id=school.id,
                         created_by=teacher.id,
                         name=title,
-                        subject="Schooleigen doelen",
+                        subject=ObservationGoal.SCHOOL_GOALS_SUBJECT,
                         domain="Welbevinden",
                         subdomain=None,
                     )

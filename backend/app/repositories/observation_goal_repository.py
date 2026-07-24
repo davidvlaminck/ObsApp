@@ -70,6 +70,7 @@ class ObservationGoalRepository:
             if class_model:
                 query = query.outerjoin(ObservationGoal.goal).filter(
                     or_(
+                        ObservationGoal.subject == ObservationGoal.SCHOOL_GOALS_SUBJECT,
                         Goal.level == class_model.class_type,
                         and_(ObservationGoal.goal_id.is_(None), ObservationGoal.subdomain == class_model.class_type),
                     )
@@ -102,6 +103,7 @@ class ObservationGoalRepository:
             if class_model:
                 query = query.outerjoin(ObservationGoal.goal).filter(
                     or_(
+                        ObservationGoal.subject == ObservationGoal.SCHOOL_GOALS_SUBJECT,
                         Goal.level == class_model.class_type,
                         and_(ObservationGoal.goal_id.is_(None), ObservationGoal.subdomain == class_model.class_type),
                     )

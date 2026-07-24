@@ -184,6 +184,8 @@ class StudentObservationRepository:
         )
 
     def _goal_matches_class(self, observation_goal: ObservationGoal, class_type: str) -> bool:
+        if observation_goal.subject == ObservationGoal.SCHOOL_GOALS_SUBJECT:
+            return True
         if observation_goal.goal and observation_goal.goal.level == class_type:
             return True
         if observation_goal.goal is None and observation_goal.subdomain == class_type:
@@ -206,6 +208,7 @@ class StudentObservationRepository:
             if class_model:
                 query = query.filter(
                     or_(
+                        ObservationGoal.subject == ObservationGoal.SCHOOL_GOALS_SUBJECT,
                         Goal.level == class_model.class_type,
                         and_(
                             ObservationGoal.goal_id.is_(None),
@@ -255,6 +258,7 @@ class StudentObservationRepository:
 
         goals_query = goals_query.filter(
             or_(
+                ObservationGoal.subject == ObservationGoal.SCHOOL_GOALS_SUBJECT,
                 Goal.level == class_model.class_type,
                 and_(
                     ObservationGoal.goal_id.is_(None),

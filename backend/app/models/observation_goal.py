@@ -8,6 +8,8 @@ from app.core.database import Base
 class ObservationGoal(Base):
     __tablename__ = "observation_goals"
 
+    SCHOOL_GOALS_SUBJECT = "Schooleigen doelen"
+
     id = Column(Integer, primary_key=True, index=True)
     school_id = Column(Integer, ForeignKey("schools.id"), nullable=False, index=True)
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)

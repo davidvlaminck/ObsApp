@@ -13,7 +13,7 @@ from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.school import School
 from app.models.school_goal_domain import SchoolGoalDomain
-from app.models.school_year import Class as ClassModel
+from app.models.school_year import Class as ClassModel, SchoolYear
 from app.models.user import User
 from app.schemas.user import UserResponse
 
@@ -747,3 +747,41 @@ def test_welbevinden_goals_can_be_created_and_listed(
     assert len(data) == len(WELBEVINDEN_GOALS)
     returned_names = {goal["name"] for goal in data}
     assert returned_names == set(WELBEVINDEN_GOALS)
+
+
+def test_school_goals_are_returned_for_any_class_in_observe_context(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
+    observation_goal_db.add(school_year)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(school_year)
+
+    cls = ClassModel(school_year_id=school_year.id, name="3K", class_type="K3")
+    observation_goal_db.add(cls)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(cls)
+
+    observation_goal_client.post(
+        "/api/observation-goals",
+        json={
+            "name": "Teamwerk",
+            "subject": "Schooleigen doelen",
+            "domain": "Sociale vaardigheden",
+            "subdomain": None,
+            "goal_id": None,
+        },
+    )
+
+    response = observation_goal_client.get(
+        "/api/observation-goals/observe/context",
+        params={"class_id": cls.id, "subject": "Schooleigen doelen"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["goals"]) == 1
+    assert data["goals"][0]["name"] == "Teamwerk"
+    assert data["goals"][0]["subject"] == "Schooleigen doelen"

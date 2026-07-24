@@ -370,6 +370,38 @@ def test_create_student_observation_rejects_goal_that_does_not_match_student_cla
     assert student_observation_db.query(StudentObservation).count() == 0
 
 
+def test_create_student_observation_accepts_school_specific_goal_for_any_class(
+    student_observation_client: TestClient,
+    student_observation_db: Session,
+):
+    seed_observation_context(student_observation_db)
+    school_goal = ObservationGoal(
+        id=2,
+        school_id=1,
+        created_by=1,
+        name="Vat een taak of spel spontaan aan",
+        subject=ObservationGoal.SCHOOL_GOALS_SUBJECT,
+        domain="Betrokkenheid",
+        subdomain=None,
+        goal_id=None,
+    )
+    student_observation_db.add(school_goal)
+    student_observation_db.commit()
+
+    response = student_observation_client.post(
+        "/api/student-observations",
+        json={
+            "observation_goal_id": 2,
+            "student_id": 1,
+            "status": "in_ontwikkeling",
+            "observation_date": "2026-06-16",
+        },
+    )
+
+    assert response.status_code == 201
+    assert student_observation_db.query(StudentObservation).count() == 1
+
+
 def test_create_student_observation_overwrites_existing_for_same_student_goal_date(
     student_observation_client: TestClient,
     student_observation_db: Session,
