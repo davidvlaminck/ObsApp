@@ -140,6 +140,11 @@ export async function deleteObservationGoal(id: number): Promise<void> {
   await api.delete(`/observation-goals/${id}`)
 }
 
+export async function updateObservationGoal(id: number, data: Partial<ObservationGoalCreate>): Promise<ObservationGoalResponse> {
+  const response = await api.put<ObservationGoalResponse>(`/observation-goals/${id}`, data)
+  return response.data
+}
+
 export async function searchOpStapGoals(filters: GoalSearchFilters): Promise<GoalResponse[]> {
   const response = await api.get<GoalResponse[]>('/observation-goals/goals/search', { params: filters })
   return response.data

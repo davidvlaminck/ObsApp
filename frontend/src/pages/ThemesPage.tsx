@@ -209,7 +209,6 @@ export default function ThemesPage() {
                 <thead>
                   <tr>
                     <th>Naam</th>
-                    <th>Omschrijving</th>
                     <th>Activiteiten</th>
                     <th>Acties</th>
                   </tr>
@@ -220,7 +219,6 @@ export default function ThemesPage() {
                       <td>
                         <strong>{theme.name}</strong>
                       </td>
-                      <td>{theme.description || '-'}</td>
                       <td>
                         {theme.activities.length > 0 ? (
                           <ul style={{ margin: 0, paddingLeft: 16 }}>

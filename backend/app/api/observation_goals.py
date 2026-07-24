@@ -254,6 +254,25 @@ def delete_managed_domain(
     repo.delete(domain)
 
 
+@router.put("/{observation_goal_id}", response_model=ObservationGoalResponse)
+def update_observation_goal(
+    observation_goal_id: int,
+    payload: ObservationGoalUpdate,
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    school_id = _ensure_school_user(current_user)
+    repo = ObservationGoalRepository(db)
+    observation_goal = repo.get_by_id(observation_goal_id, school_id)
+    if not observation_goal:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Observatiedoel niet gevonden"
+        )
+
+    updated = repo.update(observation_goal, payload)
+    return repo.to_response(updated)
+
+
 @router.delete("/{observation_goal_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_observation_goal(
     observation_goal_id: int,

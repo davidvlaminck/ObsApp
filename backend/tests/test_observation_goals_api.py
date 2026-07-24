@@ -785,3 +785,53 @@ def test_school_goals_are_returned_for_any_class_in_observe_context(
     assert len(data["goals"]) == 1
     assert data["goals"][0]["name"] == "Teamwerk"
     assert data["goals"][0]["subject"] == "Schooleigen doelen"
+
+
+def test_update_observation_goal_changes_name(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    observation_goal_db.add(
+        ObservationGoal(
+            id=1,
+            school_id=1,
+            created_by=1,
+            name="Oude naam",
+            subject="Schooleigen doelen",
+            domain="Sociale vaardigheden",
+            subdomain=None,
+            goal_id=None,
+            class_id=None,
+        ),
+    )
+    observation_goal_db.commit()
+
+    response = observation_goal_client.put(
+        "/api/observation-goals/1",
+        json={"name": "Nieuwe naam"},
+    )
+    if response.status_code != 200:
+        print("DEBUG response:", response.status_code, response.text)
+    assert response.status_code == 200
+    assert response.json()["name"] == "Nieuwe naam"
+
+    updated_goal = (
+        observation_goal_db.query(ObservationGoal)
+        .filter(ObservationGoal.id == 1)
+        .first()
+    )
+    assert updated_goal.name == "Nieuwe naam"
+
+
+def test_update_observation_goal_not_found(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+
+    response = observation_goal_client.put(
+        "/api/observation-goals/999",
+        json={"name": "Nieuwe naam"},
+    )
+    assert response.status_code == 404
