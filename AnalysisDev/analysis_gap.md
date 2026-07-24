@@ -69,10 +69,12 @@ Na te kijken:
 - [ ] Overzicht per leerling: voortgang tonen van doelen (alle kleurtjes na elkaar zetten per doel)
 
 # TODO
+thema omschrijving weghalen
+extra niveau diep filteren bij overzicht
+themafilter bij observeren scherm
+schooleigen doelen: domein en doelen beter kunnen bewerken formulier maken van domein, waarbij naam en doelen kunnen worden aangepast.
+idem voor thema's en acitiviteiten
 
-- demo data linkt doelen fout aan omschrijven
-- thema's > activiteiten > doelen koppelen
-- schoolgebonden doelen toelaten: vak > schooleigen doelen, domein: welbevinden / betrokkeneheid, subdomein: (leeg)
 
 thema de appel
 activiteiten
@@ -101,3 +103,4 @@ speeltijd
 
 activiteit label + omschrijving + doelen selecteren en koppelen
 - 
+
