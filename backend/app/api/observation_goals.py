@@ -16,7 +16,7 @@ from app.schemas.goal import GoalResponse
 from app.schemas.observation_goal import ObservationGoalCreate, ObservationGoalResponse
 from app.schemas.school import ClassResponse
 from app.schemas.school_goal_domain import SchoolGoalDomainCreate, SchoolGoalDomainResponse, SchoolGoalDomainUpdate
-from app.schemas.student_observation import ObservationContextResponse, OverviewResponse
+from app.schemas.student_observation import ObservationContextResponse, OverviewResponse, StudentObservationStatusResponse
 from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/observation-goals", tags=["observation-goals"])
@@ -314,8 +314,8 @@ def get_overview(
     student_responses = [StudentRepository(db).to_response(student) for student in students]
 
     student_observations: dict[int, StudentObservationStatusResponse] = {}
-    for (goal_id, student_id), status in status_map.items():
-        student_observations[student_id] = status
+    for (goal_id, student_id), observation_status in status_map.items():
+        student_observations[student_id] = observation_status
 
     return OverviewResponse(
         goals=goal_responses,
