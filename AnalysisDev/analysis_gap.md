@@ -73,7 +73,9 @@ thema omschrijving weghalen
 extra niveau diep filteren bij overzicht
 themafilter bij observeren scherm
 schooleigen doelen: domein en doelen beter kunnen bewerken formulier maken van domein, waarbij naam en doelen kunnen worden aangepast.
-idem voor thema's en acitiviteiten
+idem voor thema's en activiteiten
+naar links en rechts scrollen bij bulk observeren moet de leerlingen namen laten staan
+
 
 
 thema de appel
