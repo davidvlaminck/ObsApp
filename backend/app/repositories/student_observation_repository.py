@@ -241,6 +241,7 @@ class StudentObservationRepository:
         school_id: int,
         class_id: int,
         subject: str | None = None,
+        domain: str | None = None,
     ) -> tuple[list[ObservationGoal], list[StudentModel], dict[tuple[int, int], StudentObservationStatusResponse]]:
         class_model = self.db.query(ClassModel).filter(ClassModel.id == class_id).first()
         if not class_model:
@@ -255,6 +256,8 @@ class StudentObservationRepository:
         )
         if subject:
             goals_query = goals_query.filter(ObservationGoal.subject.ilike(subject))
+        if domain:
+            goals_query = goals_query.filter(ObservationGoal.domain.ilike(domain))
 
         goals_query = goals_query.filter(
             or_(

@@ -6,6 +6,7 @@ import { sortClasses } from '../lib/subjectSort'
 import {
   getOverview,
   getObservationGoalSubjects,
+  getObservationGoalDomains,
   listStudentObservations,
   type ObservationStatus,
   type OverviewResponse,
@@ -63,9 +64,11 @@ export default function StudentOverviewPage() {
   const [loading, setLoading] = useState(true)
   const [classes, setClasses] = useState<ClassResponse[]>([])
   const [subjects, setSubjects] = useState<string[]>([])
+  const [domains, setDomains] = useState<string[]>([])
   const [overview, setOverview] = useState<OverviewResponse | null>(null)
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
   const [selectedSubject, setSelectedSubject] = useState('')
+  const [selectedDomain, setSelectedDomain] = useState('')
   const [selectedStudentId, setSelectedStudentId] = useState<number | null>(null)
   const [error, setError] = useState('')
   const [studentObservations, setStudentObservations] = useState<StudentObservationResponse[]>([])
@@ -115,13 +118,13 @@ export default function StudentOverviewPage() {
 
     try {
       setError('')
-      const data = await getOverview(selectedClassId, selectedSubject || undefined)
+      const data = await getOverview(selectedClassId, selectedSubject || undefined, selectedDomain || undefined)
       setOverview(data)
     } catch (err) {
       setError(getErrorMessage(err, 'Kan overzicht niet laden.'))
       setOverview(null)
     }
-  }, [selectedClassId, selectedSubject, user])
+  }, [selectedClassId, selectedSubject, selectedDomain, user])
 
   useEffect(() => {
     loadOverview()
@@ -151,6 +154,26 @@ export default function StudentOverviewPage() {
     loadStudentObservations()
   }, [selectedClassId])
 
+  useEffect(() => {
+    const loadDomains = async () => {
+      if (!selectedSubject) {
+        setDomains([])
+        setSelectedDomain('')
+        return
+      }
+
+      try {
+        const domainList = await getObservationGoalDomains(selectedSubject)
+        setDomains(domainList)
+        setSelectedDomain('')
+      } catch (err) {
+        setError(getErrorMessage(err, 'Kan domeinen niet laden.'))
+      }
+    }
+
+    loadDomains()
+  }, [selectedSubject])
+
   const selectedStudent = useMemo(() => {
     if (!overview || selectedStudentId === null) return null
     return overview.students.find((student) => student.id === selectedStudentId) ?? null
@@ -178,13 +201,14 @@ export default function StudentOverviewPage() {
     return studentObservations
       .filter((observation) => observation.student_id === selectedStudentId)
       .filter((observation) => !selectedSubject || observation.observation_goal?.subject === selectedSubject)
+      .filter((observation) => !selectedDomain || observation.observation_goal?.domain === selectedDomain)
       .sort((a, b) => {
         const dateComparison = b.observation_date.localeCompare(a.observation_date)
         if (dateComparison !== 0) return dateComparison
 
         return (b.created_at ?? '').localeCompare(a.created_at ?? '')
       })
-  }, [selectedStudentId, selectedSubject, studentObservations])
+  }, [selectedStudentId, selectedSubject, selectedDomain, studentObservations])
 
   if (loading) {
     return <div className="empty-state compact">Gegevens laden...</div>
@@ -250,6 +274,35 @@ export default function StudentOverviewPage() {
               disabled={!selectedClassId}
             />
           </div>
+
+          {selectedSubject && (
+            <div className="form-group">
+              <label>Domein</label>
+              <div className="subject-chips">
+                <button
+                  type="button"
+                  className={`subject-chip ${selectedDomain === '' ? 'active all' : ''}`}
+                  disabled={!selectedClassId}
+                  onClick={() => setSelectedDomain('')}
+                >
+                  Alle domeinen
+                </button>
+                {domains.map((domain, index) => (
+                  <button
+                    key={domain}
+                    type="button"
+                    className={`subject-chip chip-${index % 6} ${
+                      selectedDomain === domain ? 'active' : ''
+                    }`}
+                    disabled={!selectedClassId}
+                    onClick={() => setSelectedDomain(domain)}
+                  >
+                    {domain}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="form-group">
             <label htmlFor="student-overview-student">Leerling</label>

@@ -290,6 +290,7 @@ def search_opstap_goals(
 def get_overview(
     class_id: int,
     subject: str | None = None,
+    domain: str | None = None,
     db=Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
 ):
@@ -307,7 +308,7 @@ def get_overview(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Niet bevoegd")
 
     repo = StudentObservationRepository(db)
-    goals, students, status_map = repo.get_overview_data(school_id, class_id, subject=subject)
+    goals, students, status_map = repo.get_overview_data(school_id, class_id, subject=subject, domain=domain)
 
     goal_responses = [ObservationGoalRepository(db).to_response(goal) for goal in goals]
     student_responses = [StudentRepository(db).to_response(student) for student in students]

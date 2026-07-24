@@ -199,8 +199,8 @@ export async function getObservationContext(filters?: ObservationContextFilters)
   return response.data
 }
 
-export async function getOverview(classId: number, subject?: string): Promise<OverviewResponse> {
-  const response = await api.get<OverviewResponse>('/observation-goals/overview', { params: { class_id: classId, subject } })
+export async function getOverview(classId: number, subject?: string, domain?: string): Promise<OverviewResponse> {
+  const response = await api.get<OverviewResponse>('/observation-goals/overview', { params: { class_id: classId, subject, domain } })
   return response.data
 }
 

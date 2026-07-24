@@ -173,13 +173,30 @@ class ObservationGoalRepository:
             }
             goal_domain_query = goal_domain_query.filter(Goal.subject.ilike(subject))
         goal_domains = {row[0] for row in goal_domain_query.distinct().all()}
-        managed_domains = {
+
+        managed_domain_names = {
             row[0]
             for row in self.db.query(SchoolGoalDomain.name)
             .filter(SchoolGoalDomain.school_id == school_id)
             .distinct()
             .all()
         }
+
+        if subject:
+            managed_domains = {
+                row[0]
+                for row in self.db.query(ObservationGoal.domain)
+                .filter(
+                    ObservationGoal.school_id == school_id,
+                    ObservationGoal.domain.is_not(None),
+                    ObservationGoal.subject.ilike(subject),
+                    ObservationGoal.domain.in_(managed_domain_names),
+                )
+                .distinct()
+                .all()
+            }
+        else:
+            managed_domains = managed_domain_names
 
         return sorted(domain for domain in observation_goal_domains | goal_domains | managed_domains if domain)
 

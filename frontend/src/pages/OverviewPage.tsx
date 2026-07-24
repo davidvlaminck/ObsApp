@@ -12,6 +12,7 @@ import { sortClasses, getSubjectPriority } from '../lib/subjectSort'
 import {
   getOverview,
   getObservationGoalSubjects,
+  getObservationGoalDomains,
   listStudentObservations,
   type OverviewResponse,
   type ObservationStatus,
@@ -60,9 +61,11 @@ export default function OverviewPage() {
   const [loading, setLoading] = useState(true)
   const [classes, setClasses] = useState<ClassResponse[]>([])
   const [subjects, setSubjects] = useState<string[]>([])
+  const [domains, setDomains] = useState<string[]>([])
   const [overview, setOverview] = useState<OverviewResponse | null>(null)
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null)
   const [selectedSubject, setSelectedSubject] = useState('')
+  const [selectedDomain, setSelectedDomain] = useState('')
   const [error, setError] = useState('')
   const [commentTarget, setCommentTarget] = useState<{ goalId: number; studentId: number } | null>(
     null
@@ -115,13 +118,13 @@ export default function OverviewPage() {
 
     try {
       setError('')
-      const data = await getOverview(selectedClassId, selectedSubject || undefined)
+      const data = await getOverview(selectedClassId, selectedSubject || undefined, selectedDomain || undefined)
       setOverview(data)
     } catch (err) {
       setError(getErrorMessage(err, 'Kan overzicht niet laden.'))
       setOverview(null)
     }
-  }, [selectedClassId, selectedSubject, user])
+  }, [selectedClassId, selectedSubject, selectedDomain, user])
 
   useEffect(() => {
     loadOverview()
@@ -144,6 +147,26 @@ export default function OverviewPage() {
 
     loadStudentObservations()
   }, [selectedClassId])
+
+  useEffect(() => {
+    const loadDomains = async () => {
+      if (!selectedSubject) {
+        setDomains([])
+        setSelectedDomain('')
+        return
+      }
+
+      try {
+        const domainList = await getObservationGoalDomains(selectedSubject)
+        setDomains(domainList)
+        setSelectedDomain('')
+      } catch (err) {
+        setError(getErrorMessage(err, 'Kan domeinen niet laden.'))
+      }
+    }
+
+    loadDomains()
+  }, [selectedSubject])
 
   const sortedGoals = useMemo(() => {
     if (!overview) return []
@@ -256,6 +279,35 @@ export default function OverviewPage() {
               disabled={!selectedClassId}
             />
           </div>
+
+          {selectedSubject && (
+            <div className="form-group">
+              <label>Domein</label>
+              <div className="subject-chips">
+                <button
+                  type="button"
+                  className={`subject-chip ${selectedDomain === '' ? 'active all' : ''}`}
+                  disabled={!selectedClassId}
+                  onClick={() => setSelectedDomain('')}
+                >
+                  Alle domeinen
+                </button>
+                {domains.map((domain, index) => (
+                  <button
+                    key={domain}
+                    type="button"
+                    className={`subject-chip chip-${index % 6} ${
+                      selectedDomain === domain ? 'active' : ''
+                    }`}
+                    disabled={!selectedClassId}
+                    onClick={() => setSelectedDomain(domain)}
+                  >
+                    {domain}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {!selectedClassId ? (
