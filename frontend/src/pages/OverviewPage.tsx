@@ -8,7 +8,7 @@ import {
   type ClassResponse,
   type UserResponse,
 } from '../services/auth'
-import { sortClasses } from '../lib/subjectSort'
+import { sortClasses, getSubjectPriority } from '../lib/subjectSort'
 import {
   getOverview,
   getObservationGoalSubjects,
@@ -145,6 +145,33 @@ export default function OverviewPage() {
     loadStudentObservations()
   }, [selectedClassId])
 
+  const sortedGoals = useMemo(() => {
+    if (!overview) return []
+
+    return [...overview.goals].sort((a, b) => {
+      const priorityA = getSubjectPriority(a.subject)
+      const priorityB = getSubjectPriority(b.subject)
+
+      if (priorityA !== priorityB) {
+        if (priorityA === -1 && priorityB === -1) {
+          return a.subject.localeCompare(b.subject)
+        }
+        if (priorityA === -1) return 1
+        if (priorityB === -1) return -1
+        return priorityA - priorityB
+      }
+
+      const domainA = a.domain ?? ''
+      const domainB = b.domain ?? ''
+      const domainCompare = domainA.localeCompare(domainB)
+      if (domainCompare !== 0) return domainCompare
+
+      const subdomainA = a.subdomain ?? ''
+      const subdomainB = b.subdomain ?? ''
+      return subdomainA.localeCompare(subdomainB)
+    })
+  }, [overview])
+
   const statusByGoalAndStudent = useMemo(() => {
     const map = new Map<string, StudentObservationResponse>()
 
@@ -250,7 +277,7 @@ export default function OverviewPage() {
               </thead>
 
               <tbody>
-                {overview.goals.map((goal) => (
+                {sortedGoals.map((goal) => (
                   <tr key={goal.id}>
                     <td className="overview-cell-goal">
                       <div className="overview-goal-name">{goal.name}</div>

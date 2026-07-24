@@ -1,4 +1,4 @@
-const PRIORITY_SUBJECTS = ['Nederlands', 'Wiskunde', 'Wetenschap en techniek'] as const
+const PRIORITY_SUBJECTS = ['Nederlands', 'Wiskunde', 'Wetenschap en techniek', 'Schooleigen doelen'] as const
 type PrioritySubject = typeof PRIORITY_SUBJECTS[number]
 
 const getPriorityIndex = (subject: string): number => {
@@ -23,6 +23,10 @@ export const sortSubjects = (subjects: string[]): string[] => {
   rest.sort((a, b) => a.localeCompare(b))
 
   return [...priority, ...rest]
+}
+
+export const getSubjectPriority = (subject: string): number => {
+  return getPriorityIndex(subject)
 }
 
 // Klas-types sorteren: JK, 2K, 3K
