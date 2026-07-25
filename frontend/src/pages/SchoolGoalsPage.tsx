@@ -1,4 +1,5 @@
 import { AxiosError } from 'axios'
+import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import { FormEvent, useEffect, useState } from 'react'
@@ -46,6 +47,7 @@ export default function SchoolGoalsPage() {
   const [success, setSuccess] = useState('')
 
   const [newDomainName, setNewDomainName] = useState('')
+  const [showNewDomainForm, setShowNewDomainForm] = useState(false)
   const [editingDomainName, setEditingDomainName] = useState('')
   const [editingDomain, setEditingDomain] = useState<SchoolGoalDomainResponse | null>(null)
   const [modalGoalForm, setModalGoalForm] = useState({ name: '', class_id: null as number | null })
@@ -104,12 +106,19 @@ export default function SchoolGoalsPage() {
       const created = await createManagedDomain(trimmed)
       setManagedDomains((current) => [...current, created])
       setNewDomainName('')
+      setShowNewDomainForm(false)
       setSuccess(`Domein "${trimmed}" is toegevoegd.`)
     } catch (err: any) {
       setError(getErrorMessage(err, 'Kan domein niet toevoegen.'))
     } finally {
       setDomainSaving(false)
     }
+  }
+
+  const handleCancelNewDomain = () => {
+    setShowNewDomainForm(false)
+    setNewDomainName('')
+    setError('')
   }
 
   const startEditDomain = (domain: SchoolGoalDomainResponse) => {
@@ -124,6 +133,8 @@ export default function SchoolGoalsPage() {
     setEditingGoalName('')
     setEditingGoalClassId(null)
     setModalGoalForm({ name: '', class_id: null })
+    setShowNewDomainForm(false)
+    setNewDomainName('')
   }
 
   const saveEditDomain = async (id: number) => {
@@ -277,14 +288,27 @@ export default function SchoolGoalsPage() {
 
       <div className="management-grid">
         <section className="form-card card">
-          <h2>Domeinen beheren</h2>
-          <p className="text-muted">Beheer de domeinen die je bij schooleigen doelen kunt gebruiken.</p>
-
-          <div style={{ marginBottom: 16 }}>
+           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ flex: 1, textAlign: 'center' }}>
+                <h2>Domeinen beheren</h2>
+                <p className="text-muted">Beheer de domeinen die je bij schooleigen doelen kunt gebruiken.</p>
+              </div>
+             <button
+               className="btn btn-outline"
+               type="button"
+               onClick={() => setShowNewDomainForm(true)}
+               disabled={domainSaving}
+             >
+               <AddIcon fontSize="small" aria-hidden="true" style={{ marginRight: 8 }} />
+               Nieuw domein
+             </button>
+           </div>
+ 
+           <div style={{ marginBottom: 16 }}>
             {managedDomains.length === 0 ? (
               <div className="empty-state compact">
                 <h3>Geen domeinen</h3>
-                <p className="text-muted">Voeg hieronder je eerste domein toe.</p>
+                <p className="text-muted">Klik op de knop hieronder om je eerste domein toe te voegen.</p>
               </div>
             ) : (
               <div className="user-list">
@@ -320,24 +344,54 @@ export default function SchoolGoalsPage() {
               </div>
             )}
           </div>
-
-          <form onSubmit={handleCreateDomain}>
-            <div className="form-group">
-              <label htmlFor="new-domain-name">Nieuw domein</label>
-              <input
-                id="new-domain-name"
-                value={newDomainName}
-                onChange={(event) => setNewDomainName(event.target.value)}
-                placeholder="Bijv. Sociale vaardigheden"
-                disabled={domainSaving}
-              />
-            </div>
-            <button className="btn btn-primary btn-full" type="submit" disabled={domainSaving}>
-              {domainSaving ? 'Opslaan...' : 'Domein toevoegen'}
-            </button>
-          </form>
         </section>
        </div>
+
+       {showNewDomainForm && (
+         <div className="modal-backdrop" onClick={() => handleCancelNewDomain()}>
+           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+             <div className="modal-header">
+                <div>
+                  <h2>Nieuw domein</h2>
+                  <p>Voer de naam van het nieuwe domein in.</p>
+                </div>
+              </div>
+
+             <section className="form-card card" style={{ marginBottom: 24 }}>
+               <form onSubmit={handleCreateDomain}>
+                 <div className="form-group">
+                   <label htmlFor="new-domain-name">Naam</label>
+                   <input
+                     id="new-domain-name"
+                     value={newDomainName}
+                     onChange={(event) => setNewDomainName(event.target.value)}
+                     placeholder="Bijv. Sociale vaardigheden"
+                     autoFocus
+                     disabled={domainSaving}
+                   />
+                 </div>
+                 <div className="modal-actions">
+                   <button
+                     className="btn btn-primary btn-sm"
+                     type="submit"
+                     disabled={domainSaving}
+                   >
+                     {domainSaving ? 'Opslaan...' : 'Opslaan'}
+                   </button>
+                   <button
+                     className="btn btn-sm btn-secondary"
+                     type="button"
+                     onClick={handleCancelNewDomain}
+                     disabled={domainSaving}
+                   >
+                     Annuleren
+                   </button>
+                 </div>
+               </form>
+             </section>
+           </div>
+         </div>
+       )}
  
        {editingDomain && (
          <div className="modal-backdrop" onClick={() => cancelEditDomain()}>

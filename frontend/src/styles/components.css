@@ -7,12 +7,6 @@ i/* Modern Card component */
   max-width: 480px;
   margin: 0 auto;
   border: 1px solid var(--md-border-light);
-  transition: box-shadow 0.3s, transform 0.2s;
-}
-
-.card:hover {
-  box-shadow: var(--md-shadow-lg);
-  transform: translateY(-2px);
 }
 
 /* Cards centered on a full-screen container (login, demo schoolbeheer, ...)
@@ -20,11 +14,6 @@ i/* Modern Card component */
 .center-container .card {
   border: none;
   box-shadow: none;
-}
-
-.center-container .card:hover {
-  box-shadow: none;
-  transform: none;
 }
 
 /* Avatar - Distinct colors per student */
