@@ -580,7 +580,7 @@ export default function SchoolGoalsPage() {
                              return (
                                <tr key={goal.id}>
                                  <td>
-                                   {editingGoalId === goal.id ? (
+                                {editingGoalId === goal.id ? (
                                      <input
                                        type="text"
                                        value={editingGoalName}
@@ -605,26 +605,26 @@ export default function SchoolGoalsPage() {
                                  </td>
                                  <td>{cls ? `${cls.name} (${cls.class_type})` : 'Alle klassen'}</td>
                                  <td>
-                                   {editingGoalId === goal.id ? (
-                                     <>
-                                       <button
-                                         className="btn btn-sm btn-primary"
-                                         type="button"
-                                         onClick={() => saveEditGoal(goal.id)}
-                                         disabled={saving}
-                                       >
-                                         Opslaan
-                                       </button>
-                                       <button
-                                         className="btn btn-sm btn-secondary"
-                                         type="button"
-                                         onClick={cancelEditGoal}
-                                         disabled={saving}
-                                       >
-                                         Annuleren
-                                       </button>
-                                     </>
-                                   ) : (
+{editingGoalId === goal.id ? (
+                                      <div style={{ display: 'flex', gap: 8 }}>
+                                        <button
+                                          className="btn btn-sm btn-primary"
+                                          type="button"
+                                          onClick={() => saveEditGoal(goal.id)}
+                                          disabled={saving}
+                                        >
+                                          Opslaan
+                                        </button>
+                                        <button
+                                          className="btn btn-sm btn-secondary"
+                                          type="button"
+                                          onClick={cancelEditGoal}
+                                          disabled={saving}
+                                        >
+                                          Annuleren
+                                        </button>
+                                      </div>
+                                    ) : (
                                      <>
                                        <button
                                          className="table-action edit-icon-button"
