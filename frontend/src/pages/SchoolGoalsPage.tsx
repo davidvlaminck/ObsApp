@@ -50,6 +50,7 @@ export default function SchoolGoalsPage() {
   const [showNewDomainForm, setShowNewDomainForm] = useState(false)
   const [editingDomainName, setEditingDomainName] = useState('')
   const [editingDomain, setEditingDomain] = useState<SchoolGoalDomainResponse | null>(null)
+  const [editingDomainNameVisible, setEditingDomainNameVisible] = useState(false)
   const [modalGoalForm, setModalGoalForm] = useState({ name: '', class_id: null as number | null })
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null)
   const [editingGoalName, setEditingGoalName] = useState('')
@@ -124,11 +125,13 @@ export default function SchoolGoalsPage() {
   const startEditDomain = (domain: SchoolGoalDomainResponse) => {
     setEditingDomain(domain)
     setEditingDomainName(domain.name)
+    setEditingDomainNameVisible(false)
   }
 
   const cancelEditDomain = () => {
     setEditingDomain(null)
     setEditingDomainName('')
+    setEditingDomainNameVisible(false)
     setEditingGoalId(null)
     setEditingGoalName('')
     setEditingGoalClassId(null)
@@ -150,13 +153,19 @@ export default function SchoolGoalsPage() {
       setSuccess('')
       const updated = await updateManagedDomain(id, trimmed)
       setManagedDomains((current) => current.map((d) => (d.id === id ? updated : d)))
-      cancelEditDomain()
+      setEditingDomainNameVisible(false)
       setSuccess(`Domein is bijgewerkt.`)
     } catch (err: any) {
       setError(getErrorMessage(err, 'Kan domein niet bijwerken.'))
     } finally {
       setDomainSaving(false)
     }
+  }
+
+  const cancelEditDomainName = () => {
+    setEditingDomainNameVisible(false)
+    setEditingDomainName(editingDomain?.name ?? '')
+    setError('')
   }
 
   const handleDeleteDomain = async (id: number, name: string) => {
@@ -393,65 +402,76 @@ export default function SchoolGoalsPage() {
          </div>
        )}
  
-       {editingDomain && (
-         <div className="modal-backdrop" onClick={() => cancelEditDomain()}>
-           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-             <div className="modal-header">
-               <div>
-                 <h2>Domein: {editingDomain.name}</h2>
-                 <p>Pas de naam aan en beheer de doelen voor dit domein.</p>
-               </div>
-               <button className="btn btn-sm btn-secondary" type="button" onClick={() => cancelEditDomain()}>
-                 Sluiten
-               </button>
-             </div>
- 
-             <section className="form-card card" style={{ marginBottom: 24 }}>
-               <h3>Domeinnaam aanpassen</h3>
-               <div className="form-group">
-                 <label htmlFor="edit-domain-name">Naam</label>
-                 <input
-                   id="edit-domain-name"
-                   type="text"
-                   value={editingDomainName}
-                   onChange={(e) => setEditingDomainName(e.target.value)}
-                   onKeyDown={(e) => {
-                     if (e.key === 'Enter') {
-                       e.preventDefault()
-                       saveEditDomain(editingDomain.id)
-                     }
-                     if (e.key === 'Escape') {
-                       e.preventDefault()
-                       cancelEditDomain()
-                     }
-                   }}
-                   autoFocus
-                   disabled={domainSaving}
-                 />
-               </div>
-               <div className="modal-actions">
-                 <button
-                   className="btn btn-primary btn-sm"
-                   type="button"
-                   onClick={() => saveEditDomain(editingDomain.id)}
-                   disabled={domainSaving}
-                 >
-                   {domainSaving ? 'Opslaan...' : 'Opslaan'}
-                 </button>
-                 <button
-                   className="btn btn-sm btn-secondary"
-                   type="button"
-                   onClick={cancelEditDomain}
-                   disabled={domainSaving}
-                 >
-                   Annuleren
-                 </button>
-               </div>
-             </section>
- 
-             <section className="form-card card" style={{ marginBottom: 24 }}>
-               <h3>Doelen beheren</h3>
-               <p className="text-muted">Maak, pas aan of verwijder doelen voor dit domein.</p>
+        {editingDomain && (
+          <div className="modal-backdrop" onClick={() => cancelEditDomain()}>
+            <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+              <div className="modal-header">
+                <h2>Domein {editingDomain.name}</h2>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button
+                    className="btn btn-outline btn-sm"
+                    type="button"
+                    onClick={() => setEditingDomainNameVisible(true)}
+                    disabled={domainSaving}
+                    aria-label="Bewerk domeinnaam"
+                    title="Naam bewerken"
+                  >
+                    <EditIcon fontSize="small" aria-hidden="true" />
+                  </button>
+                  <button className="btn btn-sm btn-secondary" type="button" onClick={() => cancelEditDomain()}>
+                    Sluiten
+                  </button>
+                </div>
+              </div>
+
+              {editingDomainNameVisible && (
+                <section className="form-card card" style={{ marginBottom: 24 }}>
+                  <h3>Domeinnaam aanpassen</h3>
+                  <div className="form-group">
+                    <label htmlFor="edit-domain-name">Naam</label>
+                    <input
+                      id="edit-domain-name"
+                      type="text"
+                      value={editingDomainName}
+                      onChange={(e) => setEditingDomainName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          saveEditDomain(editingDomain.id)
+                        }
+                        if (e.key === 'Escape') {
+                          e.preventDefault()
+                          cancelEditDomainName()
+                        }
+                      }}
+                      autoFocus
+                      disabled={domainSaving}
+                    />
+                  </div>
+                  <div className="modal-actions">
+                    <button
+                      className="btn btn-primary btn-sm"
+                      type="button"
+                      onClick={() => saveEditDomain(editingDomain.id)}
+                      disabled={domainSaving}
+                    >
+                      {domainSaving ? 'Opslaan...' : 'Opslaan'}
+                    </button>
+                    <button
+                      className="btn btn-sm btn-secondary"
+                      type="button"
+                      onClick={cancelEditDomainName}
+                      disabled={domainSaving}
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </section>
+              )}
+
+              <section className="form-card card" style={{ marginBottom: 24 }}>
+                <h3>Doelen beheren</h3>
+                <p className="text-muted">Maak, pas aan of verwijder doelen voor dit domein.</p>
  
                <form onSubmit={handleModalGoalSubmit}>
                  <div className="form-group">
@@ -487,7 +507,7 @@ export default function SchoolGoalsPage() {
                      ))}
                    </select>
                  </div>
-                 <button className="btn btn-primary btn-full" type="submit" disabled={saving}>
+                  <button className="btn btn-primary btn-full" type="submit" disabled={saving}>
                     {saving ? 'Opslaan...' : 'Doel toevoegen'}
                   </button>
                </form>
