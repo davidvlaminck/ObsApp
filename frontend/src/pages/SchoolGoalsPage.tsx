@@ -51,6 +51,7 @@ export default function SchoolGoalsPage() {
   const [editingDomainName, setEditingDomainName] = useState('')
   const [editingDomain, setEditingDomain] = useState<SchoolGoalDomainResponse | null>(null)
   const [editingDomainNameVisible, setEditingDomainNameVisible] = useState(false)
+  const [showNewGoalForm, setShowNewGoalForm] = useState(false)
   const [modalGoalForm, setModalGoalForm] = useState({ name: '', class_id: null as number | null })
   const [editingGoalId, setEditingGoalId] = useState<number | null>(null)
   const [editingGoalName, setEditingGoalName] = useState('')
@@ -132,10 +133,11 @@ export default function SchoolGoalsPage() {
     setEditingDomain(null)
     setEditingDomainName('')
     setEditingDomainNameVisible(false)
+    setShowNewGoalForm(false)
+    setModalGoalForm({ name: '', class_id: null })
     setEditingGoalId(null)
     setEditingGoalName('')
     setEditingGoalClassId(null)
-    setModalGoalForm({ name: '', class_id: null })
     setShowNewDomainForm(false)
     setNewDomainName('')
   }
@@ -223,6 +225,7 @@ export default function SchoolGoalsPage() {
         class_id: modalGoalForm.class_id ?? undefined,
       })
       setModalGoalForm({ name: '', class_id: null })
+      setShowNewGoalForm(false)
       setSuccess('Schooleigen doel is aangemaakt.')
       await loadGoals()
     } catch (err: any) {
@@ -246,6 +249,12 @@ export default function SchoolGoalsPage() {
     setEditingGoalId(null)
     setEditingGoalName('')
     setEditingGoalClassId(null)
+  }
+
+  const cancelNewGoal = () => {
+    setShowNewGoalForm(false)
+    setModalGoalForm({ name: '', class_id: null })
+    setError('')
   }
 
   const saveEditGoal = async (id: number) => {
@@ -469,50 +478,78 @@ export default function SchoolGoalsPage() {
                 </section>
               )}
 
-              <section className="form-card card" style={{ marginBottom: 24 }}>
+<section className="form-card card" style={{ marginBottom: 24 }}>
                 <h3>Doelen beheren</h3>
                 <p className="text-muted">Maak, pas aan of verwijder doelen voor dit domein.</p>
- 
-               <form onSubmit={handleModalGoalSubmit}>
-                 <div className="form-group">
-                   <label htmlFor="modal-goal-name">Nieuw doel</label>
-                   <input
-                     id="modal-goal-name"
-                     value={modalGoalForm.name}
-                     onChange={(e) => setModalGoalForm((current) => ({ ...current, name: e.target.value }))}
-                     placeholder="Bijvoorbeeld: Teamwerk"
-                     required
-                     disabled={saving}
-                   />
-                 </div>
-                 <div className="form-group">
-                   <label htmlFor="modal-goal-class">Klas (optioneel)</label>
-                   <select
-                     id="modal-goal-class"
-                     value={modalGoalForm.class_id ?? ''}
-                     onChange={(e) => {
-                       const value = e.target.value
-                       setModalGoalForm((current) => ({
-                         ...current,
-                         class_id: value ? Number(value) : null,
-                       }))
-                     }}
-                     disabled={saving}
-                   >
-                     <option value="">Alle klassen</option>
-                     {classes.map((cls) => (
-                       <option key={cls.id} value={cls.id}>
-                         {cls.name} ({cls.class_type})
-                       </option>
-                     ))}
-                   </select>
-                 </div>
-                  <button className="btn btn-primary btn-full" type="submit" disabled={saving}>
-                    {saving ? 'Opslaan...' : 'Doel toevoegen'}
+
+                {!showNewGoalForm ? (
+                  <button
+                    className="btn btn-outline"
+                    type="button"
+                    onClick={() => setShowNewGoalForm(true)}
+                    disabled={saving}
+                    style={{ marginBottom: 16 }}
+                  >
+                    <AddIcon fontSize="small" aria-hidden="true" style={{ marginRight: 8 }} />
+                    Doel aanmaken
                   </button>
-               </form>
- 
-               <div style={{ marginTop: 24 }}>
+                ) : (
+                  <form onSubmit={handleModalGoalSubmit}>
+                    <div className="form-group">
+                      <label htmlFor="modal-goal-name">Nieuw doel</label>
+                      <input
+                        id="modal-goal-name"
+                        value={modalGoalForm.name}
+                        onChange={(e) => setModalGoalForm((current) => ({ ...current, name: e.target.value }))}
+                        placeholder="Bijvoorbeeld: Teamwerk"
+                        required
+                        disabled={saving}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="modal-goal-class">Klas (optioneel)</label>
+                      <select
+                        id="modal-goal-class"
+                        value={modalGoalForm.class_id ?? ''}
+                        onChange={(e) => {
+                          const value = e.target.value
+                          setModalGoalForm((current) => ({
+                            ...current,
+                            class_id: value ? Number(value) : null,
+                          }))
+                        }}
+                        disabled={saving}
+                      >
+                        <option value="">Alle klassen</option>
+                        {classes.map((cls) => (
+                          <option key={cls.id} value={cls.id}>
+                            {cls.name} ({cls.class_type})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="modal-actions">
+                      <button
+                        className="btn btn-primary btn-sm"
+                        type="submit"
+                        disabled={saving}
+                      >
+                        {saving ? 'Opslaan...' : 'Opslaan'}
+                      </button>
+                      <button
+                        className="btn btn-sm btn-secondary"
+                        type="button"
+                        onClick={cancelNewGoal}
+                        disabled={saving}
+                      >
+                        Annuleren
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                <div style={{ marginTop: 24 }}>
                  {goals
                    .filter((goal) => goal.domain === editingDomain.name)
                    .length === 0 ? (
