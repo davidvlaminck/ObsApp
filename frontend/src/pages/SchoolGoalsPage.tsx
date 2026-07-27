@@ -155,8 +155,10 @@ export default function SchoolGoalsPage() {
       setSuccess('')
       const updated = await updateManagedDomain(id, trimmed)
       setManagedDomains((current) => current.map((d) => (d.id === id ? updated : d)))
+      setEditingDomain((current) => (current && current.id === id ? updated : current))
       setEditingDomainNameVisible(false)
       setSuccess(`Domein is bijgewerkt.`)
+      await loadGoals()
     } catch (err: any) {
       setError(getErrorMessage(err, 'Kan domein niet bijwerken.'))
     } finally {
