@@ -480,22 +480,26 @@ export default function SchoolGoalsPage() {
                 </section>
               )}
 
-<section className="form-card card" style={{ marginBottom: 24 }}>
-                <h3>Doelen beheren</h3>
-                <p className="text-muted">Maak, pas aan of verwijder doelen voor dit domein.</p>
+              <section className="form-card card" style={{ marginBottom: 24 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                  <div>
+                    <h3>Doelen beheren</h3>
+                    <p className="text-muted">Maak, pas aan of verwijder doelen voor dit domein.</p>
+                  </div>
+                  {!showNewGoalForm && (
+                    <button
+                      className="btn btn-outline"
+                      type="button"
+                      onClick={() => setShowNewGoalForm(true)}
+                      disabled={saving}
+                    >
+                      <AddIcon fontSize="small" aria-hidden="true" style={{ marginRight: 8 }} />
+                      Doel aanmaken
+                    </button>
+                  )}
+                </div>
 
-                {!showNewGoalForm ? (
-                  <button
-                    className="btn btn-outline"
-                    type="button"
-                    onClick={() => setShowNewGoalForm(true)}
-                    disabled={saving}
-                    style={{ marginBottom: 16 }}
-                  >
-                    <AddIcon fontSize="small" aria-hidden="true" style={{ marginRight: 8 }} />
-                    Doel aanmaken
-                  </button>
-                ) : (
+                {showNewGoalForm && (
                   <form onSubmit={handleModalGoalSubmit}>
                     <div className="form-group">
                       <label htmlFor="modal-goal-name">Nieuw doel</label>
