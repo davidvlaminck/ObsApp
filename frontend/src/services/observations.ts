@@ -27,6 +27,8 @@ export interface GoalResponse {
   target_type: string | null
   parent_goal_id: number | null
   vo_code: string | null
+  minimum_goal_code: string | null
+  voorbeelden: string | null
   vocabulary: string | null
   valid_from: string | null
   created_at: string | null

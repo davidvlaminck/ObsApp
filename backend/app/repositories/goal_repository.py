@@ -93,6 +93,8 @@ class GoalRepository:
             target_type=goal.target_type,
             parent_goal_id=goal.parent_goal_id,
             vo_code=goal.vo_code,
+            minimum_goal_code=goal.minimum_goal_code,
+            voorbeelden=goal.voorbeelden,
             vocabulary=goal.vocabulary,
             valid_from=goal.valid_from,
             created_at=goal.created_at,

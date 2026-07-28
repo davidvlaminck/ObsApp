@@ -493,10 +493,8 @@ def seed_opstap_goals():
             # Derive level from identifier
             level = _derive_level_from_identifier(goal_identifier)
 
-            # Build description: combine minimum goal title and examples
+            # Build description: only include examples
             description_parts = []
-            if minimum_goal_title:
-                description_parts.append(minimum_goal_title)
             if voorbeelden:
                 description_parts.append(f"Voorbeelden:\n{voorbeelden}")
             description = "\n\n".join(description_parts) if description_parts else None

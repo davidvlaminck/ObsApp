@@ -758,7 +758,12 @@ export default function ObservationsPage() {
                       <span className="goal-metadata">
                         {[goal.subject, goal.domain, goal.subdomain, goal.cluster].filter(Boolean).join(' · ')}
                       </span>
-                      <span>{formatGoalPreview(goal.description)}</span>
+                      {goal.goal_type === 'OP_STAP' && goal.voorbeelden && (
+                        <span>{formatGoalPreview(`Voorbeelden:\n${goal.voorbeelden}`)}</span>
+                      )}
+                      {goal.goal_type !== 'OP_STAP' && goal.description && (
+                        <span>{formatGoalPreview(goal.description)}</span>
+                      )}
                     </div>
                   </label>
                 ))}
