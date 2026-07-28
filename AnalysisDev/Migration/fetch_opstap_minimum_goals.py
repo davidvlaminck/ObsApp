@@ -89,7 +89,7 @@ def extract_examples(description: str) -> str:
                     cleaned.append(text)
             return "\n".join(f"- {item}" for item in cleaned)
     
-    # Fallback: zoek naar "Voorbeeld(en):" en neem de rest van de tekst
+# Fallback: zoek naar "Voorbeeld(en):" en neem de rest van de tekst
     # maar alleen als het lijst-items bevat
     if "Voorbeeld(en)" in description or "Voorbeeld" in description:
         # Try to find list items anywhere after "Voorbeeld"
@@ -104,7 +104,14 @@ def extract_examples(description: str) -> str:
                     if text:
                         cleaned.append(text)
                 return "\n".join(f"- {item}" for item in cleaned)
-    
+
+    # Fallback: gebruik de beschrijving zelf als voorbeeld als er geen
+    # Voorbeeld-marker in de beschrijving staat en de beschrijving niet-leeg is
+    if "Voorbeeld(en)" not in description and "Voorbeeld" not in description:
+        fallback = strip_html(description).strip()
+        if fallback:
+            return fallback
+
     return ""
 
 
@@ -122,12 +129,15 @@ def main():
     goals_with_min = [i for i in items if i.get("type") == "KRC_CURRICULUM_GOAL" and i.get("minimumGoals")]
     print(f"Doelen met minimumdoelen: {len(goals_with_min)}")
 
-    for item in goals_with_min:
+    for idx, item in enumerate(goals_with_min, 1):
         goal_identifier = item.get("identifier", "")
         goal_title = strip_html(item.get("title", ""))
         goal_description = item.get("description", "")
         path = build_path(item, lookup)
         examples = extract_examples(goal_description)
+
+        if idx % 50 == 0 or idx == 1:
+            print(f"  [{idx}/{len(goals_with_min)}] {goal_identifier}: {goal_title[:60]}")
 
         for mg_url in item["minimumGoals"]:
             mg_key = mg_url.split("/")[-1]
