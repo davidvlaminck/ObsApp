@@ -310,6 +310,86 @@ def test_list_classes_returns_all_school_classes(
     assert names == {"3K", "2K"}
 
 
+def test_list_user_classes_returns_empty_when_no_classes_linked(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+
+    response = observation_goal_client.get("/api/observation-goals/user-classes")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data == []
+
+
+def test_list_user_classes_returns_linked_classes(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    from app.models.school_year import SchoolYear, Class as ClassModel
+    from app.models.school_year import teacher_class_association
+
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
+    observation_goal_db.add(school_year)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(school_year)
+
+    cls1 = ClassModel(school_year_id=school_year.id, name="3K", class_type="K3")
+    observation_goal_db.add(cls1)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(cls1)
+
+    observation_goal_db.execute(
+        teacher_class_association.insert().values(teacher_id=1, class_id=cls1.id)
+    )
+    observation_goal_db.commit()
+
+    response = observation_goal_client.get("/api/observation-goals/user-classes")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["id"] == cls1.id
+    assert data[0]["name"] == "3K"
+    assert data[0]["class_type"] == "K3"
+
+
+def test_list_user_classes_returns_multiple_when_multiple_linked(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    from app.models.school_year import SchoolYear, Class as ClassModel, teacher_class_association
+
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
+    observation_goal_db.add(school_year)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(school_year)
+
+    cls1 = ClassModel(school_year_id=school_year.id, name="3K", class_type="K3")
+    cls2 = ClassModel(school_year_id=school_year.id, name="2K", class_type="K2")
+    observation_goal_db.add_all([cls1, cls2])
+    observation_goal_db.commit()
+    observation_goal_db.refresh(cls1)
+    observation_goal_db.refresh(cls2)
+
+    observation_goal_db.execute(
+        teacher_class_association.insert().values(teacher_id=1, class_id=cls1.id)
+    )
+    observation_goal_db.execute(
+        teacher_class_association.insert().values(teacher_id=1, class_id=cls2.id)
+    )
+    observation_goal_db.commit()
+
+    response = observation_goal_client.get("/api/observation-goals/user-classes")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+
+
 def test_search_opstap_goals_filters_by_level(
     observation_goal_client: TestClient,
     observation_goal_db: Session,

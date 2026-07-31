@@ -10,6 +10,7 @@ import {
   getObservationGoalSubdomains,
   getObservationGoals,
   getObservationGoalClasses,
+  getUserClasses,
   searchOpStapGoals,
   GoalResponse,
   GoalSearchFilters,
@@ -62,8 +63,9 @@ const formatGoalPreview = (description: string | null) => {
 }
 
 export default function ObservationsPage() {
-  const [observationGoals, setObservationGoals] = useState<ObservationGoalResponse[]>([])
+   const [observationGoals, setObservationGoals] = useState<ObservationGoalResponse[]>([])
   const [classes, setClasses] = useState<ClassOption[]>([])
+  const [userClasses, setUserClasses] = useState<ClassOption[]>([])
   const [subjects, setSubjects] = useState<string[]>([])
   const [domains, setDomains] = useState<string[]>([])
   const [modalDomains, setModalDomains] = useState<string[]>([])
@@ -113,20 +115,22 @@ export default function ObservationsPage() {
     }
   }
 
-  useEffect(() => {
+   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true)
         const currentUser = await getMe()
 
-        const [classesData, subjectsData, goalsData] = await Promise.all([
+        const [classesData, subjectsData, goalsData, userClassesData] = await Promise.all([
           getObservationGoalClasses(),
           getObservationGoalSubjects(),
           getObservationGoals(),
+          getUserClasses(),
         ])
         setClasses(classesData)
         setSubjects(subjectsData)
         setObservationGoals(goalsData)
+        setUserClasses(userClassesData)
         setCurrentUser({ is_demo: currentUser.is_demo })
 
         // Set default class filter from user's default_class_id
@@ -269,12 +273,12 @@ export default function ObservationsPage() {
   }, [goalModalOpen, goalSearchFilters, searchGoals])
 
   const handleOpenGoalModal = () => {
-    const selectedClass = classes.find((cls) => cls.id === form.class_id)
+    const defaultLevel = userClasses.length === 1 ? userClasses[0].class_type : ''
     const initialFilters = {
       subject: form.subject,
       domain: form.domain,
       subdomain: form.subdomain,
-      level: selectedClass?.class_type ?? '',
+      level: defaultLevel,
       q: form.name.trim().length >= 2 ? form.name.trim() : '',
     }
     setGoalSearchFilters(initialFilters)

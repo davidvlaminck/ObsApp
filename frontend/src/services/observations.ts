@@ -47,6 +47,8 @@ export interface GoalSummary {
   goal_type: string
   doel_soort: string | null
   vo_code: string | null
+  voorbeelden: string | null
+  vocabulary: string | null
 }
 
 export interface ObservationGoalResponse {
@@ -94,6 +96,11 @@ export async function getObservationGoalSubjects(): Promise<string[]> {
 
 export async function getObservationGoalClasses(): Promise<ClassOption[]> {
   const response = await api.get<ClassOption[]>('/observation-goals/classes')
+  return response.data
+}
+
+export async function getUserClasses(): Promise<ClassOption[]> {
+  const response = await api.get<ClassOption[]>('/observation-goals/user-classes')
   return response.data
 }
 

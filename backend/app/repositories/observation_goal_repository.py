@@ -260,6 +260,8 @@ class ObservationGoalRepository:
             goal_type=goal.goal_type,
             doel_soort=goal.doel_soort,
             vo_code=goal.vo_code,
+            voorbeelden=goal.voorbeelden,
+            vocabulary=goal.vocabulary,
         )
 
     def _get_opstap_goal(self, goal_id: int | None) -> Goal | None:

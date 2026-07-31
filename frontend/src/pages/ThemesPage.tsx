@@ -3,6 +3,7 @@ import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import { FormEvent, useEffect, useState } from 'react'
+import { sortSubjects } from '../lib/subjectSort'
 import {
   createActivity,
   createTheme,
@@ -13,7 +14,17 @@ import {
   ActivityResponse,
   ThemeResponse,
   updateTheme,
+  updateActivity,
 } from '../services/auth'
+import {
+  getObservationGoalDomains,
+  getObservationGoalSubdomains,
+  getObservationGoalSubjects,
+  getObservationGoals,
+  getUserClasses,
+  ObservationGoalResponse,
+  ClassOption,
+} from '../services/observations'
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   const axiosError = error as AxiosError<{ detail?: string }>
@@ -51,11 +62,44 @@ export default function ThemesPage() {
   const [editingThemeDescription, setEditingThemeDescription] = useState('')
   const [editingThemeNameVisible, setEditingThemeNameVisible] = useState(false)
 
-  const [themeActivities, setThemeActivities] = useState<ActivityResponse[]>([])
+   const [themeActivities, setThemeActivities] = useState<ActivityResponse[]>([])
   const [loadingActivities, setLoadingActivities] = useState(false)
   const [newActivityName, setNewActivityName] = useState('')
   const [newActivityDescription, setNewActivityDescription] = useState('')
   const [showNewActivityForm, setShowNewActivityForm] = useState(false)
+  const [userClasses, setUserClasses] = useState<ClassOption[]>([])
+
+  const [goalModal, setGoalModal] = useState<{
+    open: boolean
+    activityId: number | null
+    subject: string
+    domain: string
+    subdomain: string
+    level: string
+    q: string
+    goals: ObservationGoalResponse[]
+    tempSelectedItems: Array<{ goal_id: number; label: string | null; observe: boolean }>
+    subjects: string[]
+    domains: string[]
+    subdomains: string[]
+    saving: boolean
+    error: string
+  }>({
+    open: false,
+    activityId: null,
+    subject: '',
+    domain: '',
+    subdomain: '',
+    level: '',
+    q: '',
+    goals: [],
+    tempSelectedItems: [],
+    subjects: [],
+    domains: [],
+    subdomains: [],
+    saving: false,
+    error: '',
+  })
 
   const loadThemes = async () => {
     try {
@@ -67,11 +111,13 @@ export default function ThemesPage() {
     }
   }
 
-  useEffect(() => {
+   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true)
         await loadThemes()
+        const userClassesData = await getUserClasses()
+        setUserClasses(userClassesData)
       } catch (err) {
         setError(getErrorMessage(err, 'Kan gegevens niet laden.'))
       } finally {
@@ -253,6 +299,132 @@ export default function ThemesPage() {
       setSaving(false)
     }
   }
+
+  const openGoalModal = (activity: ActivityResponse) => {
+    const defaultLevel = userClasses.length === 1 ? userClasses[0].class_type : ''
+    setGoalModal((current) => ({
+      ...current,
+      open: true,
+      activityId: activity.id,
+      tempSelectedItems: activity.goals.map((g) => ({ goal_id: g.goal_id, label: g.label, observe: g.observe })),
+      subject: '',
+      domain: '',
+      subdomain: '',
+      level: defaultLevel,
+      q: '',
+      goals: [],
+      domains: [],
+      subdomains: [],
+      saving: false,
+      error: '',
+    }))
+  }
+
+  const closeGoalModal = () => {
+    setGoalModal((current) => ({ ...current, open: false, activityId: null }))
+  }
+
+  const confirmGoalSelection = async () => {
+    if (!goalModal.activityId) {
+      return
+    }
+
+    try {
+      setSaving(true)
+      setError('')
+      setSuccess('')
+      await updateActivity(goalModal.activityId, {
+        name: themeActivities.find((a) => a.id === goalModal.activityId)?.name || '',
+        description: themeActivities.find((a) => a.id === goalModal.activityId)?.description || '',
+        theme_id: editingTheme?.id || 0,
+        goal_items: goalModal.tempSelectedItems,
+      })
+      setSuccess('Doelen bijgewerkt.')
+      closeGoalModal()
+      if (editingTheme) {
+        await loadActivitiesForTheme(editingTheme.id)
+      }
+    } catch (err: any) {
+      setError(getErrorMessage(err, 'Kan doelen niet bijwerken.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    const loadSubjects = async () => {
+      if (!goalModal.open) {
+        return
+      }
+      try {
+        const subjects = await getObservationGoalSubjects()
+        setGoalModal((current) => ({ ...current, subjects, subject: '' }))
+      } catch {
+        // non-blocking
+      }
+    }
+    loadSubjects()
+  }, [goalModal.open])
+
+  useEffect(() => {
+    const loadDomains = async () => {
+      if (!goalModal.open || !goalModal.subject) {
+        setGoalModal((current) => ({ ...current, domains: [], domain: '', subdomains: [], subdomain: '' }))
+        return
+      }
+      try {
+        const domains = await getObservationGoalDomains(goalModal.subject)
+        setGoalModal((current) => ({ ...current, domains, domain: '', subdomains: [], subdomain: '' }))
+      } catch {
+        // non-blocking
+      }
+    }
+    loadDomains()
+  }, [goalModal.open, goalModal.subject])
+
+  useEffect(() => {
+    const loadSubdomains = async () => {
+      if (!goalModal.open || !goalModal.subject) {
+        setGoalModal((current) => ({ ...current, subdomains: [], subdomain: '' }))
+        return
+      }
+      try {
+        const subdomains = await getObservationGoalSubdomains(goalModal.subject, goalModal.domain || undefined)
+        setGoalModal((current) => ({ ...current, subdomains, subdomain: '' }))
+      } catch {
+        // non-blocking
+      }
+    }
+    loadSubdomains()
+  }, [goalModal.open, goalModal.subject, goalModal.domain])
+
+  useEffect(() => {
+    const loadGoals = async () => {
+      if (!goalModal.open) {
+        return
+      }
+      setGoalModal((current) => ({ ...current, saving: true, error: '' }))
+      try {
+        const data = await getObservationGoals({
+          subject: goalModal.subject || undefined,
+          domain: goalModal.domain || undefined,
+          subdomain: goalModal.subdomain || undefined,
+          q: goalModal.q || undefined,
+        })
+        setGoalModal((current) => ({ ...current, goals: data, saving: false }))
+      } catch (err) {
+        setGoalModal((current) => ({ ...current, error: getErrorMessage(err, 'Kan doelen niet laden.'), saving: false }))
+      }
+    }
+    loadGoals()
+  }, [goalModal.open, goalModal.subject, goalModal.domain, goalModal.subdomain, goalModal.q])
+
+  const filteredGoals = goalModal.goals.filter((goal) => {
+    if (goalModal.level && goal.goal?.level !== goalModal.level) {
+      return false
+    }
+    return true
+  })
 
   const handleDeleteTheme = async (themeId: number, themeName: string) => {
     if (!window.confirm(`Thema "${themeName}" verwijderen?`)) {
@@ -581,6 +753,15 @@ export default function ThemesPage() {
                             </td>
                             <td>
                               <button
+                                className="btn btn-outline btn-sm"
+                                type="button"
+                                onClick={() => openGoalModal(activity)}
+                                disabled={saving}
+                                style={{ marginRight: 8 }}
+                              >
+                                Doelen koppelen
+                              </button>
+                              <button
                                 className="table-action danger-link delete-icon-button"
                                 type="button"
                                 onClick={() => handleDeleteActivity(activity.id, activity.name)}
@@ -600,6 +781,192 @@ export default function ThemesPage() {
               </div>
             </section>
           </div>
+        </div>
+      )}
+
+      {goalModal.open && goalModal.activityId && (
+        <div className="modal-backdrop">
+          <section className="modal-card goal-select-modal" role="dialog" aria-modal="true" aria-labelledby="goal-select-title">
+            <div className="modal-header">
+              <div>
+                <h2 id="goal-select-title">Koppel doelen</h2>
+                <p className="text-muted">Filter op vak, domein en subdomein. Selecteer een of meer doelen.</p>
+              </div>
+              <button className="icon-button" type="button" onClick={closeGoalModal} aria-label="Sluiten">
+                ✕
+              </button>
+            </div>
+
+            <div className="goal-modal-filters">
+              <div className="form-group">
+                <label htmlFor="goal-select-subject">Vak</label>
+                <select
+                  id="goal-select-subject"
+                  value={goalModal.subject}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      subject: event.target.value,
+                      domain: '',
+                      subdomain: '',
+                    }))
+                  }
+                >
+                  <option value="">Alle vakken</option>
+                  {sortSubjects(goalModal.subjects).map((subject) => (
+                    <option key={subject} value={subject}>
+                      {subject}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="goal-select-domain">Domein</label>
+                <select
+                  id="goal-select-domain"
+                  value={goalModal.domain}
+                  disabled={!goalModal.subject}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      domain: event.target.value,
+                      subdomain: '',
+                    }))
+                  }
+                >
+                  <option value="">Alle domeinen</option>
+                  {goalModal.domains.map((domain) => (
+                    <option key={domain} value={domain}>
+                      {domain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="goal-select-subdomain">Subdomein</label>
+                <select
+                  id="goal-select-subdomain"
+                  value={goalModal.subdomain}
+                  disabled={!goalModal.subject}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      subdomain: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Alle subdomeinen</option>
+                  {goalModal.subdomains.map((subdomain) => (
+                    <option key={subdomain} value={subdomain}>
+                      {subdomain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="goal-select-level">Klasgroep</label>
+                <select
+                  id="goal-select-level"
+                  value={goalModal.level}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      level: event.target.value,
+                    }))
+                  }
+                >
+                  <option value="">Alle klasgroepen</option>
+                  <option value="JK">JK</option>
+                  <option value="K2">2K</option>
+                  <option value="K3">3K</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="goal-select-q">Zoek in omschrijving</label>
+                <input
+                  id="goal-select-q"
+                  value={goalModal.q}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      q: event.target.value,
+                    }))
+                  }
+                  placeholder="Typ minstens 2 tekens"
+                />
+              </div>
+            </div>
+
+            <div className="goal-select-list">
+              {goalModal.saving ? (
+                <div className="empty-state compact">
+                  <p className="text-muted">Laden...</p>
+                </div>
+              ) : filteredGoals.length === 0 ? (
+                <div className="empty-state compact">
+                  <h3>Geen doelen gevonden</h3>
+                  <p className="text-muted">Pas de filters aan.</p>
+                </div>
+              ) : (
+                filteredGoals.map((goal) => {
+                  const selectedItem = goalModal.tempSelectedItems.find((item) => item.goal_id === goal.id)
+                  const isSelected = !!selectedItem
+                  return (
+                    <label
+                      key={goal.id}
+                      className={`goal-select-item ${isSelected ? 'selected' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => {
+                          setGoalModal((current) => ({
+                            ...current,
+                            tempSelectedItems: isSelected
+                              ? current.tempSelectedItems.filter((item) => item.goal_id !== goal.id)
+                              : [...current.tempSelectedItems, { goal_id: goal.id, label: null, observe: true }],
+                          }))
+                        }}
+                      />
+                      <span>
+                        <strong>
+                          {goal.goal ? `${goal.goal.code} - ${goal.goal.title}` : goal.name}
+                        </strong>
+                        <span className="goal-metadata">
+                          {' '}
+                          {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
+                        </span>
+                        {goal.goal?.goal_type === 'OP_STAP' && goal.goal?.voorbeelden && (
+                          <span className="goal-metadata">Voorbeelden: {goal.goal.voorbeelden}</span>
+                        )}
+                        {goal.goal && goal.goal.goal_type !== 'OP_STAP' && goal.goal?.description && (
+                          <span className="goal-metadata">{goal.goal.description}</span>
+                        )}
+                      </span>
+                    </label>
+                  )
+                })
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-outline" type="button" onClick={closeGoalModal}>
+                Annuleren
+              </button>
+              <button
+                className="btn btn-primary"
+                type="button"
+                onClick={confirmGoalSelection}
+                disabled={goalModal.tempSelectedItems.length === 0}
+              >
+                Toevoegen ({goalModal.tempSelectedItems.length})
+              </button>
+            </div>
+          </section>
         </div>
       )}
     </div>

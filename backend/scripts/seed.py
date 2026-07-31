@@ -140,8 +140,17 @@ def seed_school_and_admin():
             is_superuser=False,
             is_active=True,
             school_id=school.id,
+            default_class_id=class_model.id,
         )
         db.add(teacher)
+        db.commit()
+        db.refresh(teacher)
+
+        # Link Lieve to the 3K class via teacher_classes association
+        from app.models.school_year import teacher_class_association
+        db.execute(
+            teacher_class_association.insert().values(teacher_id=teacher.id, class_id=class_model.id)
+        )
         db.commit()
 
         print(f"School created: {school.name}")

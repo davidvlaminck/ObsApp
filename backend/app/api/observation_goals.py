@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import selectinload
 
 from app.api.auth import get_current_user
 from app.core.database import get_db
+from app.models.user import User as UserModel
 from app.repositories.goal_repository import GoalRepository
 from app.repositories.observation_goal_repository import ObservationGoalRepository
 from app.repositories.school_goal_domain_repository import SchoolGoalDomainRepository
@@ -153,6 +155,24 @@ def list_observation_goal_classes(
 
     classes = [class_repo.get_class_by_id(cid) for cid in class_ids]
     return [class_repo.class_to_response(cls) for cls in classes if cls]
+
+
+@router.get("/user-classes", response_model=list[ClassResponse])
+def list_user_classes(
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    _ensure_school_user(current_user)
+    user = (
+        db.query(UserModel)
+        .options(selectinload(UserModel.classes))
+        .filter(UserModel.id == current_user.id)
+        .first()
+    )
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Gebruiker niet gevonden")
+    class_repo = ClassRepository(db)
+    return [class_repo.class_to_response(cls) for cls in user.classes]
 
 
 @router.get("/subjects", response_model=list[str])

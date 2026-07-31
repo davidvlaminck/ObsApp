@@ -17,6 +17,8 @@ class GoalSummary(BaseModel):
     goal_type: str
     doel_soort: Optional[str] = None
     vo_code: Optional[str] = None
+    voorbeelden: Optional[str] = None
+    vocabulary: Optional[str] = None
 
     class Config:
         from_attributes = True
