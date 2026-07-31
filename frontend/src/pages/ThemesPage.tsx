@@ -20,9 +20,9 @@ import {
   getObservationGoalDomains,
   getObservationGoalSubdomains,
   getObservationGoalSubjects,
-  getObservationGoals,
   getUserClasses,
-  ObservationGoalResponse,
+  searchOpStapGoals,
+  GoalResponse,
   ClassOption,
 } from '../services/observations'
 
@@ -77,7 +77,7 @@ export default function ThemesPage() {
     subdomain: string
     level: string
     q: string
-    goals: ObservationGoalResponse[]
+    goals: GoalResponse[]
     tempSelectedItems: Array<{ goal_id: number; label: string | null; observe: boolean }>
     subjects: string[]
     domains: string[]
@@ -405,10 +405,11 @@ export default function ThemesPage() {
       }
       setGoalModal((current) => ({ ...current, saving: true, error: '' }))
       try {
-        const data = await getObservationGoals({
+        const data = await searchOpStapGoals({
           subject: goalModal.subject || undefined,
           domain: goalModal.domain || undefined,
           subdomain: goalModal.subdomain || undefined,
+          level: goalModal.level || undefined,
           q: goalModal.q || undefined,
         })
         setGoalModal((current) => ({ ...current, goals: data, saving: false }))
@@ -417,14 +418,9 @@ export default function ThemesPage() {
       }
     }
     loadGoals()
-  }, [goalModal.open, goalModal.subject, goalModal.domain, goalModal.subdomain, goalModal.q])
+  }, [goalModal.open, goalModal.subject, goalModal.domain, goalModal.subdomain, goalModal.level, goalModal.q])
 
-  const filteredGoals = goalModal.goals.filter((goal) => {
-    if (goalModal.level && goal.goal?.level !== goalModal.level) {
-      return false
-    }
-    return true
-  })
+  const filteredGoals = goalModal.goals
 
   const handleDeleteTheme = async (themeId: number, themeName: string) => {
     if (!window.confirm(`Thema "${themeName}" verwijderen?`)) {
@@ -742,6 +738,7 @@ export default function ThemesPage() {
                       <thead>
                         <tr>
                           <th>Naam</th>
+                          <th>Gekoppelde doelen</th>
                           <th>Acties</th>
                         </tr>
                       </thead>
@@ -750,6 +747,9 @@ export default function ThemesPage() {
                           <tr key={activity.id}>
                             <td>
                               <strong>{activity.name}</strong>
+                            </td>
+                            <td>
+                              <span className="count-pill">{activity.goals.length}</span>
                             </td>
                             <td>
                               <button
@@ -932,21 +932,21 @@ export default function ThemesPage() {
                           }))
                         }}
                       />
-                      <span>
-                        <strong>
-                          {goal.goal ? `${goal.goal.code} - ${goal.goal.title}` : goal.name}
-                        </strong>
-                        <span className="goal-metadata">
-                          {' '}
-                          {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
-                        </span>
-                        {goal.goal?.goal_type === 'OP_STAP' && goal.goal?.voorbeelden && (
-                          <span className="goal-metadata">Voorbeelden: {goal.goal.voorbeelden}</span>
-                        )}
-                        {goal.goal && goal.goal.goal_type !== 'OP_STAP' && goal.goal?.description && (
-                          <span className="goal-metadata">{goal.goal.description}</span>
-                        )}
-                      </span>
+                       <span>
+                         <strong>
+                           {goal.code} - {goal.title}
+                         </strong>
+                         <span className="goal-metadata">
+                           {' '}
+                           {[goal.subject, goal.domain, goal.subdomain].filter(Boolean).join(' · ')}
+                         </span>
+                         {goal.goal_type === 'OP_STAP' && goal.voorbeelden && (
+                           <span className="goal-metadata">Voorbeelden: {goal.voorbeelden}</span>
+                         )}
+                         {goal.goal_type !== 'OP_STAP' && goal.description && (
+                           <span className="goal-metadata">{goal.description}</span>
+                         )}
+                       </span>
                     </label>
                   )
                 })

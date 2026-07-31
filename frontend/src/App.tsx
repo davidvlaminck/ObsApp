@@ -19,7 +19,6 @@ import KoepelSelectionPage from './pages/KoepelSelectionPage'
 import DemoPage from './pages/DemoPage'
 import DemoSchoolPage from './pages/DemoSchoolPage'
 import ThemesPage from './pages/ThemesPage'
-import ActivitiesPage from './pages/ActivitiesPage'
 import SchoolGoalsPage from './pages/SchoolGoalsPage'
 
 function App() {
@@ -116,14 +115,6 @@ function App() {
         element={
           <AppLayout>
             <ThemesPage />
-          </AppLayout>
-        }
-      />
-      <Route
-        path="/management/activities"
-        element={
-          <AppLayout>
-            <ActivitiesPage />
           </AppLayout>
         }
       />
