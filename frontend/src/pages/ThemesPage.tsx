@@ -17,6 +17,7 @@ import {
   ThemeResponse,
   updateTheme,
   updateActivity,
+  removeActivityGoal,
 } from '../services/auth'
 import {
   getObservationGoalDomains,
@@ -298,6 +299,34 @@ export default function ThemesPage() {
       await loadThemes()
     } catch (err) {
       setError(getErrorMessage(err, 'Kan activiteit niet verwijderen.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleRemoveGoal = async (activityId: number, goalId: number) => {
+    if (!window.confirm('Doel loskoppelen?')) {
+      return
+    }
+
+    try {
+      setSaving(true)
+      setError('')
+      setSuccess('')
+      await removeActivityGoal(activityId, goalId)
+      setSuccess('Doel is losgekoppeld.')
+      setThemeActivities((current) =>
+        current.map((activity) =>
+          activity.id === activityId
+            ? {
+                ...activity,
+                goals: activity.goals.filter((goal) => goal.goal_id !== goalId),
+              }
+            : activity,
+        ),
+      )
+    } catch (err) {
+      setError(getErrorMessage(err, 'Kan doel niet loskoppelen.'))
     } finally {
       setSaving(false)
     }
@@ -792,21 +821,31 @@ export default function ThemesPage() {
                                  </button>
                                </td>
                              </tr>
-                             {expandedActivityId === activity.id && activity.goals.length > 0 && (
-                               <tr key={`${activity.id}-goals`}>
-                                 <td colSpan={3} style={{ padding: 0 }}>
-                                   <div style={{ padding: '12px 16px', background: '#f8f9fa' }}>
-                                     {activity.goals.map((goal) => (
-                                       <div key={goal.goal_id} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                         <span style={{ fontWeight: 500 }}>{goal.code && `${goal.code} — `}{goal.title}</span>
-                                         {goal.goal_type && <span className="badge badge-secondary" style={{ fontSize: 11 }}>{goal.goal_type}</span>}
-                                         {goal.label && <span style={{ color: '#6c757d', fontSize: 13 }}>({goal.label})</span>}
-                                       </div>
-                                     ))}
-                                   </div>
-                                 </td>
-                               </tr>
-                             )}
+                              {expandedActivityId === activity.id && activity.goals.length > 0 && (
+                                <tr key={`${activity.id}-goals`}>
+                                  <td colSpan={3} style={{ padding: 0 }}>
+                                    <div style={{ padding: '12px 16px', background: '#f8f9fa' }}>
+                                      {activity.goals.map((goal) => (
+                                        <div key={goal.goal_id} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                                          <span style={{ fontWeight: 500 }}>
+                                            {goal.code && `${goal.code} — `}{goal.title}
+                                          </span>
+                                          <button
+                                            className="table-action danger-link delete-icon-button"
+                                            type="button"
+                                            onClick={() => handleRemoveGoal(activity.id, goal.goal_id)}
+                                            disabled={saving}
+                                            aria-label={`Verwijder ${goal.title ?? goal.code ?? 'doel'}`}
+                                            title="Loskoppelen"
+                                          >
+                                            <DeleteIcon fontSize="small" aria-hidden="true" />
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </td>
+                                </tr>
+                              )}
                            </>
                          ))}
                       </tbody>

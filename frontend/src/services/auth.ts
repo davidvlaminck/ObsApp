@@ -409,7 +409,7 @@ export async function deleteActivity(activityId: number): Promise<void> {
 }
 
 export async function removeActivityGoal(activityId: number, goalId: number): Promise<void> {
-  await api.delete(`/activities/${activityId}/goals/${goalId}`)
+  await api.delete(`/activities/${activityId}/observation-goals/${goalId}`)
 }
 
 export async function getAvailableGoals(filters?: { subject?: string; domain?: string; subdomain?: string; q?: string }): Promise<AvailableGoal[]> {
