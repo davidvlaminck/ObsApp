@@ -238,7 +238,7 @@ gunzip -c /var/backups/obsapp_*.sql.gz | sudo -u postgres psql obsapp
 sudo systemctl start obsapp-backend
 
 # 5. Controleer of de app werkt
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 ```
 
 ---
@@ -372,7 +372,7 @@ After=network.target postgresql.service
 Type=exec
 WorkingDirectory=/opt/obsapp/backend
 Environment="PATH=/opt/obsapp/backend/.venv/bin"
-ExecStart=/opt/obsapp/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 4
+ExecStart=/opt/obsapp/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8001 --workers 4
 Restart=always
 RestartSec=5
 
@@ -437,7 +437,7 @@ server {
 
     # API reverse proxy
     location /api/ {
-        proxy_pass http://127.0.0.1:8000/api/;
+        proxy_pass http://127.0.0.1:8001/api/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -446,7 +446,7 @@ server {
 
     # Uploads (student afbeeldingen)
     location /uploads/ {
-        proxy_pass http://127.0.0.1:8000/uploads/;
+        proxy_pass http://127.0.0.1:8001/uploads/;
         proxy_set_header Host $host;
     }
 
@@ -489,7 +489,7 @@ server {
 
     # API reverse proxy
     location /api/ {
-        proxy_pass http://127.0.0.1:8000/api/;
+        proxy_pass http://127.0.0.1:8001/api/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -498,7 +498,7 @@ server {
 
     # Uploads (student afbeeldingen)
     location /uploads/ {
-        proxy_pass http://127.0.0.1:8000/uploads/;
+        proxy_pass http://127.0.0.1:8001/uploads/;
         proxy_set_header Host $host;
     }
 
@@ -789,7 +789,7 @@ sudo systemctl restart obsapp-backend
 
 # Test health
 sleep 2
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 
 # Als iets misgaat: ROLLBACK
 git reset --hard pre-update-$(date +%Y%m%d%H%M%S)
@@ -808,7 +808,7 @@ Bepaal het juiste aantal workers en cache strategie:
 sudo apt install -y apache2-utils
 
 # Test backend met 100 requests, 10 concurrent
-ab -n 100 -c 10 http://localhost:8000/health
+ab -n 100 -c 10 http://localhost:8001/health
 
 # Monitor performance
 watch -n 1 'ps aux | grep uvicorn | grep -v grep'
@@ -935,7 +935,7 @@ curl -X POST http://staging.obsapp.local/api/uploads \
    sudo systemctl restart obsapp-backend
 
 4. Verify health
-   curl http://localhost:8000/health
+   curl http://localhost:8001/health
 
 5. If still failing: rollback
    git reset --hard HEAD~1
@@ -1075,9 +1075,9 @@ COPY app ./app
 # Create uploads directory
 RUN mkdir -p uploads/students
 
-EXPOSE 8000
+EXPOSE 8001
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "4"]
 ```
 
 ### 8.2 Frontend Dockerfile
@@ -1122,7 +1122,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8001:8001"
     environment:
       DATABASE_URL: postgresql://obsapp_user:${DB_PASSWORD}@db:5432/obsapp
       SECRET_KEY: ${SECRET_KEY}
@@ -1248,7 +1248,7 @@ uv run alembic upgrade head
 # Test health
 sudo systemctl restart obsapp-backend
 sleep 2
-curl http://localhost:8000/health
+curl http://localhost:8001/health
 
 # Frontend update
 cd ../frontend
@@ -1323,7 +1323,7 @@ journalctl -u obsapp-backend -n 20 --no-pager
 3. [ ] **Structured logging**: Voeg JSON logger toe aan `main.py`
 4. [ ] **Health check DB**: Extend `/health` met `db.execute("SELECT 1")`
 5. [ ] **Backup alerting**: Update script met email notifications
-6. [ ] **Load testing**: Voer `ab -n 100 -c 10 http://localhost:8000/health` uit
+6. [ ] **Load testing**: Voer `ab -n 100 -c 10 http://localhost:8001/health` uit
 7. [ ] **Staging setup**: Duplicate production config op aparte server/VM
 8. [ ] **Incident playbook**: Document handover en troubleshooting procedures
 9. [ ] **Certificate renewal**: Test `certbot renew --dry-run`

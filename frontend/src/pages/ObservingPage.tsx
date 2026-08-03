@@ -7,8 +7,10 @@ import {
   getClasses,
   getMe,
   getSchoolYears,
+  getThemes,
   type ClassResponse,
   type StudentResponse,
+  type ThemeResponse,
   type UserResponse,
 } from '../services/auth'
 import {
@@ -43,6 +45,7 @@ type GoalModalState = {
   subject: string
   domain: string
   subdomain: string
+  theme_id: number | ''
   goals: ObservationGoalResponse[]
   tempSelectedIds: number[]
   domains: string[]
@@ -142,6 +145,7 @@ export default function ObservingPage() {
   const [loading, setLoading] = useState(true)
   const [classes, setClasses] = useState<ClassResponse[]>([])
   const [subjects, setSubjects] = useState<string[]>([])
+  const [themes, setThemes] = useState<ThemeResponse[]>([])
   const [context, setContext] = useState<ObservationContextResponse>({
     goals: [],
     students: [],
@@ -169,6 +173,7 @@ export default function ObservingPage() {
     subject: '',
     domain: '',
     subdomain: '',
+    theme_id: '',
     goals: [],
     tempSelectedIds: [],
     domains: [],
@@ -264,6 +269,7 @@ export default function ObservingPage() {
         }
 
         setSubjects(await getObservationGoalSubjects())
+        setThemes(await getThemes())
       } catch (err) {
         setError(getErrorMessage(err, 'Kan startgegevens niet laden.'))
       } finally {
@@ -322,6 +328,7 @@ export default function ObservingPage() {
           subject: goalModal.subject || undefined,
           domain: goalModal.domain || undefined,
           subdomain: goalModal.subdomain || undefined,
+          theme_id: goalModal.theme_id || undefined,
         })
         setGoalModal((current) => ({ ...current, goals: data }))
       } catch (err) {
@@ -330,7 +337,7 @@ export default function ObservingPage() {
     }
 
     loadModalGoals()
-  }, [goalModal.open, goalModal.subject, goalModal.domain, goalModal.subdomain])
+  }, [goalModal.open, goalModal.subject, goalModal.domain, goalModal.subdomain, goalModal.theme_id])
 
   useEffect(() => {
     const loadObservations = async () => {
@@ -382,6 +389,7 @@ export default function ObservingPage() {
       subject: '',
       domain: '',
       subdomain: '',
+      theme_id: '',
       goals: [],
       tempSelectedIds: selectedGoals.map((g) => g.id),
       domains: [],
@@ -908,7 +916,7 @@ export default function ObservingPage() {
             <div className="modal-header">
               <div>
                 <h2 id="goal-select-title">Voeg observatiedoelen toe</h2>
-                <p className="text-muted">Filter op vak, domein en subdomein. Selecteer een of meer doelen.</p>
+                <p className="text-muted">Filter op thema, vak, domein en subdomein. Selecteer een of meer doelen.</p>
               </div>
               <button className="icon-button" type="button" onClick={closeGoalModal} aria-label="Sluiten">
                 ✕
@@ -916,6 +924,30 @@ export default function ObservingPage() {
             </div>
 
             <div className="goal-select-filters">
+              <div className="form-group">
+                <label htmlFor="goal-select-theme">Thema</label>
+                <select
+                  id="goal-select-theme"
+                  value={goalModal.theme_id}
+                  onChange={(event) =>
+                    setGoalModal((current) => ({
+                      ...current,
+                      theme_id: event.target.value ? Number(event.target.value) : '',
+                      subject: '',
+                      domain: '',
+                      subdomain: '',
+                    }))
+                  }
+                >
+                  <option value="">Alle thema's</option>
+                  {themes.map((theme) => (
+                    <option key={theme.id} value={theme.id}>
+                      {theme.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="form-group">
                 <label htmlFor="goal-select-subject">Vak</label>
                 <select

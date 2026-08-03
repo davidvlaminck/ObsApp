@@ -1,6 +1,7 @@
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
+from app.models.activity import Activity, ActivityObservationGoal
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.school_goal_domain import SchoolGoalDomain
@@ -61,9 +62,21 @@ class ObservationGoalRepository:
         subdomain: str | None = None,
         q: str | None = None,
         class_id: int | None = None,
+        theme_id: int | None = None,
     ) -> list[ObservationGoal]:
         query = self.db.query(ObservationGoal).options(joinedload(ObservationGoal.goal))
         query = query.filter(ObservationGoal.school_id == school_id)
+
+        if theme_id is not None:
+            query = (
+                query.join(
+                    ActivityObservationGoal,
+                    ObservationGoal.id == ActivityObservationGoal.observation_goal_id,
+                )
+                .join(Activity, ActivityObservationGoal.activity_id == Activity.id)
+                .filter(Activity.theme_id == theme_id)
+                .distinct()
+            )
 
         if class_id:
             class_model = self.db.query(ClassModel).filter(ClassModel.id == class_id).first()
@@ -94,9 +107,21 @@ class ObservationGoalRepository:
         subject: str | None = None,
         domain: str | None = None,
         q: str | None = None,
+        theme_id: int | None = None,
     ) -> list[ObservationGoal]:
         query = self.db.query(ObservationGoal).options(selectinload(ObservationGoal.goal))
         query = query.filter(ObservationGoal.school_id == school_id)
+
+        if theme_id is not None:
+            query = (
+                query.join(
+                    ActivityObservationGoal,
+                    ObservationGoal.id == ActivityObservationGoal.observation_goal_id,
+                )
+                .join(Activity, ActivityObservationGoal.activity_id == Activity.id)
+                .filter(Activity.theme_id == theme_id)
+                .distinct()
+            )
 
         if class_id:
             class_model = self.db.query(ClassModel).filter(ClassModel.id == class_id).first()
@@ -114,15 +139,7 @@ class ObservationGoalRepository:
         if domain:
             query = query.filter(ObservationGoal.domain.ilike(domain))
         if q:
-            search_term = f"%{q.strip()}%"
-            query = query.filter(
-                or_(
-                    ObservationGoal.name.ilike(search_term),
-                    Goal.code.ilike(search_term),
-                    Goal.title.ilike(search_term),
-                    Goal.description.ilike(search_term),
-                )
-            )
+            query = query.filter(ObservationGoal.name.ilike(f"%{q}%"))
 
         return query.order_by(ObservationGoal.subject, ObservationGoal.domain, ObservationGoal.name).all()
 

@@ -111,12 +111,12 @@ Als je een andere databasegebruiker, wachtwoord, host of databasenaam kiest, pas
 ```bash
 cd backend
 uv sync
-uv run uvicorn app.main:app --reload
+uv run uvicorn app.main:app --reload --port 8001
 ```
 
-Backend draait op `http://localhost:8000`
-- API docs: `http://localhost:8000/docs`
-- Health check: `http://localhost:8000/health`
+Backend draait op `http://localhost:8001`
+- API docs: `http://localhost:8001/docs`
+- Health check: `http://localhost:8001/health`
 
 ### 2. Database initialiseren (eerste keer)
 
@@ -191,7 +191,7 @@ Dit reset enkel de tabellen in de database. De PostgreSQL-role `obsapp_user` en 
 
 4. Start met Gunicorn + Uvicorn workers:
    ```bash
-   uv run gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+   uv run gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001
    ```
 
 ### Frontend

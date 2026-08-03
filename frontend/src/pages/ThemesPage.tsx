@@ -4,6 +4,8 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import VisibilityIcon from '@mui/icons-material/Visibility'
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff'
 import { FormEvent, useEffect, useState } from 'react'
 import { sortSubjects } from '../lib/subjectSort'
 import {
@@ -875,17 +877,19 @@ export default function ThemesPage() {
                                       {activity.goals.map((goal) => (
                                         <div key={goal.goal_id} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                                           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 500 }}>
-                                              <input
-                                                type="checkbox"
-                                                checked={goal.observe}
-                                                onChange={() => handleToggleObserve(activity.id, goal.goal_id)}
-                                                disabled={saving}
-                                              />
-                                              <span>
-                                                {goal.code && `${goal.code} — `}{goal.title}
-                                              </span>
-                                            </label>
+                                            <button
+                                              type="button"
+                                              onClick={() => handleToggleObserve(activity.id, goal.goal_id)}
+                                              disabled={saving}
+                                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', color: goal.observe ? 'var(--md-primary)' : '#9ca3af' }}
+                                              aria-label={goal.observe ? 'Verberg bij observeren' : 'Toon bij observeren'}
+                                              title={goal.observe ? 'Verberg bij observeren' : 'Toon bij observeren'}
+                                            >
+                                              {goal.observe ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                                            </button>
+                                            <span style={{ fontWeight: 500 }}>
+                                              {goal.code && `${goal.code} — `}{goal.title}
+                                            </span>
                                           </div>
                                           <button
                                             className="table-action danger-link delete-icon-button"

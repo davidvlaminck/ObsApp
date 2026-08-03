@@ -82,6 +82,7 @@ export interface GoalSearchFilters {
   level?: string
   q?: string
   class_id?: number
+  theme_id?: number
 }
 
 export async function getObservationGoals(filters?: GoalSearchFilters): Promise<ObservationGoalResponse[]> {
@@ -206,6 +207,7 @@ export interface ObservationContextFilters {
   subject?: string
   domain?: string
   selected_goal_id?: number | null
+  theme_id?: number
 }
 
 export async function getObservationContext(filters?: ObservationContextFilters): Promise<ObservationContextResponse> {

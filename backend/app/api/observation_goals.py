@@ -77,6 +77,7 @@ def list_observation_goals(
     subdomain: str | None = None,
     q: str | None = None,
     class_id: int | None = None,
+    theme_id: int | None = None,
     db=Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
 ):
@@ -85,7 +86,7 @@ def list_observation_goals(
     return [
         repo.to_response(goal)
         for goal in repo.get_all(
-            school_id, subject=subject, domain=domain, subdomain=subdomain, q=q, class_id=class_id
+            school_id, subject=subject, domain=domain, subdomain=subdomain, q=q, class_id=class_id, theme_id=theme_id
         )
     ]
 
@@ -96,6 +97,7 @@ def get_observation_context(
     subject: str | None = None,
     domain: str | None = None,
     selected_goal_id: int | None = None,
+    theme_id: int | None = None,
     db=Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
 ):
@@ -122,7 +124,7 @@ def get_observation_context(
         ]
 
     repo = ObservationGoalRepository(db)
-    goals = repo.get_for_observing(school_id, class_id=class_id, subject=subject, domain=domain)
+    goals = repo.get_for_observing(school_id, class_id=class_id, subject=subject, domain=domain, theme_id=theme_id)
     student_observations = {}
     if class_id and selected_goal_id:
         student_observations = StudentObservationRepository(db).get_latest_statuses_for_students(
