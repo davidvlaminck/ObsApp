@@ -58,6 +58,31 @@
   border: 1px solid var(--md-border-light);
 }
 
+.modal-card--wide {
+  width: min(1200px, 100%);
+}
+
+.modal-card--wide .form-card.card {
+  max-width: none;
+  margin: 0 0 24px;
+}
+
+.modal-card--wide .theme-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+}
+
+@media (min-width: 768px) {
+  .modal-card--wide .theme-form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .modal-card--wide .theme-form-grid .form-group:first-child {
+    grid-column: 1 / -1;
+  }
+}
+
 .modal-header,
 .modal-footer,
 .modal-actions {

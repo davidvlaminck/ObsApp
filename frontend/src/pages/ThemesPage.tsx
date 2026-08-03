@@ -2,6 +2,8 @@ import { AxiosError } from 'axios'
 import AddIcon from '@mui/icons-material/Add'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
+import ExpandLessIcon from '@mui/icons-material/ExpandLess'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import { FormEvent, useEffect, useState } from 'react'
 import { sortSubjects } from '../lib/subjectSort'
 import {
@@ -63,7 +65,8 @@ export default function ThemesPage() {
   const [editingThemeNameVisible, setEditingThemeNameVisible] = useState(false)
 
    const [themeActivities, setThemeActivities] = useState<ActivityResponse[]>([])
-  const [loadingActivities, setLoadingActivities] = useState(false)
+   const [expandedActivityId, setExpandedActivityId] = useState<number | null>(null)
+   const [loadingActivities, setLoadingActivities] = useState(false)
   const [newActivityName, setNewActivityName] = useState('')
   const [newActivityDescription, setNewActivityDescription] = useState('')
   const [showNewActivityForm, setShowNewActivityForm] = useState(false)
@@ -586,7 +589,7 @@ export default function ThemesPage() {
 
       {editingTheme && (
         <div className="modal-backdrop" onClick={() => cancelEditTheme()}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-card modal-card--wide" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h2>Thema {editingTheme.name}</h2>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -609,36 +612,38 @@ export default function ThemesPage() {
             {editingThemeNameVisible && (
               <section className="form-card card" style={{ marginBottom: 24 }}>
                 <h3>Themanaam en beschrijving aanpassen</h3>
-                <div className="form-group">
-                  <label htmlFor="edit-theme-name">Naam</label>
-                  <input
-                    id="edit-theme-name"
-                    type="text"
-                    value={editingThemeName}
-                    onChange={(e) => setEditingThemeName(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault()
-                        saveEditTheme()
-                      }
-                      if (e.key === 'Escape') {
-                        e.preventDefault()
-                        cancelEditThemeName()
-                      }
-                    }}
-                    autoFocus
-                    disabled={saving}
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="edit-theme-description">Beschrijving</label>
-                  <textarea
-                    id="edit-theme-description"
-                    value={editingThemeDescription}
-                    onChange={(e) => setEditingThemeDescription(e.target.value)}
-                    rows={3}
-                    disabled={saving}
-                  />
+                <div className="theme-form-grid">
+                  <div className="form-group">
+                    <label htmlFor="edit-theme-name">Naam</label>
+                    <input
+                      id="edit-theme-name"
+                      type="text"
+                      value={editingThemeName}
+                      onChange={(e) => setEditingThemeName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          saveEditTheme()
+                        }
+                        if (e.key === 'Escape') {
+                          e.preventDefault()
+                          cancelEditThemeName()
+                        }
+                      }}
+                      autoFocus
+                      disabled={saving}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="edit-theme-description">Beschrijving</label>
+                    <textarea
+                      id="edit-theme-description"
+                      value={editingThemeDescription}
+                      onChange={(e) => setEditingThemeDescription(e.target.value)}
+                      rows={3}
+                      disabled={saving}
+                    />
+                  </div>
                 </div>
                 <div className="modal-actions">
                   <button
@@ -682,28 +687,30 @@ export default function ThemesPage() {
 
               {showNewActivityForm && (
                 <form onSubmit={handleCreateActivity}>
-                  <div className="form-group">
-                    <label htmlFor="modal-activity-name">Naam</label>
-                    <input
-                      id="modal-activity-name"
-                      value={newActivityName}
-                      onChange={(e) => setNewActivityName(e.target.value)}
-                      placeholder="Bijvoorbeeld: Verkenning van het bos"
-                      required
-                      disabled={saving}
-                      autoFocus
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="modal-activity-description">Beschrijving</label>
-                    <textarea
-                      id="modal-activity-description"
-                      value={newActivityDescription}
-                      onChange={(e) => setNewActivityDescription(e.target.value)}
-                      placeholder="Korte beschrijving van de activiteit (optioneel)"
-                      rows={3}
-                      disabled={saving}
-                    />
+                  <div className="theme-form-grid">
+                    <div className="form-group">
+                      <label htmlFor="modal-activity-name">Naam</label>
+                      <input
+                        id="modal-activity-name"
+                        value={newActivityName}
+                        onChange={(e) => setNewActivityName(e.target.value)}
+                        placeholder="Bijvoorbeeld: Verkenning van het bos"
+                        required
+                        disabled={saving}
+                        autoFocus
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="modal-activity-description">Beschrijving</label>
+                      <textarea
+                        id="modal-activity-description"
+                        value={newActivityDescription}
+                        onChange={(e) => setNewActivityDescription(e.target.value)}
+                        placeholder="Korte beschrijving van de activiteit (optioneel)"
+                        rows={3}
+                        disabled={saving}
+                      />
+                    </div>
                   </div>
                   <div className="modal-actions">
                     <button
@@ -743,37 +750,65 @@ export default function ThemesPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {themeActivities.map((activity) => (
-                          <tr key={activity.id}>
-                            <td>
-                              <strong>{activity.name}</strong>
-                            </td>
-                            <td>
-                              <span className="count-pill">{activity.goals.length}</span>
-                            </td>
-                            <td>
-                              <button
-                                className="btn btn-outline btn-sm"
-                                type="button"
-                                onClick={() => openGoalModal(activity)}
-                                disabled={saving}
-                                style={{ marginRight: 8 }}
-                              >
-                                Doelen koppelen
-                              </button>
-                              <button
-                                className="table-action danger-link delete-icon-button"
-                                type="button"
-                                onClick={() => handleDeleteActivity(activity.id, activity.name)}
-                                aria-label={`Verwijder ${activity.name}`}
-                                title="Verwijderen"
-                                disabled={saving}
-                              >
-                                <DeleteIcon fontSize="small" aria-hidden="true" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
+                         {themeActivities.map((activity) => (
+                           <>
+                             <tr key={activity.id}>
+                               <td>
+                                 <strong>{activity.name}</strong>
+                               </td>
+                               <td>
+                                 <span className="count-pill">{activity.goals.length}</span>
+                                 <button
+                                   className="btn btn-outline btn-sm"
+                                   type="button"
+                                   onClick={() => setExpandedActivityId(expandedActivityId === activity.id ? null : activity.id)}
+                                   disabled={activity.goals.length === 0}
+                                   style={{ marginLeft: 4, padding: '2px 6px', minWidth: 'auto' }}
+                                   aria-label={expandedActivityId === activity.id ? 'Verberg doelen' : 'Toon doelen'}
+                                   title={expandedActivityId === activity.id ? 'Verberg doelen' : 'Toon doelen'}
+                                 >
+                                   {expandedActivityId === activity.id ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                                 </button>
+                                 <button
+                                   className="btn btn-outline btn-sm"
+                                   type="button"
+                                   onClick={() => openGoalModal(activity)}
+                                   disabled={saving}
+                                   style={{ marginLeft: 8 }}
+                                 >
+                                   Doelen koppelen
+                                 </button>
+                               </td>
+                               <td>
+                                 <button
+                                   className="table-action danger-link delete-icon-button"
+                                   type="button"
+                                   onClick={() => handleDeleteActivity(activity.id, activity.name)}
+                                   aria-label={`Verwijder ${activity.name}`}
+                                   title="Verwijderen"
+                                   disabled={saving}
+                                 >
+                                   <DeleteIcon fontSize="small" aria-hidden="true" />
+                                 </button>
+                               </td>
+                             </tr>
+                             {expandedActivityId === activity.id && activity.goals.length > 0 && (
+                               <tr key={`${activity.id}-goals`}>
+                                 <td colSpan={3} style={{ padding: 0 }}>
+                                   <div style={{ padding: '12px 16px', background: '#f8f9fa' }}>
+                                     {activity.goals.map((goal) => (
+                                       <div key={goal.goal_id} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                         <span style={{ fontWeight: 500 }}>{goal.code && `${goal.code} — `}{goal.title}</span>
+                                         {goal.goal_type && <span className="badge badge-secondary" style={{ fontSize: 11 }}>{goal.goal_type}</span>}
+                                         {goal.label && <span style={{ color: '#6c757d', fontSize: 13 }}>({goal.label})</span>}
+                                       </div>
+                                     ))}
+                                   </div>
+                                 </td>
+                               </tr>
+                             )}
+                           </>
+                         ))}
                       </tbody>
                     </table>
                   </div>
