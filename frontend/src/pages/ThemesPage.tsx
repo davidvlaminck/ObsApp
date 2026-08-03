@@ -332,6 +332,53 @@ export default function ThemesPage() {
     }
   }
 
+  const handleToggleObserve = async (activityId: number, goalId: number) => {
+    const activity = themeActivities.find((a) => a.id === activityId)
+    if (!activity) {
+      return
+    }
+
+    const goal = activity.goals.find((g) => g.goal_id === goalId)
+    if (!goal) {
+      return
+    }
+
+    const updatedGoalItems = activity.goals.map((g) => ({
+      goal_id: g.goal_id,
+      label: g.label,
+      observe: g.goal_id === goalId ? !g.observe : g.observe,
+    }))
+
+    try {
+      setSaving(true)
+      setError('')
+      setSuccess('')
+      await updateActivity(activityId, {
+        name: activity.name,
+        description: activity.description,
+        theme_id: activity.theme_id ?? editingTheme?.id ?? 0,
+        goal_items: updatedGoalItems,
+      })
+      setSuccess('Observeerbaarheid bijgewerkt.')
+      setThemeActivities((current) =>
+        current.map((a) =>
+          a.id === activityId
+            ? {
+                ...a,
+                goals: a.goals.map((g) =>
+                  g.goal_id === goalId ? { ...g, observe: !g.observe } : g,
+                ),
+              }
+            : a,
+        ),
+      )
+    } catch (err) {
+      setError(getErrorMessage(err, 'Kan observeerbaarheid niet bijwerken.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const openGoalModal = (activity: ActivityResponse) => {
     const defaultLevel = userClasses.length === 1 ? userClasses[0].class_type : ''
     setGoalModal((current) => ({
@@ -827,9 +874,19 @@ export default function ThemesPage() {
                                     <div style={{ padding: '12px 16px', background: '#f8f9fa' }}>
                                       {activity.goals.map((goal) => (
                                         <div key={goal.goal_id} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                                          <span style={{ fontWeight: 500 }}>
-                                            {goal.code && `${goal.code} — `}{goal.title}
-                                          </span>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontWeight: 500 }}>
+                                              <input
+                                                type="checkbox"
+                                                checked={goal.observe}
+                                                onChange={() => handleToggleObserve(activity.id, goal.goal_id)}
+                                                disabled={saving}
+                                              />
+                                              <span>
+                                                {goal.code && `${goal.code} — `}{goal.title}
+                                              </span>
+                                            </label>
+                                          </div>
                                           <button
                                             className="table-action danger-link delete-icon-button"
                                             type="button"
