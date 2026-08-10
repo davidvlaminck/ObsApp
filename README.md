@@ -16,9 +16,9 @@ See the [LICENSE](./LICENSE) file for full terms.
 ## Vereisten
 
 - Python 3.11+
-- Node.js 18+
-- uv (Python package manager)
-- npm
+  - Node.js 18+
+  - uv (Python package manager)
+  - npm
 
 ## PostgreSQL installeren en configureren op Linux
 
@@ -116,7 +116,7 @@ uv run uvicorn app.main:app --reload --port 8001
 
 Backend draait op `http://localhost:8001`
 - API docs: `http://localhost:8001/docs`
-- Health check: `http://localhost:8001/health`
+  - Health check: `http://localhost:8001/health`
 
 ### 2. Database initialiseren (eerste keer)
 
@@ -138,7 +138,7 @@ uv run python scripts/seed.py
 
 Dit seed een standaard admin gebruiker:
 - Email: `admin@example.com`
-- Wachtwoord: `admin`
+  - Wachtwoord: `admin`
 
 ### 3. Frontend starten
 
@@ -155,8 +155,8 @@ Frontend draait op `http://localhost:5173`
 ### 4. Testen
 
 1. Open `http://localhost:5173/login`
-2. Log in met `admin@example.com` / `admin`
-3. Je wordt doorgestuurd naar de landingspagina
+   2. Log in met `admin@example.com` / `admin`
+   3. Je wordt doorgestuurd naar de landingspagina
 
 ## Database resetten
 
@@ -178,21 +178,21 @@ Dit reset enkel de tabellen in de database. De PostgreSQL-role `obsapp_user` en 
    export DATABASE_URL=postgresql://user:pass@host:5432/obsapp
    ```
 
-2. Installeer dependencies:
-   ```bash
-   cd backend
-   uv sync --no-dev
-   ```
+   2. Installeer dependencies:
+      ```bash
+      cd backend
+      uv sync --no-dev
+      ```
 
-3. Run migrations (wanneer Alembic is geconfigureerd):
-   ```bash
-   uv run alembic upgrade head
-   ```
+   3. Run migrations (wanneer Alembic is geconfigureerd):
+      ```bash
+      uv run alembic upgrade head
+      ```
 
-4. Start met Gunicorn + Uvicorn workers:
-   ```bash
-   uv run gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001
-   ```
+   4. Start met Gunicorn + Uvicorn workers:
+      ```bash
+      uv run gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001
+      ```
 
 ### Frontend
 
@@ -203,18 +203,18 @@ Dit reset enkel de tabellen in de database. De PostgreSQL-role `obsapp_user` en 
    npm run build
    ```
 
-2. Serveer de `dist/` map met Nginx of een static file server.
+   2. Serveer de `dist/` map met Nginx of een static file server.
 
 ### Security checklist voor productie
 
 - [ ] Verander `SECRET_KEY` in `.env` naar een sterke, unieke waarde
-- [ ] Verwijder of deactiveer de admin gebruiker (`admin@example.com`) na eerste login
-- [ ] Gebruik HTTPS (Let's Encrypt / certificaten)
-- [ ] Zet `DEBUG=False` in productie
-- [ ] Configureer CORS voor je productie domein
-- [ ] Gebruik een PostgreSQL database in plaats van SQLite
-- [ ] Voeg rate limiting toe aan login endpoint
-- [ ] Overweeg refresh tokens voor langere sessies
+  - [ ] Verwijder of deactiveer de admin gebruiker (`admin@example.com`) na eerste login
+  - [ ] Gebruik HTTPS (Let's Encrypt / certificaten)
+  - [ ] Zet `DEBUG=False` in productie
+  - [ ] Configureer CORS voor je productie domein
+  - [ ] Gebruik een PostgreSQL database in plaats van SQLite
+  - [ ] Voeg rate limiting toe aan login endpoint
+  - [ ] Overweeg refresh tokens voor langere sessies
 
 ## Projectstructuur
 
@@ -246,7 +246,7 @@ obsapp/
 ## Volgende stappen
 
 - [ ] Multi-tenant filtering toevoegen
-- [ ] Rollen en permissies (admin, leerkracht, etc.)
-- [ ] Observatie invoer en overzichten
-- [ ] PDF export
-- [ ] Echte gebruikersbeheer pagina
+  - [ ] Rollen en permissies (admin, leerkracht, etc.)
+  - [ ] Observatie invoer en overzichten
+  - [ ] PDF export
+  - [ ] Echte gebruikersbeheer pagina

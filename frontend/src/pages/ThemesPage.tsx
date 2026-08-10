@@ -1,5 +1,7 @@
 import { AxiosError } from 'axios'
 import AddIcon from '@mui/icons-material/Add'
+import CancelIcon from '@mui/icons-material/Cancel'
+import CheckIcon from '@mui/icons-material/Check'
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import ExpandLessIcon from '@mui/icons-material/ExpandLess'
@@ -15,6 +17,7 @@ import {
   deleteTheme,
   getActivities,
   getThemes,
+  ActivityGoalResponse,
   ActivityResponse,
   ThemeResponse,
   updateTheme,
@@ -74,6 +77,12 @@ export default function ThemesPage() {
   const [newActivityDescription, setNewActivityDescription] = useState('')
   const [showNewActivityForm, setShowNewActivityForm] = useState(false)
   const [userClasses, setUserClasses] = useState<ClassOption[]>([])
+
+  const [editingGoal, setEditingGoal] = useState<{
+    activityId: number | null
+    goalId: number | null
+    tempLabel: string
+  } | null>(null)
 
   const [goalModal, setGoalModal] = useState<{
     open: boolean
@@ -332,6 +341,67 @@ export default function ThemesPage() {
     } finally {
       setSaving(false)
     }
+  }
+
+  const handleEditGoalLabel = (activity: ActivityResponse, goal: ActivityGoalResponse) => {
+    setEditingGoal({
+      activityId: activity.id,
+      goalId: goal.goal_id,
+      tempLabel: goal.label ?? goal.title ?? '',
+    })
+  }
+
+  const handleSaveGoalLabel = async () => {
+    if (!editingGoal) {
+      return
+    }
+
+    const { activityId, goalId, tempLabel } = editingGoal
+    const activity = themeActivities.find((a) => a.id === activityId)
+    if (!activity) {
+      return
+    }
+
+    const trimmedLabel = tempLabel.trim() || null
+
+    try {
+      setSaving(true)
+      setError('')
+      setSuccess('')
+      const updatedGoalItems = activity.goals.map((g) => ({
+        goal_id: g.goal_id,
+        label: g.goal_id === goalId ? trimmedLabel : g.label,
+        observe: g.observe,
+      }))
+      await updateActivity(activity.id, {
+        name: activity.name,
+        description: activity.description,
+        theme_id: activity.theme_id ?? editingTheme?.id ?? 0,
+        goal_items: updatedGoalItems,
+      })
+      setThemeActivities((current) =>
+        current.map((a) =>
+          a.id === activityId
+            ? {
+                ...a,
+                goals: a.goals.map((g) =>
+                  g.goal_id === goalId ? { ...g, label: trimmedLabel } : g,
+                ),
+              }
+            : a,
+        ),
+      )
+      setSuccess('Doel is bijgewerkt.')
+      setEditingGoal(null)
+    } catch (err) {
+      setError(getErrorMessage(err, 'Kan doel niet bijwerken.'))
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleCancelEditGoalLabel = () => {
+    setEditingGoal(null)
   }
 
   const handleToggleObserve = async (activityId: number, goalId: number) => {
@@ -830,33 +900,33 @@ export default function ThemesPage() {
                       <tbody>
                          {themeActivities.map((activity) => (
                            <>
-                             <tr key={activity.id}>
+                              <tr key={activity.id} style={{ verticalAlign: 'middle' }}>
                                <td>
                                  <strong>{activity.name}</strong>
                                </td>
-                               <td>
-                                 <span className="count-pill">{activity.goals.length}</span>
-                                 <button
-                                   className="btn btn-outline btn-sm"
-                                   type="button"
-                                   onClick={() => setExpandedActivityId(expandedActivityId === activity.id ? null : activity.id)}
-                                   disabled={activity.goals.length === 0}
-                                   style={{ marginLeft: 4, padding: '2px 6px', minWidth: 'auto' }}
-                                   aria-label={expandedActivityId === activity.id ? 'Verberg doelen' : 'Toon doelen'}
-                                   title={expandedActivityId === activity.id ? 'Verberg doelen' : 'Toon doelen'}
-                                 >
-                                   {expandedActivityId === activity.id ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
-                                 </button>
-                                 <button
-                                   className="btn btn-outline btn-sm"
-                                   type="button"
-                                   onClick={() => openGoalModal(activity)}
-                                   disabled={saving}
-                                   style={{ marginLeft: 8 }}
-                                 >
-                                   Doelen koppelen
-                                 </button>
-                               </td>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                                    <span className="count-pill">{activity.goals.length}</span>
+                                    <button
+                                      className="btn btn-outline btn-sm"
+                                      type="button"
+                                      onClick={() => setExpandedActivityId(expandedActivityId === activity.id ? null : activity.id)}
+                                      disabled={activity.goals.length === 0}
+                                      aria-label={expandedActivityId === activity.id ? 'Verberg doelen' : 'Toon doelen'}
+                                      title={expandedActivityId === activity.id ? 'Verberg doelen' : 'Toon doelen'}
+                                    >
+                                      {expandedActivityId === activity.id ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                                    </button>
+                                    <button
+                                      className="btn btn-outline btn-sm"
+                                      type="button"
+                                      onClick={() => openGoalModal(activity)}
+                                      disabled={saving}
+                                    >
+                                      Doelen koppelen
+                                    </button>
+                                  </div>
+                                </td>
                                <td>
                                  <button
                                    className="table-action danger-link delete-icon-button"
@@ -874,35 +944,97 @@ export default function ThemesPage() {
                                 <tr key={`${activity.id}-goals`}>
                                   <td colSpan={3} style={{ padding: 0 }}>
                                     <div style={{ padding: '12px 16px', background: '#f8f9fa' }}>
-                                      {activity.goals.map((goal) => (
-                                        <div key={goal.goal_id} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                                          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                            <button
-                                              type="button"
-                                              onClick={() => handleToggleObserve(activity.id, goal.goal_id)}
-                                              disabled={saving}
-                                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', color: goal.observe ? 'var(--md-primary)' : '#9ca3af' }}
-                                              aria-label={goal.observe ? 'Verberg bij observeren' : 'Toon bij observeren'}
-                                              title={goal.observe ? 'Verberg bij observeren' : 'Toon bij observeren'}
-                                            >
-                                              {goal.observe ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
-                                            </button>
-                                            <span style={{ fontWeight: 500 }}>
-                                              {goal.code && `${goal.code} — `}{goal.title}
-                                            </span>
-                                          </div>
-                                          <button
-                                            className="table-action danger-link delete-icon-button"
-                                            type="button"
-                                            onClick={() => handleRemoveGoal(activity.id, goal.goal_id)}
-                                            disabled={saving}
-                                            aria-label={`Verwijder ${goal.title ?? goal.code ?? 'doel'}`}
-                                            title="Loskoppelen"
-                                          >
-                                            <DeleteIcon fontSize="small" aria-hidden="true" />
-                                          </button>
-                                        </div>
-                                      ))}
+                                       {activity.goals.map((goal) => {
+                                         const isEditing = editingGoal?.activityId === activity.id && editingGoal?.goalId === goal.goal_id
+                                         const displayLabel = goal.label ?? goal.title
+
+                                         return (
+                                         <div key={goal.goal_id} style={{ marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                                           <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0 }}>
+                                             <button
+                                               type="button"
+                                               onClick={() => handleToggleObserve(activity.id, goal.goal_id)}
+                                               disabled={saving}
+                                               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', color: goal.observe ? 'var(--md-primary)' : '#9ca3af' }}
+                                               aria-label={goal.observe ? 'Verberg bij observeren' : 'Toon bij observeren'}
+                                               title={goal.observe ? 'Verberg bij observeren' : 'Toon bij observeren'}
+                                             >
+                                               {goal.observe ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />}
+                                             </button>
+                                             {isEditing ? (
+                                               <input
+                                                 type="text"
+                                                 value={editingGoal.tempLabel}
+                                                 onChange={(event) => setEditingGoal((current) => current ? { ...current, tempLabel: event.target.value } : null)}
+                                                 onKeyDown={(event) => {
+                                                   if (event.key === 'Enter') {
+                                                     handleSaveGoalLabel()
+                                                   } else if (event.key === 'Escape') {
+                                                     handleCancelEditGoalLabel()
+                                                   }
+                                                 }}
+                                                 disabled={saving}
+                                                 style={{ padding: '4px 8px', border: '1px solid #d1d5db', borderRadius: 4, fontSize: 'inherit', flex: 1, minWidth: 120 }}
+                                                 autoFocus
+                                               />
+                                             ) : (
+                                               <span style={{ fontWeight: 500 }}>
+                                                 {goal.code && `${goal.code} — `}{displayLabel}
+                                               </span>
+                                             )}
+                                           </div>
+                                           <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                             {isEditing ? (
+                                               <>
+                                                 <button
+                                                   className="table-action"
+                                                   type="button"
+                                                   onClick={handleSaveGoalLabel}
+                                                   disabled={saving}
+                                                   aria-label="Opslaan"
+                                                   title="Opslaan"
+                                                 >
+                                                    <CheckIcon fontSize="small" aria-hidden="true" />
+                                                 </button>
+                                                 <button
+                                                   className="table-action"
+                                                   type="button"
+                                                   onClick={handleCancelEditGoalLabel}
+                                                   disabled={saving}
+                                                   aria-label="Annuleren"
+                                                   title="Annuleren"
+                                                 >
+                                                   <CancelIcon fontSize="small" aria-hidden="true" />
+                                                 </button>
+                                               </>
+                                             ) : (
+                                               <>
+                                                 <button
+                                                   className="table-action"
+                                                   type="button"
+                                                   onClick={() => handleEditGoalLabel(activity, goal)}
+                                                   disabled={saving}
+                                                   aria-label={`Bewerk omschrijving van ${goal.title ?? goal.code ?? 'doel'}`}
+                                                   title="Bewerken"
+                                                 >
+                                                   <EditIcon fontSize="small" aria-hidden="true" />
+                                                 </button>
+                                                 <button
+                                                   className="table-action danger-link delete-icon-button"
+                                                   type="button"
+                                                   onClick={() => handleRemoveGoal(activity.id, goal.goal_id)}
+                                                   disabled={saving}
+                                                   aria-label={`Verwijder ${goal.title ?? goal.code ?? 'doel'}`}
+                                                   title="Loskoppelen"
+                                                 >
+                                                   <DeleteIcon fontSize="small" aria-hidden="true" />
+                                                 </button>
+                                               </>
+                                             )}
+                                           </div>
+                                         </div>
+                                         )
+                                       })}
                                     </div>
                                   </td>
                                 </tr>
