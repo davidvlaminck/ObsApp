@@ -2,7 +2,7 @@ import { AxiosError } from 'axios'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { SubjectChips } from '../components/SubjectChips'
 import { getClasses, getMe, getSchoolYears, type ClassResponse, type StudentResponse, type UserResponse } from '../services/auth'
-import { sortClasses } from '../lib/subjectSort'
+import { sortClasses, getSubjectPriority } from '../lib/subjectSort'
 import {
   getOverview,
   getObservationGoalSubjects,
@@ -39,10 +39,6 @@ const formatDate = (value: string) => {
   return `${day}-${month}-${year}`
 }
 
-const getObservationGoalName = (observation: StudentObservationResponse) => {
-  return observation.observation_goal?.name ?? 'Onbekend doel'
-}
-
 const getErrorMessage = (error: unknown, fallback: string) => {
   const axiosError = error as AxiosError<{ detail?: string }>
   const status = axiosError.response?.status
@@ -73,6 +69,7 @@ export default function StudentOverviewPage() {
   const [error, setError] = useState('')
   const [studentObservations, setStudentObservations] = useState<StudentObservationResponse[]>([])
   const [studentObservationsLoading, setStudentObservationsLoading] = useState(false)
+  const [popoverTarget, setPopoverTarget] = useState<StudentObservationResponse | null>(null)
 
   useEffect(() => {
     const loadUserAndClasses = async () => {
@@ -209,6 +206,61 @@ export default function StudentOverviewPage() {
         return (b.created_at ?? '').localeCompare(a.created_at ?? '')
       })
   }, [selectedStudentId, selectedSubject, selectedDomain, studentObservations])
+
+  useEffect(() => {
+    if (!popoverTarget) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setPopoverTarget(null)
+      }
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [popoverTarget])
+
+  const groupedObservations = useMemo(() => {
+    if (selectedStudentId === null || selectedStudentObservations.length === 0) return []
+
+    const groups = new Map<number, StudentObservationResponse[]>()
+
+    for (const observation of selectedStudentObservations) {
+      const goalId = observation.observation_goal_id
+      const existing = groups.get(goalId)
+      if (existing) {
+        existing.push(observation)
+      } else {
+        groups.set(goalId, [observation])
+      }
+    }
+
+    return Array.from(groups.entries())
+      .map(([goalId, observations]) => ({
+        goalId,
+        goalName: observations[0].observation_goal?.name ?? 'Onbekend doel',
+        goalSubject: observations[0].observation_goal?.subject ?? '',
+        goalDomain: observations[0].observation_goal?.domain ?? '',
+        latest: observations[0],
+        history: [...observations].reverse(),
+      }))
+      .sort((a, b) => {
+        const priorityA = getSubjectPriority(a.goalSubject)
+        const priorityB = getSubjectPriority(b.goalSubject)
+
+        if (priorityA !== priorityB) {
+          if (priorityA === -1 && priorityB === -1) {
+            return a.goalSubject.localeCompare(b.goalSubject)
+          }
+          if (priorityA === -1) return 1
+          if (priorityB === -1) return -1
+          return priorityA - priorityB
+        }
+
+        const domainCompare = a.goalDomain.localeCompare(b.goalDomain)
+        if (domainCompare !== 0) return domainCompare
+
+        return a.goalName.localeCompare(b.goalName)
+      })
+  }, [selectedStudentId, selectedStudentObservations])
 
   if (loading) {
     return <div className="empty-state compact">Gegevens laden...</div>
@@ -371,29 +423,41 @@ export default function StudentOverviewPage() {
               <thead>
                 <tr>
                   <th>Leerdoel</th>
-                  <th>Observatie</th>
+                  <th>Status</th>
                   <th>Datum</th>
-                  <th>Leerkracht</th>
                   <th>Commentaar</th>
+                  <th>Evolutie</th>
                 </tr>
               </thead>
               <tbody>
-                {selectedStudentObservations.map((observation) => (
-                  <tr key={observation.id}>
+                {groupedObservations.map(({ goalId, goalName, latest, history }) => (
+                  <tr key={goalId}>
                     <td>
-                      <div className="student-observation-goal-name">{getObservationGoalName(observation)}</div>
+                      <div className="student-observation-goal-name">{goalName}</div>
                     </td>
-                    <td>
+                    <td className="observation-status-cell">
                       <span
-                        className="overview-observation-pill"
-                        style={{ backgroundColor: getStatusColor(observation.status) }}
-                      >
-                        {statusLabels[observation.status]}
-                      </span>
+                        className="overview-status-chip observation-status-square"
+                        style={{ backgroundColor: getStatusColor(latest.status) }}
+                        title={statusLabels[latest.status]}
+                        onClick={() => setPopoverTarget(latest)}
+                      />
                     </td>
-                    <td>{formatDate(observation.observation_date)}</td>
-                    <td>{observation.observer?.name ?? '—'}</td>
-                    <td>{observation.comment ?? '—'}</td>
+                    <td>{formatDate(latest.observation_date)}</td>
+                    <td>{latest.comment ?? '—'}</td>
+                    <td className="observation-evolution-cell">
+                      <div className="observation-evolution-row">
+                        {history.map((obs) => (
+                          <span
+                            key={obs.id}
+                            className="observation-evolution-chip"
+                            style={{ backgroundColor: getStatusColor(obs.status) }}
+                            title={statusLabels[obs.status]}
+                            onClick={() => setPopoverTarget(obs)}
+                          />
+                        ))}
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -402,6 +466,42 @@ export default function StudentOverviewPage() {
         </section>
       )}
       </div>
+
+      {popoverTarget && (
+        <div
+          className="observation-popup-overlay"
+          onClick={() => setPopoverTarget(null)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="observation-popup" onClick={(e) => e.stopPropagation()}>
+            <div className="observation-popup-header">
+              <strong>{statusLabels[popoverTarget.status]}</strong>
+              <button
+                className="observation-popup-close"
+                onClick={() => setPopoverTarget(null)}
+                aria-label="Sluiten"
+                type="button"
+              >
+                ×
+              </button>
+            </div>
+            <p>
+              <strong>Datum:</strong> {formatDate(popoverTarget.observation_date)}
+            </p>
+            {popoverTarget.comment && (
+              <p>
+                <strong>Commentaar:</strong> {popoverTarget.comment}
+              </p>
+            )}
+            {popoverTarget.observer?.name && (
+              <p>
+                <strong>Leerkracht:</strong> {popoverTarget.observer.name}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }

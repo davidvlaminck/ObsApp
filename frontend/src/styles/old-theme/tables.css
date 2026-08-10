@@ -60,6 +60,118 @@
   word-break: break-word;
 }
 
+/* Student overview: grouped goal view */
+.observation-status-cell {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.observation-evolution-cell {
+  text-align: left;
+}
+
+.observation-status-square {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 9px;
+  color: #ffffff;
+}
+
+.observation-status-square:hover {
+  filter: brightness(1.1);
+}
+
+.observation-evolution-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.observation-evolution-chip {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  border-radius: 3px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.observation-evolution-chip:hover {
+  filter: brightness(1.15);
+}
+
+/* Observation detail popup */
+.observation-popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 16px;
+}
+
+.observation-popup {
+  background: var(--md-surface);
+  border-radius: var(--md-radius);
+  box-shadow: var(--md-shadow);
+  border: 1px solid var(--md-border);
+  padding: 16px;
+  max-width: 280px;
+  width: min(280px, 90vw);
+}
+
+.observation-popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.observation-popup-header strong {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--md-text-secondary);
+  font-weight: 600;
+}
+
+.observation-popup-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--md-text-secondary);
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.observation-popup-close:hover {
+  color: var(--md-text-primary);
+}
+
+.observation-popup p {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--md-text-primary);
+  line-height: 1.4;
+  text-align: left;
+}
+
+.observation-popup p:last-child {
+  margin-bottom: 0;
+}
+
 /* Overview table */
 .overview-table-wrapper {
   width: 100%;
