@@ -160,6 +160,36 @@ export async function searchOpStapGoals(filters: GoalSearchFilters): Promise<Goa
   return response.data
 }
 
+export type ClassGoalStatusResponse = {
+  id: number
+  code: string | null
+  title: string
+  subject: string
+  domain: string | null
+  subdomain: string | null
+  is_observed_in_class: boolean
+  is_in_activity: boolean
+}
+
+export interface ClassGoalsOverviewResponse {
+  goals: ClassGoalStatusResponse[]
+  class_name: string | null
+  total: number
+}
+
+export interface ClassGoalsFilters {
+  class_id?: number
+  subject?: string
+  domain?: string
+  subdomain?: string
+  q?: string
+}
+
+export async function getClassGoalsOverview(filters?: ClassGoalsFilters): Promise<ClassGoalsOverviewResponse> {
+  const response = await api.get<ClassGoalsOverviewResponse>('/observation-goals/goals/class-status', { params: filters })
+  return response.data
+}
+
 export type ObservationStatus = 'onvoldoende' | 'in_ontwikkeling' | 'voldoende' | 'voorsprong' | 'geen_observatie'
 
 export interface StudentObservationStatusResponse {

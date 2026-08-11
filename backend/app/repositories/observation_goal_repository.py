@@ -1,4 +1,4 @@
-from sqlalchemy import and_, desc, or_
+from sqlalchemy import and_, desc, func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.activity import Activity, ActivityObservationGoal
@@ -6,7 +6,15 @@ from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.school_goal_domain import SchoolGoalDomain
 from app.models.school_year import Class as ClassModel
-from app.schemas.observation_goal import GoalSummary, ObservationGoalCreate, ObservationGoalResponse, ObservationGoalUpdate
+from app.models.school_year import Student as StudentModel
+from app.models.student_observation import StudentObservation
+from app.schemas.observation_goal import (
+    ClassGoalStatusResponse,
+    GoalSummary,
+    ObservationGoalCreate,
+    ObservationGoalResponse,
+    ObservationGoalUpdate,
+)
 
 
 class ObservationGoalRepository:
@@ -332,3 +340,205 @@ class ObservationGoalRepository:
             goal.domain = new_domain
         self.db.commit()
         return len(goals)
+
+    def get_koepel_goals_with_class_status(
+        self,
+        school_id: int,
+        koepel_id: int | None,
+        class_id: int | None = None,
+        subject: str | None = None,
+        domain: str | None = None,
+        subdomain: str | None = None,
+        q: str | None = None,
+    ) -> list[ClassGoalStatusResponse]:
+        class_type: str | None = None
+        if class_id:
+            class_model = self.db.query(ClassModel).filter(ClassModel.id == class_id).first()
+            if class_model:
+                class_type = class_model.class_type
+
+        results: list[ClassGoalStatusResponse] = []
+
+        # --- Op Stap goals (from the koepel) ---
+        # Only include "GK" type goals (Kennis/kentismaking groeileerdoelen),
+        # not "GL" (Leerjaar) or "PF" (Praktijkgerichte finaliteit) goals.
+        # The level filter (Goal.level == class_type) narrows to the class group,
+        # and the code pattern filter ensures we get only GK-type goals.
+        query = self.db.query(Goal).filter(Goal.goal_type == "OP_STAP")
+
+        if koepel_id:
+            query = query.filter(Goal.koepel_id == koepel_id)
+
+        if class_type:
+            query = query.filter(Goal.level == class_type)
+
+        query = query.filter(func.split_part(Goal.code, '.', 3).like('GK%'))
+
+        if subject:
+            query = query.filter(Goal.subject.ilike(subject))
+        if domain:
+            query = query.filter(Goal.domain.ilike(domain))
+        if subdomain:
+            query = query.filter(Goal.subdomain.ilike(subdomain))
+        if q and len(q.strip()) >= 2:
+            search_term = f"%{q.strip()}%"
+            query = query.filter(
+                or_(
+                    Goal.code.ilike(search_term),
+                    Goal.title.ilike(search_term),
+                    Goal.description.ilike(search_term),
+                    Goal.vo_code.ilike(search_term),
+                )
+            )
+
+        goals = query.order_by(Goal.subject, Goal.level, Goal.code).all()
+
+        if goals:
+            goal_ids = [g.id for g in goals]
+
+            og_rows = (
+                self.db.query(ObservationGoal.id, ObservationGoal.goal_id)
+                .filter(
+                    ObservationGoal.school_id == school_id,
+                    ObservationGoal.goal_id.in_(goal_ids),
+                )
+                .all()
+            )
+            goal_to_og_ids: dict[int, set[int]] = {}
+            for og_id, goal_id in og_rows:
+                goal_to_og_ids.setdefault(goal_id, set()).add(og_id)
+
+            all_og_ids = {og_id for (og_id, _) in og_rows}
+
+            activity_og_ids: set[int] = set()
+            if all_og_ids:
+                activity_og_ids = {
+                    og_id
+                    for (og_id,) in self.db.query(ActivityObservationGoal.observation_goal_id)
+                    .filter(ActivityObservationGoal.observation_goal_id.in_(all_og_ids))
+                    .all()
+                }
+
+            observed_og_ids: set[int] = set()
+            if class_id and all_og_ids:
+                student_ids = {
+                    sid
+                    for (sid,) in self.db.query(StudentModel.id)
+                    .filter(StudentModel.class_id == class_id)
+                    .all()
+                }
+                if student_ids:
+                    observed_og_ids = {
+                        og_id
+                        for (og_id,) in self.db.query(StudentObservation.observation_goal_id)
+                        .filter(
+                            StudentObservation.school_id == school_id,
+                            StudentObservation.observation_goal_id.in_(all_og_ids),
+                            StudentObservation.student_id.in_(student_ids),
+                        )
+                        .distinct()
+                        .all()
+                    }
+
+            for goal in goals:
+                og_ids = goal_to_og_ids.get(goal.id, set())
+                is_observed = bool(og_ids & observed_og_ids)
+                is_in_activity = bool(og_ids & activity_og_ids)
+                results.append(
+                    ClassGoalStatusResponse(
+                        id=goal.id,
+                        code=goal.code,
+                        title=goal.title,
+                        subject=goal.subject,
+                        domain=goal.domain,
+                        subdomain=goal.subdomain,
+                        is_observed_in_class=is_observed,
+                        is_in_activity=is_in_activity,
+                    )
+                )
+
+        # --- School goals (scholeigen doelen) ---
+        school_query = self.db.query(ObservationGoal).filter(
+            ObservationGoal.school_id == school_id,
+            ObservationGoal.subject == ObservationGoal.SCHOOL_GOALS_SUBJECT,
+        )
+
+        if class_id and class_type:
+            school_query = school_query.filter(
+                or_(
+                    ObservationGoal.class_id == class_id,
+                    and_(
+                        ObservationGoal.class_id.is_(None),
+                        func.coalesce(ObservationGoal.subdomain, '') == class_type,
+                    ),
+                    and_(
+                        ObservationGoal.goal_id.is_(None),
+                        ObservationGoal.class_id.is_(None),
+                    ),
+                )
+            )
+
+        if subject and subject != ObservationGoal.SCHOOL_GOALS_SUBJECT:
+            school_query = school_query.filter(ObservationGoal.subject.ilike(subject))
+        if domain:
+            school_query = school_query.filter(ObservationGoal.domain.ilike(domain))
+        if subdomain:
+            school_query = school_query.filter(ObservationGoal.subdomain.ilike(subdomain))
+        if q and len(q.strip()) >= 2:
+            search_term = f"%{q.strip()}%"
+            school_query = school_query.filter(
+                or_(
+                    ObservationGoal.name.ilike(search_term),
+                    ObservationGoal.domain.ilike(search_term),
+                )
+            )
+
+        school_goals = school_query.order_by(ObservationGoal.domain, ObservationGoal.name).all()
+
+        if school_goals:
+            school_og_ids = {og.id for og in school_goals}
+
+            school_activity_og_ids: set[int] = {
+                og_id
+                for (og_id,) in self.db.query(ActivityObservationGoal.observation_goal_id)
+                .filter(ActivityObservationGoal.observation_goal_id.in_(school_og_ids))
+                .all()
+            }
+
+            school_observed_og_ids: set[int] = set()
+            if class_id and school_og_ids:
+                student_ids = {
+                    sid
+                    for (sid,) in self.db.query(StudentModel.id)
+                    .filter(StudentModel.class_id == class_id)
+                    .all()
+                }
+                if student_ids:
+                    school_observed_og_ids = {
+                        og_id
+                        for (og_id,) in self.db.query(StudentObservation.observation_goal_id)
+                        .filter(
+                            StudentObservation.school_id == school_id,
+                            StudentObservation.observation_goal_id.in_(school_og_ids),
+                            StudentObservation.student_id.in_(student_ids),
+                        )
+                        .distinct()
+                        .all()
+                    }
+
+            for og in school_goals:
+                results.append(
+                    ClassGoalStatusResponse(
+                        id=og.id,
+                        code=None,
+                        title=og.name,
+                        subject=og.subject,
+                        domain=og.domain,
+                        subdomain=og.subdomain,
+                        is_observed_in_class=og.id in school_observed_og_ids,
+                        is_in_activity=og.id in school_activity_og_ids,
+                    )
+                )
+
+        results.sort(key=lambda r: (r.subject, r.domain or '', r.title))
+        return results

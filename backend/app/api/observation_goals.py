@@ -15,7 +15,11 @@ from app.repositories.school_year_repository import (
 )
 from app.repositories.student_observation_repository import StudentObservationRepository
 from app.schemas.goal import GoalResponse
-from app.schemas.observation_goal import ObservationGoalCreate, ObservationGoalResponse
+from app.schemas.observation_goal import (
+    ClassGoalsOverviewResponse,
+    ObservationGoalCreate,
+    ObservationGoalResponse, ObservationGoalUpdate,
+)
 from app.schemas.school import ClassResponse
 from app.schemas.school_goal_domain import SchoolGoalDomainCreate, SchoolGoalDomainResponse, SchoolGoalDomainUpdate
 from app.schemas.student_observation import ObservationContextResponse, OverviewResponse, StudentObservationStatusResponse
@@ -325,6 +329,48 @@ def search_opstap_goals(
     repo = ObservationGoalRepository(db)
     goals = repo.search_goals(subject=subject, domain=domain, subdomain=subdomain, level=level, q=q)
     return [GoalRepository(db).to_response(goal) for goal in goals]
+
+
+@router.get("/goals/class-status", response_model=ClassGoalsOverviewResponse)
+def get_koepel_goals_class_status(
+    class_id: int | None = None,
+    subject: str | None = None,
+    domain: str | None = None,
+    subdomain: str | None = None,
+    q: str | None = None,
+    db=Depends(get_db),
+    current_user: UserResponse = Depends(get_current_user),
+):
+    school_id = _ensure_school_user(current_user)
+    school = SchoolRepository(db).get_by_id(school_id)
+    if not school:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="School niet gevonden")
+
+    koepel_id = school.koepel_id
+
+    class_name = None
+    if class_id:
+        class_model = ClassRepository(db).get_class_by_id(class_id)
+        if not class_model:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Klas niet gevonden")
+        class_name = class_model.name
+
+    repo = ObservationGoalRepository(db)
+    goals = repo.get_koepel_goals_with_class_status(
+        school_id=school_id,
+        koepel_id=koepel_id,
+        class_id=class_id,
+        subject=subject,
+        domain=domain,
+        subdomain=subdomain,
+        q=q,
+    )
+
+    return ClassGoalsOverviewResponse(
+        goals=goals,
+        class_name=class_name,
+        total=len(goals),
+    )
 
 
 @router.get("/overview", response_model=OverviewResponse)

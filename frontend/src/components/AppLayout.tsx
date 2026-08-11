@@ -48,6 +48,7 @@ const menuItems: MenuItem[] = [
   { label: 'Home', to: '/home', icon: HomeIcon },
   { label: 'Overzicht per klas', to: '/overzicht', icon: AssignmentIcon },
   { label: 'Overzicht per kleuter', to: '/overzicht/kleuter', icon: AssignmentIcon },
+  { label: 'Overzicht voor doelen', to: '/overzicht/doelen', icon: AssignmentIcon },
   { label: 'Observeren', to: '/observeren', icon: VisibilityIcon },
       {
         label: 'Beheer',

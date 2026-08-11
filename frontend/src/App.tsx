@@ -14,6 +14,7 @@ import ObservationsPage from './pages/ObservationsPage'
 import ObservingPage from './pages/ObservingPage'
 import OverviewPage from './pages/OverviewPage'
 import StudentOverviewPage from './pages/StudentOverviewPage'
+import GoalsOverviewPage from './pages/GoalsOverviewPage'
 import RegistrationPage from './pages/RegistrationPage'
 import KoepelSelectionPage from './pages/KoepelSelectionPage'
 import DemoPage from './pages/DemoPage'
@@ -66,11 +67,19 @@ function App() {
           </AppLayout>
         }
       />
-      <Route
+       <Route
         path="/overzicht/kleuter"
         element={
           <AppLayout>
             <StudentOverviewPage />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/overzicht/doelen"
+        element={
+          <AppLayout>
+            <GoalsOverviewPage />
           </AppLayout>
         }
       />

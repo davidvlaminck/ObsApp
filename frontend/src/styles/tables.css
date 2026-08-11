@@ -189,6 +189,81 @@
   margin-bottom: 0;
 }
 
+/* Goals overview cards */
+.goals-overview-cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+}
+
+.goals-overview-card {
+  padding: 0;
+}
+
+.goals-overview-card .table-header {
+  padding: 24px 28px 16px;
+  background: linear-gradient(135deg, var(--md-primary-light) 0%, rgba(139, 92, 246, 0.05) 100%);
+}
+
+.goals-overview-table {
+  min-width: 600px;
+}
+
+/* Goals overview filters */
+.goals-overview-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  padding: 20px 28px 0;
+}
+
+.goals-overview-filters .form-group:last-child {
+  grid-column: 1 / -1;
+}
+
+.goals-overview-filters input[type="text"] {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Goals overview table */
+.goals-overview-table th,
+.goals-overview-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--md-border-light);
+  text-align: left;
+  vertical-align: middle;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+.goals-overview-table th {
+  color: var(--md-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: linear-gradient(135deg, var(--md-primary-light) 0%, rgba(139, 92, 246, 0.05) 100%);
+  border-bottom: 2px solid var(--md-border);
+}
+
+.goals-overview-table .goal-code-cell {
+  white-space: nowrap;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--md-text-secondary);
+}
+
+.goals-overview-table .goal-title-cell {
+  font-weight: 600;
+  color: var(--md-text-primary);
+  max-width: 360px;
+}
+
+.goals-overview-table .status-cell {
+  white-space: nowrap;
+}
+
 /* Overview table */
 .overview-table-wrapper {
   width: 100%;
@@ -397,4 +472,61 @@
     padding: 12px;
     font-size: 14px;
   }
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--md-border-light);
+}
+
+.pagination-info {
+  font-size: 13px;
+  color: var(--md-text-secondary);
+}
+
+.pagination-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--md-border-light);
+  border-radius: var(--md-radius);
+  background: var(--md-surface);
+  color: var(--md-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination-button:hover {
+  background: var(--md-surface-hover);
+  border-color: var(--md-border);
+}
+
+.pagination-button.active {
+  background: var(--md-primary);
+  color: #ffffff;
+  border-color: var(--md-primary);
+}
+
+.pagination-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-button:disabled:hover {
+  background: var(--md-surface);
+}
+
+.pagination-ellipsis {
+  font-size: 14px;
+  color: var(--md-text-secondary);
 }

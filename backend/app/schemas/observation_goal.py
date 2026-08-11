@@ -57,3 +57,23 @@ class ObservationGoalResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class ClassGoalStatusResponse(BaseModel):
+    id: int
+    code: Optional[str] = None
+    title: str
+    subject: str
+    domain: Optional[str] = None
+    subdomain: Optional[str] = None
+    is_observed_in_class: bool
+    is_in_activity: bool
+
+    class Config:
+        from_attributes = True
+
+
+class ClassGoalsOverviewResponse(BaseModel):
+    goals: list[ClassGoalStatusResponse]
+    class_name: Optional[str] = None
+    total: int
