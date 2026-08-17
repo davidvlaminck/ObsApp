@@ -564,6 +564,13 @@
   flex-direction: column;
 }
 
+.goal-select-modal > .modal-header,
+.goal-select-modal > .goal-select-filters,
+.goal-select-modal > .modal-footer {
+  min-height: 0;
+  flex-shrink: 0;
+}
+
 .goal-select-filters {
   display: flex;
   gap: 12px;
@@ -571,6 +578,7 @@
   margin-bottom: 20px;
   padding-bottom: 20px;
   border-bottom: 1.5px solid var(--md-border-light);
+  flex-shrink: 0;
 }
 
 .goal-select-filters .form-group {
@@ -580,7 +588,7 @@
 
 .goal-select-list {
   flex: 1;
-  overflow-y: auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
