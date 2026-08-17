@@ -5,6 +5,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 ENV_FILE = BASE_DIR / ".env"
+ENV_FILE_FALLBACK = Path("/opt/obsapp/config/obsapp.env")
+
+
+def _resolve_env_file() -> str | None:
+    if ENV_FILE_FALLBACK.exists():
+        return str(ENV_FILE_FALLBACK)
+    if ENV_FILE.exists():
+        return str(ENV_FILE)
+    return None
 
 
 class Settings(BaseSettings):
@@ -23,7 +32,7 @@ class Settings(BaseSettings):
     activation_token_expire_hours: int = 48
     demo_account_expire_days: int = 30
 
-    model_config = SettingsConfigDict(env_file=ENV_FILE, extra="ignore")
+    model_config = SettingsConfigDict(env_file=_resolve_env_file(), extra="ignore")
 
     def model_post_init(self, __context):
         if self.database_url.startswith("sqlite:///") and not self.database_url.startswith("sqlite:////"):
