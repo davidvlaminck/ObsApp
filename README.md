@@ -16,9 +16,9 @@ See the [LICENSE](./LICENSE) file for full terms.
 ## Vereisten
 
 - Python 3.11+
-  - Node.js 18+
-  - uv (Python package manager)
-  - npm
+- Node.js 18+
+- uv (Python package manager)
+- npm
 
 ## PostgreSQL installeren en configureren op Linux
 
@@ -116,7 +116,7 @@ uv run uvicorn app.main:app --reload --port 8001
 
 Backend draait op `http://localhost:8001`
 - API docs: `http://localhost:8001/docs`
-  - Health check: `http://localhost:8001/health`
+- Health check: `http://localhost:8001/health`
 
 ### 2. Database initialiseren (eerste keer)
 
@@ -136,9 +136,10 @@ cd backend
 uv run python scripts/seed.py
 ```
 
-Dit seed een standaard admin gebruiker:
-- Email: `admin@example.com`
-  - Wachtwoord: `admin`
+Dit seed de volgende demo gebruikers:
+- Email: `admin@example.com` / Wachtwoord: `admin` (admin)
+- Email: `lieve@example.com` / Wachtwoord: `lieve` (leerkracht)
+- Email: `demo@example.com` / Wachtwoord: `demo` (uitproberen, nog geen school gekozen)
 
 ### 3. Frontend starten
 
@@ -155,8 +156,8 @@ Frontend draait op `http://localhost:5173`
 ### 4. Testen
 
 1. Open `http://localhost:5173/login`
-   2. Log in met `admin@example.com` / `admin`
-   3. Je wordt doorgestuurd naar de landingspagina
+2. Log in met `admin@example.com` / `admin`
+3. Je wordt doorgestuurd naar de landingspagina
 
 ## Database resetten
 
@@ -173,48 +174,72 @@ Dit reset enkel de tabellen in de database. De PostgreSQL-role `obsapp_user` en 
 
 ### Backend
 
-1. Zet `DATABASE_URL` in de environment (PostgreSQL op productie):
+1. Voor lokaal development kun je `.env` in `backend/` gebruiken met dezelfde variabelen als hieronder. Voor productie gebruik je `EnvironmentFile` in de systemd-service.
+
+2. Installeer dependencies:
    ```bash
-   export DATABASE_URL=postgresql://user:pass@host:5432/obsapp
+   cd backend
+   uv sync --no-dev
    ```
 
-   2. Installeer dependencies:
-      ```bash
-      cd backend
-      uv sync --no-dev
-      ```
+3. Kopieer de voorbeeld systemd-service:
+   ```bash
+   sudo cp AnalysisDev/deploy/obsapp-backend.service /etc/systemd/system/
+   ```
 
-   3. Run migrations (wanneer Alembic is geconfigureerd):
-      ```bash
-      uv run alembic upgrade head
-      ```
+4. Maak `/opt/obsapp/config/obsapp.env` met alle productie-variabelen:
+   ```env
+   DATABASE_URL=postgresql://user:pass@host:5432/obsapp
+   SECRET_KEY=<sterke-unieke-waarde>
+   SMTP_HOST=sandbox.smtp.mailtrap.io
+   SMTP_PORT=2525
+   SMTP_USER=<mailtrap-user>
+   SMTP_PASSWORD=<mailtrap-pass>
+   SMTP_FROM_EMAIL=noreply@obsapp.test
+   FRONTEND_BASE_URL=http://<server-ip>
+   DEBUG=False
+   ```
 
-   4. Start met Gunicorn + Uvicorn workers:
-      ```bash
-      uv run gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8001
-      ```
+5. activeer en start de service:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now obsapp-backend
+   ```
+
+6. Controleer de logs bij problemen:
+   ```bash
+   journalctl -u obsapp-backend -f
+   ```
 
 ### Frontend
 
-1. Build:
+1. Bouw de frontend:
    ```bash
    cd frontend
    npm install
    npm run build
    ```
 
-   2. Serveer de `dist/` map met Nginx of een static file server.
+2. Kopieer de voorbeeld Nginx-site:
+   ```bash
+   sudo cp AnalysisDev/deploy/obsapp-frontend.nginx /etc/nginx/sites-available/obsapp
+   sudo ln -s /etc/nginx/sites-available/obsapp /etc/nginx/sites-enabled/
+   sudo rm /etc/nginx/sites-enabled/default
+   sudo nginx -t && sudo systemctl reload nginx
+   ```
+
+3. Zorg dat de `dist/` map bestaat op `/opt/obsapp/ObsApp/frontend/dist/` (of pas de Nginx `root` aan).
 
 ### Security checklist voor productie
 
-- [ ] Verander `SECRET_KEY` in `.env` naar een sterke, unieke waarde
-  - [ ] Verwijder of deactiveer de admin gebruiker (`admin@example.com`) na eerste login
-  - [ ] Gebruik HTTPS (Let's Encrypt / certificaten)
-  - [ ] Zet `DEBUG=False` in productie
-  - [ ] Configureer CORS voor je productie domein
-  - [ ] Gebruik een PostgreSQL database in plaats van SQLite
-  - [ ] Voeg rate limiting toe aan login endpoint
-  - [ ] Overweeg refresh tokens voor langere sessies
+- [ ] Verander `SECRET_KEY` naar een sterke, unieke waarde
+- [ ] Verwijder of deactiveer de admin gebruiker (`admin@example.com`) na eerste login
+- [ ] Gebruik HTTPS (Let's Encrypt / certificaten)
+- [ ] Zet `DEBUG=False` in productie
+- [ ] Configureer CORS voor je productie domein (indien API rechtstreeks bereikbaar is)
+- [ ] Gebruik een PostgreSQL database in plaats van SQLite
+- [ ] Voeg rate limiting toe aan login endpoint (reeds aanwezig via slowapi)
+- [ ] Overweeg refresh tokens voor langere sessies
 
 ## Projectstructuur
 
@@ -246,7 +271,7 @@ obsapp/
 ## Volgende stappen
 
 - [ ] Multi-tenant filtering toevoegen
-  - [ ] Rollen en permissies (admin, leerkracht, etc.)
-  - [ ] Observatie invoer en overzichten
-  - [ ] PDF export
-  - [ ] Echte gebruikersbeheer pagina
+- [ ] Rollen en permissies (admin, leerkracht, etc.)
+- [ ] Observatie invoer en overzichten
+- [ ] PDF export
+- [ ] Echte gebruikersbeheer pagina

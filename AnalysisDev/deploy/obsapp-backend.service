@@ -1,0 +1,18 @@
+[Unit]
+Description=ObsApp FastAPI Backend
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=david
+Group=david
+WorkingDirectory=/opt/obsapp/ObsApp/backend
+EnvironmentFile=/opt/obsapp/config/obsapp.env
+ExecStart=/home/david/.local/bin/uv run gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 127.0.0.1:8001
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
