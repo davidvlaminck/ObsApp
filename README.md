@@ -189,7 +189,7 @@ Dit reset enkel de tabellen in de database. De PostgreSQL-role `obsapp_user` en 
 
 4. Maak `/opt/obsapp/config/obsapp.env` met alle productie-variabelen:
    ```env
-   DATABASE_URL=postgresql://user:pass@host:5432/obsapp
+   DATABASE_URL=postgresql://user:pass@127.0.0.1:5432/obsapp
    SECRET_KEY=<sterke-unieke-waarde>
    SMTP_HOST=sandbox.smtp.mailtrap.io
    SMTP_PORT=2525
