@@ -1,5 +1,6 @@
 import html
 import os
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -160,12 +161,15 @@ def seed_school_and_admin():
 
 def seed_schools():
     """Seed schools from the Vlaanderen onderwijs CSV."""
-    import subprocess
-    fetch_script = Path(__file__).resolve().parent.parent.parent / "AnalysisDev" / "Migration" / "fetch_schools.py"
+    import sys
+
     project_root = Path(__file__).resolve().parent.parent.parent
-    backend_dir = Path(__file__).resolve().parent.parent
-    env = {**os.environ, "PYTHONPATH": str(backend_dir)}
-    subprocess.run(["uv", "run", "python", str(fetch_script)], check=True, cwd=project_root, env=env)
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+
+    from AnalysisDev.Migration.fetch_schools import seed_schools_from_csv
+
+    seed_schools_from_csv()
 
 
 def seed_mow_user():
