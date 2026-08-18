@@ -4,9 +4,9 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from app.models.activity import Activity, ActivityObservationGoal
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
-from app.models.theme import Theme
 from app.models.school import School
-from app.schemas.activity import ActivityResponse, ActivityGoalResponse
+from app.models.theme import Theme
+from app.schemas.activity import ActivityGoalResponse, ActivityResponse
 
 
 class ActivityRepository:

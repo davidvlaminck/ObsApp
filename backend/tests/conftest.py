@@ -2,8 +2,16 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.core.database import Base
 from app.core.config import settings
+from app.core.database import Base
+from app.core.limiter import limiter
+
+
+@pytest.fixture(autouse=True)
+def disable_rate_limiting():
+    limiter.enabled = False
+    yield
+    limiter.enabled = True
 
 
 @pytest.fixture(scope="session")

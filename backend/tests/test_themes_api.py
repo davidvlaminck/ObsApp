@@ -12,7 +12,6 @@ from app.models.activity import Activity
 from app.models.theme import Theme
 from app.schemas.user import UserResponse
 
-
 TEACHER_RESPONSE = UserResponse(
     id=1,
     email="teacher@example.com",

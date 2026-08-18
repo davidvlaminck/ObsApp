@@ -1,15 +1,26 @@
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from pathlib import Path
-
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 
-from app.api import auth, goals, observation_goals, observations, schools, student_observations, themes, activities, users, registration
+from app.api import (
+    activities,
+    auth,
+    goals,
+    observation_goals,
+    observations,
+    registration,
+    schools,
+    student_observations,
+    themes,
+    users,
+)
 from app.core.limiter import limiter
 
 app = FastAPI(

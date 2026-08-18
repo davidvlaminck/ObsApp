@@ -9,12 +9,12 @@ from app.models.school_year import Student as StudentModel
 from app.models.student_observation import StudentObservation
 from app.repositories.school_year_repository import StudentRepository
 from app.repositories.user_repository import UserRepository
+from app.schemas.observation_goal import ObservationGoalResponse
 from app.schemas.student_observation import (
     StudentObservationCreate,
     StudentObservationResponse,
     StudentObservationStatusResponse,
 )
-from app.schemas.observation_goal import ObservationGoalResponse
 
 
 class StudentObservationRepository:

@@ -1,10 +1,11 @@
+from datetime import date
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
-from datetime import date
 
 from app.api import auth as auth_module
 from app.api import observation_goals as observation_goals_router_module
@@ -13,10 +14,10 @@ from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.school import School
 from app.models.school_goal_domain import SchoolGoalDomain
-from app.models.school_year import Class as ClassModel, SchoolYear
+from app.models.school_year import Class as ClassModel
+from app.models.school_year import SchoolYear
 from app.models.user import User
 from app.schemas.user import UserResponse
-
 
 TEACHER_RESPONSE = UserResponse(
     id=1,
@@ -288,7 +289,8 @@ def test_list_classes_returns_all_school_classes(
     observation_goal_client: TestClient,
     observation_goal_db: Session,
 ):
-    from app.models.school_year import SchoolYear, Class as ClassModel
+    from app.models.school_year import Class as ClassModel
+    from app.models.school_year import SchoolYear
 
     seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
     school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
@@ -327,8 +329,8 @@ def test_list_user_classes_returns_linked_classes(
     observation_goal_client: TestClient,
     observation_goal_db: Session,
 ):
-    from app.models.school_year import SchoolYear, Class as ClassModel
-    from app.models.school_year import teacher_class_association
+    from app.models.school_year import Class as ClassModel
+    from app.models.school_year import SchoolYear, teacher_class_association
 
     seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
     school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
@@ -360,7 +362,8 @@ def test_list_user_classes_returns_multiple_when_multiple_linked(
     observation_goal_client: TestClient,
     observation_goal_db: Session,
 ):
-    from app.models.school_year import SchoolYear, Class as ClassModel, teacher_class_association
+    from app.models.school_year import Class as ClassModel
+    from app.models.school_year import SchoolYear, teacher_class_association
 
     seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
     school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)

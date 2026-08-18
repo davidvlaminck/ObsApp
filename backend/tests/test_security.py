@@ -1,12 +1,12 @@
 from datetime import timedelta
 
+from app.core.config import settings
 from app.core.security import (
-    verify_password,
-    get_password_hash,
     create_access_token,
     decode_access_token,
+    get_password_hash,
+    verify_password,
 )
-from app.core.config import settings
 
 
 def test_password_hash_and_verify():
@@ -47,6 +47,7 @@ def test_decode_invalid_token():
 def test_decode_expired_token():
     # Create a token that expired 1 hour ago
     from datetime import datetime, timedelta
+
     from jose import jwt
 
     expired_data = {"sub": "test@example.com", "exp": datetime.utcnow() - timedelta(hours=1)}

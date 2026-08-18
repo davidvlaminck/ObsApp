@@ -18,11 +18,20 @@ from app.schemas.goal import GoalResponse
 from app.schemas.observation_goal import (
     ClassGoalsOverviewResponse,
     ObservationGoalCreate,
-    ObservationGoalResponse, ObservationGoalUpdate,
+    ObservationGoalResponse,
+    ObservationGoalUpdate,
 )
 from app.schemas.school import ClassResponse
-from app.schemas.school_goal_domain import SchoolGoalDomainCreate, SchoolGoalDomainResponse, SchoolGoalDomainUpdate
-from app.schemas.student_observation import ObservationContextResponse, OverviewResponse, StudentObservationStatusResponse
+from app.schemas.school_goal_domain import (
+    SchoolGoalDomainCreate,
+    SchoolGoalDomainResponse,
+    SchoolGoalDomainUpdate,
+)
+from app.schemas.student_observation import (
+    ObservationContextResponse,
+    OverviewResponse,
+    StudentObservationStatusResponse,
+)
 from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/observation-goals", tags=["observation-goals"])

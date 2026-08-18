@@ -1,27 +1,26 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
+import app.core.database as database_module
 from app.core.database import Base, engine
-from app.models.user import User
 from app.core.security import get_password_hash
+from app.main import app
+from app.models.user import User
 
 
 @pytest.fixture(scope="module")
 def client():
     """Create a test client with SQLite in-memory database."""
-    # Override database URL for testing
     import app.core.config as config_module
     original_url = config_module.settings.database_url
     config_module.settings.database_url = "sqlite:///:memory:"
 
-    # Create tables
     Base.metadata.create_all(bind=engine)
+    database_module._initialized = True
 
     with TestClient(app) as c:
         yield c
 
-    # Cleanup
     Base.metadata.drop_all(bind=engine)
     config_module.settings.database_url = original_url
 
@@ -110,6 +109,7 @@ def test_get_me_no_token(seeded_admin: TestClient):
 def test_reset_demo_forbidden_for_non_demo(client: TestClient):
     """Test that reset-demo returns 403 for non-demo users."""
     import uuid
+
     from app.core.database import SessionLocal
     unique_email = f"teacher_{uuid.uuid4().hex[:8]}@example.com"
     
@@ -147,9 +147,10 @@ def test_reset_demo_success(client: TestClient):
     """Test that reset-demo successfully clears demo data for demo users."""
     import uuid
     from datetime import date
+
     from app.core.database import SessionLocal
     from app.models.school import School
-    from app.models.school_year import SchoolYear, Class, Student
+    from app.models.school_year import Class, SchoolYear, Student
 
     unique_email = f"demo_{uuid.uuid4().hex[:8]}@example.com"
     

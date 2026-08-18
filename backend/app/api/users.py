@@ -4,9 +4,9 @@ from app.api.auth import get_current_superuser
 from app.core.config import settings
 from app.core.database import get_db
 from app.repositories.school_repository import SchoolRepository
+from app.schemas.user import UserCreate, UserResponse
 from app.services.auth_service import AuthService
 from app.services.email_service import send_activation_email
-from app.schemas.user import UserCreate, UserResponse
 
 router = APIRouter(prefix="/users", tags=["users"])
 

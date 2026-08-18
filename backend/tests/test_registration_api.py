@@ -1,25 +1,24 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
+import app.core.database as database_module
 from app.core.database import Base, engine
+from app.main import app
 
 
 @pytest.fixture(scope="module")
 def client():
     """Create a test client with SQLite in-memory database."""
-    # Override database URL for testing
     import app.core.config as config_module
     original_url = config_module.settings.database_url
     config_module.settings.database_url = "sqlite:///:memory:"
 
-    # Create tables
     Base.metadata.create_all(bind=engine)
+    database_module._initialized = True
 
     with TestClient(app) as c:
         yield c
 
-    # Cleanup
     Base.metadata.drop_all(bind=engine)
     config_module.settings.database_url = original_url
 

@@ -3,13 +3,9 @@
 Decodes HTML entities, removes zero-width characters, and normalizes
 special spaces in all goal fields (title, description, voorbeelden, vocabulary).
 """
-import sys
-from pathlib import Path
-
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 import html
 import re
+
 from app.core.database import SessionLocal
 from app.models.goal import Goal
 

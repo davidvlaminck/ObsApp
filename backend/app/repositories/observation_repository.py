@@ -2,7 +2,7 @@ from sqlalchemy import desc
 from sqlalchemy.orm import Session
 
 from app.models.observation import Observation
-from app.schemas.observation import ObservationCreate, ObservationUpdate, ObservationResponse
+from app.schemas.observation import ObservationCreate, ObservationResponse, ObservationUpdate
 
 
 class ObservationRepository:

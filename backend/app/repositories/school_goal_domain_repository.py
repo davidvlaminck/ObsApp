@@ -1,7 +1,11 @@
 from sqlalchemy.orm import Session
 
 from app.models.school_goal_domain import SchoolGoalDomain
-from app.schemas.school_goal_domain import SchoolGoalDomainCreate, SchoolGoalDomainResponse, SchoolGoalDomainUpdate
+from app.schemas.school_goal_domain import (
+    SchoolGoalDomainCreate,
+    SchoolGoalDomainResponse,
+    SchoolGoalDomainUpdate,
+)
 
 
 class SchoolGoalDomainRepository:

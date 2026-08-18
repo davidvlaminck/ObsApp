@@ -3,8 +3,8 @@ import uuid
 from datetime import date
 
 import httpx
-from pydantic import BaseModel, EmailStr, Field
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, EmailStr, Field
 
 from app.core.config import settings
 from app.core.database import get_db

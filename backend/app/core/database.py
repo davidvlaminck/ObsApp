@@ -3,7 +3,7 @@ from threading import Lock
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from app.core.config import settings, BASE_DIR
+from app.core.config import BASE_DIR, settings
 
 Base = declarative_base()
 
@@ -16,8 +16,9 @@ _initialize_lock = Lock()
 
 def run_alembic_migrations() -> None:
     """Run pending Alembic migrations to bring the database up to date."""
-    from alembic import command
     from alembic.config import Config
+
+    from alembic import command
 
     alembic_cfg = Config(str(BASE_DIR / "alembic.ini"))
     alembic_cfg.set_main_option("sqlalchemy.url", settings.database_url)

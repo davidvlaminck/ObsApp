@@ -1,9 +1,9 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from app.services.auth_service import AuthService
-from app.models.user import User
 from app.core.security import get_password_hash
+from app.models.user import User
+from app.services.auth_service import AuthService
 
 
 @pytest.fixture

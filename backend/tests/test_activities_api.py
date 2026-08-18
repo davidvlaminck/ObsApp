@@ -5,8 +5,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.api.activities import router as activity_router
 from app.api import auth as auth_module
+from app.api.activities import router as activity_router
 from app.core.database import Base, get_db
 from app.models.activity import Activity
 from app.models.goal import Goal
@@ -15,7 +15,6 @@ from app.models.school import School
 from app.models.theme import Theme
 from app.models.user import User
 from app.schemas.user import UserResponse
-
 
 TEACHER_RESPONSE = UserResponse(
     id=1,

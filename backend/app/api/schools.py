@@ -1,12 +1,16 @@
 from io import BytesIO
 
-from fastapi import APIRouter, Depends, File, HTTPException, status, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 
 from app.api.auth import get_current_school_user, get_current_superuser
 from app.core.database import get_db
 from app.repositories.school_repository import SchoolRepository
-from app.repositories.school_year_repository import ClassRepository, SchoolYearRepository, StudentRepository
+from app.repositories.school_year_repository import (
+    ClassRepository,
+    SchoolYearRepository,
+    StudentRepository,
+)
 from app.schemas.school import (
     ClassCreate,
     ClassResponse,

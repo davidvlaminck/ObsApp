@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.models.goal import Goal
-from app.schemas.goal import GoalCreate, GoalUpdate, GoalResponse
+from app.schemas.goal import GoalCreate, GoalResponse, GoalUpdate
 
 
 class GoalRepository:

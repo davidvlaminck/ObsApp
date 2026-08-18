@@ -7,7 +7,6 @@ from app.schemas.observation_goal import ObservationGoalResponse
 from app.schemas.school import ClassResponse, StudentResponse
 from app.schemas.user import UserResponse
 
-
 ObservationStatus = Literal["onvoldoende", "in_ontwikkeling", "voldoende", "voorsprong"]
 
 

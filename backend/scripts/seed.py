@@ -1,27 +1,21 @@
 import html
-import sys
 from datetime import date
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 from sqlalchemy import text
 
-from app.core.database import Base, engine, SessionLocal
-from app.models.koepel import Koepel
-from app.models.school import School
-from app.models.school_year import Class, SchoolYear
-from app.models.school_year import Student
-from app.models.user import User
+from app.core.database import Base, SessionLocal, engine
+from app.core.security import get_password_hash
+from app.models.activity import Activity, ActivityObservationGoal
 from app.models.goal import Goal
+from app.models.koepel import Koepel
 from app.models.observation_goal import ObservationGoal
+from app.models.school import School
 from app.models.school_goal_domain import SchoolGoalDomain
+from app.models.school_year import Class, SchoolYear, Student
 from app.models.student_observation import StudentObservation
 from app.models.theme import Theme
-from app.models.activity import Activity, ActivityObservationGoal
-from app.models.observation_goal import ObservationGoal
-from app.core.security import get_password_hash
-from app.core.security import get_password_hash
+from app.models.user import User
 
 
 def reset_database():
@@ -161,6 +155,13 @@ def seed_school_and_admin():
     finally:
         db.close()
 
+
+
+def seed_schools():
+    """Seed schools from the Vlaanderen onderwijs CSV."""
+    import subprocess
+    fetch_script = Path(__file__).resolve().parent.parent.parent / "AnalysisDev" / "Migration" / "fetch_schools.py"
+    subprocess.run(["uv", "run", "python", str(fetch_script)], check=True)
 
 
 def seed_mow_user():
@@ -354,6 +355,7 @@ def _normalize_subject(value: str) -> str:
 def seed_vo_goals():
     """Import VO-doelen from Excel."""
     from openpyxl import load_workbook
+
     from app.models.goal import Goal
 
     db = SessionLocal()
@@ -817,6 +819,7 @@ def seed_activities(school_id: int, teacher_id: int):
 if __name__ == "__main__":
     reset_database()
     seed_koepels()
+    seed_schools()
     seed_school_and_admin()
     seed_mow_user()
     seed_school_goal_domain_and_goals()

@@ -9,7 +9,6 @@ from app.repositories.goal_repository import GoalRepository
 from app.schemas.goal import GoalCreate, GoalResponse, GoalUpdate
 from app.schemas.user import UserResponse
 
-
 router = APIRouter(prefix="/goals", tags=["goals"])
 
 

@@ -1,5 +1,6 @@
-import pytest
 from datetime import date
+
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -17,7 +18,6 @@ from app.models.school_year import Class, SchoolYear, Student
 from app.models.student_observation import StudentObservation
 from app.models.user import User
 from app.schemas.user import UserResponse
-
 
 TEACHER_RESPONSE = UserResponse(
     id=1,

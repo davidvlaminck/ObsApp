@@ -6,10 +6,10 @@ Requires: DATABASE_URL set to PostgreSQL in .env or environment
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
 from app.core.database import Base, engine
-from app.models.user import User
 from app.core.security import get_password_hash
+from app.main import app
+from app.models.user import User
 
 
 @pytest.fixture(scope="module")
