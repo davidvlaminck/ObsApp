@@ -149,13 +149,15 @@ def seed_schools_from_csv():
     db = SessionLocal()
     try:
         koepels = {k.slug: k for k in db.query(Koepel).all()}
-        count = 0
-        for s in schools:
-            if s["koepel_slug"] not in koepels:
-                continue
+        existing_ids = {row[0] for row in db.query(School.external_id).all() if row[0]}
 
-            existing = db.query(School).filter(School.external_id == s["external_id"]).first()
-            if existing:
+        new_schools = []
+        school_address_pairs = []
+
+        for s in schools:
+            if s["external_id"] in existing_ids:
+                continue
+            if s["koepel_slug"] not in koepels:
                 continue
 
             school = School(
@@ -168,25 +170,29 @@ def seed_schools_from_csv():
                 postal_code=s["postal_code"],
                 city=s["city"],
             )
-            db.add(school)
-            db.commit()
-            db.refresh(school)
-
+            new_schools.append(school)
             for addr in s.get("addresses", []):
-                db.add(
-                    SchoolAddress(
-                        school_id=school.id,
-                        address=addr["address"],
-                        postal_code=addr["postal_code"],
-                        city=addr["city"],
-                        is_head_office=addr["is_head_office"],
-                    )
-                )
+                school_address_pairs.append((school, addr))
 
-            count += 1
-
+        db.add_all(new_schools)
         db.commit()
-        print(f"Nieuwe scholen toegevoegd aan database: {count}")
+
+        address_objects = []
+        for school, addr in school_address_pairs:
+            address_objects.append(
+                SchoolAddress(
+                    school_id=school.id,
+                    address=addr["address"],
+                    postal_code=addr["postal_code"],
+                    city=addr["city"],
+                    is_head_office=addr["is_head_office"],
+                )
+            )
+
+        db.add_all(address_objects)
+        db.commit()
+
+        print(f"Nieuwe scholen toegevoegd aan database: {len(new_schools)}")
     finally:
         db.close()
 

@@ -161,7 +161,8 @@ def seed_schools():
     """Seed schools from the Vlaanderen onderwijs CSV."""
     import subprocess
     fetch_script = Path(__file__).resolve().parent.parent.parent / "AnalysisDev" / "Migration" / "fetch_schools.py"
-    subprocess.run(["uv", "run", "python", str(fetch_script)], check=True)
+    project_root = Path(__file__).resolve().parent.parent.parent
+    subprocess.run(["uv", "run", "python", str(fetch_script)], check=True, cwd=project_root)
 
 
 def seed_mow_user():
@@ -764,34 +765,42 @@ def seed_themes():
         db.close()
 
 
-def seed_activities(school_id: int, teacher_id: int):
+def seed_activities():
     db = SessionLocal()
     try:
         theme = db.query(Theme).filter(Theme.name == "De appel").first()
         if not theme:
             return
-        school = db.query(School).filter(School.id == school_id).first()
+        school = db.query(School).filter(School.slug == "demo-school").first()
         if not school:
             return
-
-        opstap_goals = db.query(Goal).filter(Goal.goal_type == "OP_STAP", Goal.subject == "Wiskunde").limit(2).all()
-        if not opstap_goals:
+        teacher = db.query(User).filter(User.email == "lieve@example.com").first()
+        if not teacher:
             return
 
+        goal_codes = ["2.1.GK3.1", "2.1.GK3.16", "2.3.GK3.23"]
+        existing_activity = db.query(Activity).filter(Activity.school_id == school.id, Activity.name == "Appels in manden").first()
+        if existing_activity:
+            db.delete(existing_activity)
+            db.commit()
+
         activity = Activity(
-            school_id=school_id,
-            name="Rekenspelletjes met appels",
-            description="Leuke activiteiten met appels om rekenvaardigheid te oefenen.",
+            school_id=school.id,
+            name="Appels in manden",
+            description="Sorteer appels per kleur en tel hoeveel er in elke mand zitten.",
             theme_id=theme.id,
         )
         db.add(activity)
         db.commit()
         db.refresh(activity)
 
-        for goal in opstap_goals:
+        for code in goal_codes:
+            goal = db.query(Goal).filter(Goal.code == code).first()
+            if not goal:
+                continue
             observation_goal = ObservationGoal(
-                school_id=school_id,
-                created_by=teacher_id,
+                school_id=school.id,
+                created_by=teacher.id,
                 name=goal.title,
                 subject=goal.subject,
                 domain=goal.domain,
@@ -806,7 +815,7 @@ def seed_activities(school_id: int, teacher_id: int):
                 activity_id=activity.id,
                 observation_goal_id=observation_goal.id,
                 label=goal.title,
-                observe=False,
+                observe=code != "2.3.GK3.23",
             )
             db.add(link)
 
@@ -827,6 +836,6 @@ if __name__ == "__main__":
     seed_vo_goals()
     seed_opstap_goals()
     seed_themes()
-    seed_activities(school_id=1, teacher_id=2)
+    seed_activities()
     link_demo_observation_goal()
     seed_static_class_observations()

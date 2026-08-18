@@ -82,7 +82,7 @@ class ObservationGoalRepository:
                     ObservationGoal.id == ActivityObservationGoal.observation_goal_id,
                 )
                 .join(Activity, ActivityObservationGoal.activity_id == Activity.id)
-                .filter(Activity.theme_id == theme_id)
+                .filter(Activity.theme_id == theme_id, ActivityObservationGoal.observe == True)
                 .distinct()
             )
 
@@ -127,7 +127,7 @@ class ObservationGoalRepository:
                     ObservationGoal.id == ActivityObservationGoal.observation_goal_id,
                 )
                 .join(Activity, ActivityObservationGoal.activity_id == Activity.id)
-                .filter(Activity.theme_id == theme_id)
+                .filter(Activity.theme_id == theme_id, ActivityObservationGoal.observe == True)
                 .distinct()
             )
 

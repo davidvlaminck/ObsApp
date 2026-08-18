@@ -10,12 +10,14 @@ from sqlalchemy.pool import StaticPool
 from app.api import auth as auth_module
 from app.api import observation_goals as observation_goals_router_module
 from app.core.database import Base
+from app.models.activity import Activity, ActivityObservationGoal
 from app.models.goal import Goal
 from app.models.observation_goal import ObservationGoal
 from app.models.school import School
 from app.models.school_goal_domain import SchoolGoalDomain
 from app.models.school_year import Class as ClassModel
 from app.models.school_year import SchoolYear
+from app.models.theme import Theme
 from app.models.user import User
 from app.schemas.user import UserResponse
 
@@ -918,3 +920,108 @@ def test_update_observation_goal_not_found(
         json={"name": "Nieuwe naam"},
     )
     assert response.status_code == 404
+
+
+def test_list_observation_goals_theme_filter_excludes_non_observable(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    theme = Theme(id=1, name="De appel", description="Fruit")
+    observation_goal_db.add(theme)
+    observation_goal_db.commit()
+
+    activity = Activity(school_id=1, name="Appels in manden", theme_id=1)
+    observation_goal_db.add(activity)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(activity)
+
+    goals = [
+        Goal(id=1, code="2.1.GK3.1", title="Doel 1", subject="Wiskunde", goal_type="OP_STAP"),
+        Goal(id=2, code="2.1.GK3.16", title="Doel 2", subject="Wiskunde", goal_type="OP_STAP"),
+        Goal(id=3, code="2.3.GK3.23", title="Doel 3", subject="Wiskunde", goal_type="OP_STAP"),
+    ]
+    observation_goal_db.add_all(goals)
+    observation_goal_db.commit()
+
+    observation_goals = [
+        ObservationGoal(school_id=1, created_by=1, name="Doel 1", subject="Wiskunde", domain="Getallen", goal_id=1),
+        ObservationGoal(school_id=1, created_by=1, name="Doel 2", subject="Wiskunde", domain="Getallen", goal_id=2),
+        ObservationGoal(school_id=1, created_by=1, name="Doel 3", subject="Wiskunde", domain="Meten", goal_id=3),
+    ]
+    observation_goal_db.add_all(observation_goals)
+    observation_goal_db.commit()
+
+    links = [
+        ActivityObservationGoal(activity_id=activity.id, observation_goal_id=observation_goals[0].id, label="Doel 1", observe=True),
+        ActivityObservationGoal(activity_id=activity.id, observation_goal_id=observation_goals[1].id, label="Doel 2", observe=True),
+        ActivityObservationGoal(activity_id=activity.id, observation_goal_id=observation_goals[2].id, label="Doel 3", observe=False),
+    ]
+    observation_goal_db.add_all(links)
+    observation_goal_db.commit()
+
+    response = observation_goal_client.get("/api/observation-goals", params={"theme_id": 1})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 2
+    codes = {item["goal"]["code"] for item in data}
+    assert codes == {"2.1.GK3.1", "2.1.GK3.16"}
+
+
+def test_observe_context_theme_filter_excludes_non_observable(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    theme = Theme(id=1, name="De appel", description="Fruit")
+    observation_goal_db.add(theme)
+    observation_goal_db.commit()
+
+    activity = Activity(school_id=1, name="Appels in manden", theme_id=1)
+    observation_goal_db.add(activity)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(activity)
+
+    school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
+    observation_goal_db.add(school_year)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(school_year)
+
+    cls = ClassModel(school_year_id=school_year.id, name="3K", class_type="K3")
+    observation_goal_db.add(cls)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(cls)
+
+    goals = [
+        Goal(id=1, code="2.1.GK3.1", title="Doel 1", subject="Wiskunde", level="K3", goal_type="OP_STAP"),
+        Goal(id=2, code="2.1.GK3.16", title="Doel 2", subject="Wiskunde", level="K3", goal_type="OP_STAP"),
+        Goal(id=3, code="2.3.GK3.23", title="Doel 3", subject="Wiskunde", level="K3", goal_type="OP_STAP"),
+    ]
+    observation_goal_db.add_all(goals)
+    observation_goal_db.commit()
+
+    observation_goals = [
+        ObservationGoal(school_id=1, created_by=1, name="Doel 1", subject="Wiskunde", domain="Getallen", goal_id=1, class_id=cls.id),
+        ObservationGoal(school_id=1, created_by=1, name="Doel 2", subject="Wiskunde", domain="Getallen", goal_id=2, class_id=cls.id),
+        ObservationGoal(school_id=1, created_by=1, name="Doel 3", subject="Wiskunde", domain="Meten", goal_id=3, class_id=cls.id),
+    ]
+    observation_goal_db.add_all(observation_goals)
+    observation_goal_db.commit()
+
+    links = [
+        ActivityObservationGoal(activity_id=activity.id, observation_goal_id=observation_goals[0].id, label="Doel 1", observe=True),
+        ActivityObservationGoal(activity_id=activity.id, observation_goal_id=observation_goals[1].id, label="Doel 2", observe=True),
+        ActivityObservationGoal(activity_id=activity.id, observation_goal_id=observation_goals[2].id, label="Doel 3", observe=False),
+    ]
+    observation_goal_db.add_all(links)
+    observation_goal_db.commit()
+
+    response = observation_goal_client.get(
+        "/api/observation-goals/observe/context",
+        params={"class_id": cls.id, "theme_id": 1},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["goals"]) == 2
+    codes = {item["goal"]["code"] for item in data["goals"]}
+    assert codes == {"2.1.GK3.1", "2.1.GK3.16"}
