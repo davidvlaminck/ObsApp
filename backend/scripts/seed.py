@@ -1,4 +1,5 @@
 import html
+import os
 from datetime import date
 from pathlib import Path
 
@@ -162,7 +163,9 @@ def seed_schools():
     import subprocess
     fetch_script = Path(__file__).resolve().parent.parent.parent / "AnalysisDev" / "Migration" / "fetch_schools.py"
     project_root = Path(__file__).resolve().parent.parent.parent
-    subprocess.run(["uv", "run", "python", str(fetch_script)], check=True, cwd=project_root)
+    backend_dir = Path(__file__).resolve().parent.parent
+    env = {**os.environ, "PYTHONPATH": str(backend_dir)}
+    subprocess.run(["uv", "run", "python", str(fetch_script)], check=True, cwd=project_root, env=env)
 
 
 def seed_mow_user():
