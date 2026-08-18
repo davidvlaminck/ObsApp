@@ -684,11 +684,11 @@ export default function ObservingPage() {
         <section className="page-header">
           <div>
             <h1>Observeren</h1>
-            <p className="text-muted">Voer observaties uit voor kleuteren op basis van bestaande observatiedoelen.</p>
+            <p className="text-muted">Voer observaties uit voor kleuters op basis van bestaande observatiedoelen.</p>
           </div>
         </section>
         <div className="inline-message inline-message-error">
-          Superusers moeten zich eerst als leerkracht identificeren voordat ze kleuteren kunnen observeren.
+          Superusers moeten zich eerst als leerkracht identificeren voordat ze kleuters kunnen observeren.
         </div>
       </>
     )
@@ -786,12 +786,12 @@ export default function ObservingPage() {
           {selectedGoals.length === 0 ? (
             <div className="empty-state">
               <h3>Geen doelen geselecteerd</h3>
-              <p className="text-muted">Kies een of meer observatiedoelen om de kleuteren te bekijken.</p>
+              <p className="text-muted">Kies een of meer observatiedoelen om de kleuters te bekijken.</p>
             </div>
           ) : context.students.length === 0 ? (
             <div className="empty-state">
-              <h3>Geen kleuteren geladen</h3>
-              <p className="text-muted">Kies een klas om de kleuteren van die klas te tonen.</p>
+              <h3>Geen kleuters geladen</h3>
+              <p className="text-muted">Kies een klas om de kleuters van die klas te tonen.</p>
             </div>
           ) : (
             <>

@@ -402,7 +402,7 @@ export default function StudentOverviewPage() {
       {!selectedClassId ? (
         <div className="empty-state">Kies een klas om het overzicht per kleuter te bekijken.</div>
       ) : !overview || overview.students.length === 0 ? (
-        <div className="empty-state">Geen kleuteren gevonden voor deze klas.</div>
+        <div className="empty-state">Geen kleuters gevonden voor deze klas.</div>
       ) : !selectedStudent ? (
         <div className="empty-state">Kies een kleuter om het overzicht per kleuter te bekijken.</div>
       ) : studentObservationsLoading ? (

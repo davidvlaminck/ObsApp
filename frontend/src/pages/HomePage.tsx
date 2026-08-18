@@ -3,7 +3,7 @@ export default function HomePage() {
     <div className="home-page">
       <div className="home-header">
         <h1>ObsApp</h1>
-        <p className="text-muted">Welkom bij ObsApp - Jouw tool voor observaties bij kleuteren.</p>
+        <p className="text-muted">Welkom bij ObsApp - Jouw tool voor observaties bij kleuters.</p>
       </div>
       
       <div style={{ marginTop: '2rem' }}>
@@ -13,8 +13,8 @@ export default function HomePage() {
           <article className="card home-card">
             <h3>Overzicht</h3>
             <p className="text-muted">
-              Bekijk een overzicht van alle observatiedoelen en de huidige status van kleuteren.
-              Deze pagina toont per observatiedoel welke kleuteren al geobserveerd zijn en wat hun status is.
+              Bekijk een overzicht van alle observatiedoelen en de huidige status van kleuters.
+              Deze pagina toont per observatiedoel welke kleuters al geobserveerd zijn en wat hun status is.
             </p>
             <p style={{ marginTop: '0.5rem' }}>
               <strong>Tip:</strong> De klasfilter is standaard ingesteld op jouw eigen klas. 
@@ -36,7 +36,7 @@ export default function HomePage() {
           <article className="card home-card">
             <h3>Observeren</h3>
             <p className="text-muted">
-              Maak nieuwe observaties aan voor kleuteren. 
+              Maak nieuwe observaties aan voor kleuters. 
               Kies een klas, vak, domein en observatiedoel om vervolgens de status van elke kleuter in te vullen.
             </p>
             <p style={{ marginTop: '0.5rem' }}>
