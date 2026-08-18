@@ -1,11 +1,11 @@
-import { useTheme } from '../hooks/useTheme'
+import { useColorTheme } from '../hooks/useTheme'
 
 export function ThemeSelector() {
-  const { theme, setTheme, availableThemes } = useTheme()
+  const { theme, setTheme, availableThemes } = useColorTheme()
 
   return (
     <div className="theme-selector">
-      <span className="theme-selector-title">Theme</span>
+      <span className="theme-selector-title">Thema</span>
       <div className="theme-options">
         {availableThemes.map((t) => (
           <button

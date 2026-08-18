@@ -192,6 +192,7 @@ async def get_current_school_user(current_user: UserResponse = Depends(get_curre
             is_demo=current_user.is_demo,
             demo_school_id=current_user.demo_school_id,
             demo_expires_at=current_user.demo_expires_at,
+            color_theme=current_user.color_theme or "teal",
             needs_koepel_selection=current_user.needs_koepel_selection,
         )
     return current_user

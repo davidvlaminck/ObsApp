@@ -11,7 +11,7 @@ export default function HomePage() {
         
         <div className="home-grid">
           <article className="card home-card">
-            <h3>Doel</h3>
+            <h3>Doel van deze app</h3>
             <p className="text-muted">
               Met deze app kan je kiezen welke doelen je wil observeren bij kleuters.
               Vervolgens kan je in de verschillende overzichten bekijken welke kleuters al geobserveerd zijn en wat hun status is.

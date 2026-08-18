@@ -266,6 +266,64 @@
   font-size: 13px;
 }
 
+/* Color theme selector for settings page */
+.color-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.color-theme-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  border: 2px solid var(--md-border);
+  border-radius: var(--md-radius-sm);
+  background: var(--md-surface);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.color-theme-option:hover {
+  border-color: var(--md-primary);
+  background: var(--md-primary-light);
+  transform: translateY(-2px);
+  box-shadow: var(--md-shadow-sm);
+}
+
+.color-theme-option.active {
+  border-color: var(--md-primary);
+  background: linear-gradient(135deg, rgba(16, 168, 120, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
+  box-shadow: 0 2px 8px rgba(16, 168, 120, 0.15);
+}
+
+.color-theme-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--md-border);
+}
+
+.color-theme-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--md-text-primary);
+}
+
+.color-theme-check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--md-primary);
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .overview-filters {
@@ -311,5 +369,9 @@
 
   .overview-table {
     min-width: 1200px;
+  }
+
+  .color-theme-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

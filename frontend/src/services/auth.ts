@@ -62,6 +62,7 @@ export interface UserResponse {
   demo_school_id: number | null
   demo_expires_at: string | null
   default_class_id: number | null
+  color_theme: string
   needs_koepel_selection: boolean
 }
 
@@ -443,6 +444,25 @@ export function getToken(): string | null {
 
 export function clearToken() {
   localStorage.removeItem('access_token')
+}
+
+
+export interface UserSettingsResponse {
+  color_theme: string
+}
+
+export interface UserSettingsUpdate {
+  color_theme: string | null
+}
+
+export async function getUserSettings(): Promise<UserSettingsResponse> {
+  const response = await api.get<UserSettingsResponse>('/user-settings')
+  return response.data
+}
+
+export async function updateUserSettings(data: UserSettingsUpdate): Promise<UserSettingsResponse> {
+  const response = await api.put<UserSettingsResponse>('/user-settings', data)
+  return response.data
 }
 
 api.interceptors.request.use((config) => {

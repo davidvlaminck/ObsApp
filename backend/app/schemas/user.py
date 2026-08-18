@@ -26,4 +26,16 @@ class UserResponse(BaseModel):
     demo_school_id: int | None = None
     demo_expires_at: datetime | None = None
     default_class_id: int | None = None
+    color_theme: str = "teal"
     needs_koepel_selection: bool = False
+
+
+class UserSettingsResponse(BaseModel):
+    color_theme: str = "teal"
+
+    class Config:
+        from_attributes = True
+
+
+class UserSettingsUpdate(BaseModel):
+    color_theme: str | None = Field(default=None, min_length=1, max_length=50)

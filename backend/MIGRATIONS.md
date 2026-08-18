@@ -25,9 +25,12 @@ backend/
 
 ## Hoe het werkt
 
-1. **Bij opstarten** roept [`initialize_database()`](backend/app/core/database.py:57) eerst [`Base.metadata.create_all()`](backend/app/core/database.py:64) aan (voor verse databases) en daarna [`run_alembic_migrations()`](backend/app/core/database.py:67).
-2. **Alembic** vergelijkt de modellen met de database en voert alleen nog niet toegepaste migraties uit.
-3. De [`alembic_version`](backend/alembic/versions/6e20bb72433b_initial_schema.py) tabel in de database bijhoudt welke migraties zijn toegepast.
+1. **Bij opstarten** roept [`initialize_database()`](app/core/database.py:60) eerst [`Base.metadata.create_all()`](app/core/database.py:68) aan (voor verse databases) en daarna [`run_alembic_migrations()`](app/core/database.py:70).
+2. **Alembic** voert alleen nog niet toegepaste migraties uit.
+3. De `alembic_version` tabel in de database bijhoudt welke migraties zijn toegepast.
+4. **`seed_default_data()`** (in `database.py`) maakt alleen een admin-gebruiker en demo-school aan als deze nog niet bestaan — dit is **idempotent** en veilig voor productie.
+
+> **Belangrijk:** Gebruik `scripts/seed.py` **alleen voor ontwikkeling**. Dat script doet een volledige database-reset (`drop_all` + `create_all`) en maakt demo-gebruikers aan (admin, lief, demo). Zie [`../AnalysisDev/production.md`](../AnalysisDev/production.md) voor de productie-deploy workflow.
 
 ## Nieuwe migratie aanmaken
 

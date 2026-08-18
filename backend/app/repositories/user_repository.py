@@ -67,5 +67,16 @@ class UserRepository:
             demo_school_id=user.demo_school_id,
             demo_expires_at=user.demo_expires_at,
             default_class_id=user.default_class_id,
+            color_theme=user.color_theme or "teal",
             needs_koepel_selection=needs_koepel_selection,
         )
+
+    def update_color_theme(self, user_id: int, color_theme: str) -> User:
+        user = self.get_by_id(user_id)
+        if not user:
+            raise ValueError("Gebruiker niet gevonden")
+        user.color_theme = color_theme
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user

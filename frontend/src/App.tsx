@@ -21,6 +21,7 @@ import DemoPage from './pages/DemoPage'
 import DemoSchoolPage from './pages/DemoSchoolPage'
 import ThemesPage from './pages/ThemesPage'
 import SchoolGoalsPage from './pages/SchoolGoalsPage'
+import SettingsPage from './pages/SettingsPage'
 
 function App() {
   return (
@@ -132,6 +133,14 @@ function App() {
         element={
           <AppLayout>
             <SchoolGoalsPage />
+          </AppLayout>
+        }
+      />
+      <Route
+        path="/management/settings"
+        element={
+          <AppLayout>
+            <SettingsPage />
           </AppLayout>
         }
       />

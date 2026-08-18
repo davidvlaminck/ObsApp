@@ -19,6 +19,7 @@ from app.api import (
     schools,
     student_observations,
     themes,
+    user_settings,
     users,
 )
 from app.core.limiter import limiter
@@ -50,6 +51,7 @@ app.include_router(users.router, prefix="/api")
 app.include_router(themes.router, prefix="/api")
 app.include_router(activities.router, prefix="/api")
 app.include_router(registration.router, prefix="/api")
+app.include_router(user_settings.router, prefix="/api")
 
 # Mount static files for student images
 UPLOAD_DIR = Path(__file__).parent.parent / "uploads" / "students"

@@ -3,7 +3,7 @@ import { AxiosError } from 'axios'
 import { ReactNode, useEffect, useState } from 'react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { clearToken, getMe, UserResponse } from '../services/auth'
-import { ThemeSelector } from './ThemeSelector'
+import { ColorThemeProvider } from '../hooks/useTheme'
 import {
   Drawer,
   List,
@@ -27,6 +27,7 @@ import MenuIcon from '@mui/icons-material/Menu'
 import ExpandLess from '@mui/icons-material/ExpandLess'
 import ExpandMore from '@mui/icons-material/ExpandMore'
 import PaletteIcon from '@mui/icons-material/Palette'
+import SettingsIcon from '@mui/icons-material/Settings'
 import FlagIcon from '@mui/icons-material/Flag'
 
 interface AppLayoutProps {
@@ -59,6 +60,7 @@ const menuItems: MenuItem[] = [
             { label: 'Schooleigen doelen', to: '/management/school-goals', icon: FlagIcon },
             { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
             { label: 'Thema\'s', to: '/management/themes', icon: PaletteIcon },
+            { label: 'Instellingen', to: '/management/settings', icon: SettingsIcon },
             { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
            { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
            { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
@@ -323,38 +325,37 @@ export default function AppLayout({ children }: AppLayoutProps) {
 
         <Divider />
 
-        <Box sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-            <Box
-              sx={{
-                width: 36,
-                height: 36,
-                borderRadius: '50%',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: 'primary.main',
-                color: 'white',
-                fontWeight: 500,
-              }}
-            >
-              {user?.name?.charAt(0) ?? 'U'}
+          <Box sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  fontWeight: 500,
+                }}
+              >
+                {user?.name?.charAt(0) ?? 'U'}
+              </Box>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {user?.name ?? 'Gebruiker'}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {user?.is_superuser ? 'Admin' : 'Leerkracht'}
+                </Typography>
+              </Box>
             </Box>
-            <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                {user?.name ?? 'Gebruiker'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {user?.is_superuser ? 'Admin' : 'Leerkracht'}
-              </Typography>
-            </Box>
-          </Box>
             <Divider />
-            <ThemeSelector />
-          <button className="btn btn-outline btn-full" type="button" onClick={handleLogout}>
-            Uitloggen
-          </button>
-        </Box>
+            <button className="btn btn-outline btn-full" type="button" onClick={handleLogout}>
+              Uitloggen
+            </button>
+          </Box>
       </Drawer>
 
       {isMobile && (
@@ -373,6 +374,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
           <MenuIcon />
         </IconButton>
       )}
+      <ColorThemeProvider initialTheme={user?.color_theme}>
         <Box
           component="main"
           sx={{
@@ -381,8 +383,9 @@ export default function AppLayout({ children }: AppLayoutProps) {
             p: { xs: 1, md: 1.5 },
           }}
         >
-        {children}
-      </Box>
+          {children}
+        </Box>
+      </ColorThemeProvider>
     </Box>
   )
 }
