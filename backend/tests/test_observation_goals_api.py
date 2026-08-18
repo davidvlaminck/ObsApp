@@ -12,6 +12,7 @@ from app.api import observation_goals as observation_goals_router_module
 from app.core.database import Base
 from app.models.activity import Activity, ActivityObservationGoal
 from app.models.goal import Goal
+from app.models.koepel import Koepel
 from app.models.observation_goal import ObservationGoal
 from app.models.school import School
 from app.models.school_goal_domain import SchoolGoalDomain
@@ -1025,3 +1026,40 @@ def test_observe_context_theme_filter_excludes_non_observable(
     assert len(data["goals"]) == 2
     codes = {item["goal"]["code"] for item in data["goals"]}
     assert codes == {"2.1.GK3.1", "2.1.GK3.16"}
+
+
+def test_class_status_filters_by_level(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    school = observation_goal_db.query(School).filter(School.id == 1).first()
+    school.koepel_id = 1
+    observation_goal_db.commit()
+
+    koepel = Koepel(id=1, slug="katholiek-onderwijs-vlaanderen", name="KOV")
+    observation_goal_db.add(koepel)
+    observation_goal_db.commit()
+
+    school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
+    observation_goal_db.add(school_year)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(school_year)
+
+    cls = ClassModel(school_year_id=school_year.id, name="3K", class_type="K3")
+    observation_goal_db.add(cls)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(cls)
+
+    observation_goal_db.add_all([
+        Goal(id=10, code="2.1.GK3.1", title="K3 doel", subject="Wiskunde", level="K3", goal_type="OP_STAP", koepel_id=1),
+        Goal(id=11, code="2.1.GK2.1", title="K2 doel", subject="Wiskunde", level="K2", goal_type="OP_STAP", koepel_id=1),
+        Goal(id=12, code="1.2.JK1.1", title="JK doel", subject="Nederlands", level="JK", goal_type="OP_STAP", koepel_id=1),
+    ])
+    observation_goal_db.commit()
+
+    response = observation_goal_client.get("/api/observation-goals/goals/class-status", params={"class_id": cls.id})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["goals"]) == 1
+    assert data["goals"][0]["code"] == "2.1.GK3.1"

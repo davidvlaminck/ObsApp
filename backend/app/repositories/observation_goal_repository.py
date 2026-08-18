@@ -106,7 +106,25 @@ class ObservationGoalRepository:
         if q:
             query = query.filter(ObservationGoal.name.ilike(f"%{q}%"))
 
-        return query.order_by(desc(ObservationGoal.created_at), ObservationGoal.id.desc()).all()
+        results = query.order_by(desc(ObservationGoal.created_at), ObservationGoal.id.desc()).all()
+
+        if results:
+            og_ids = [og.id for og in results]
+            og_observe_status: dict[int, bool] = {}
+            for og_id, observe in self.db.query(
+                ActivityObservationGoal.observation_goal_id,
+                ActivityObservationGoal.observe,
+            ).filter(ActivityObservationGoal.observation_goal_id.in_(og_ids)).all():
+                existing = og_observe_status.get(og_id)
+                og_observe_status[og_id] = existing if existing is not None else observe
+
+            excluded_og_ids = {
+                og_id for og_id, has_observable in og_observe_status.items()
+                if not has_observable
+            }
+            results = [og for og in results if og.id not in excluded_og_ids]
+
+        return results
 
     def get_for_observing(
         self,
@@ -149,7 +167,25 @@ class ObservationGoalRepository:
         if q:
             query = query.filter(ObservationGoal.name.ilike(f"%{q}%"))
 
-        return query.order_by(ObservationGoal.subject, ObservationGoal.domain, ObservationGoal.name).all()
+        results = query.order_by(ObservationGoal.subject, ObservationGoal.domain, ObservationGoal.name).all()
+
+        if results:
+            og_ids = [og.id for og in results]
+            og_observe_status: dict[int, bool] = {}
+            for og_id, observe in self.db.query(
+                ActivityObservationGoal.observation_goal_id,
+                ActivityObservationGoal.observe,
+            ).filter(ActivityObservationGoal.observation_goal_id.in_(og_ids)).all():
+                existing = og_observe_status.get(og_id)
+                og_observe_status[og_id] = existing if existing is not None else observe
+
+            excluded_og_ids = {
+                og_id for og_id, has_observable in og_observe_status.items()
+                if not has_observable
+            }
+            results = [og for og in results if og.id not in excluded_og_ids]
+
+        return results
 
     def delete(self, observation_goal: ObservationGoal) -> None:
         self.db.delete(observation_goal)
@@ -372,7 +408,7 @@ class ObservationGoalRepository:
         if class_type:
             query = query.filter(Goal.level == class_type)
 
-        query = query.filter(func.split_part(Goal.code, '.', 3).like('GK%'))
+        query = query.filter(Goal.code.like('%.GK%'))
 
         if subject:
             query = query.filter(Goal.subject.ilike(subject))
@@ -419,6 +455,20 @@ class ObservationGoalRepository:
                     .all()
                 }
 
+            og_observe_status: dict[int, bool] = {}
+            if all_og_ids:
+                for og_id, observe in self.db.query(
+                    ActivityObservationGoal.observation_goal_id,
+                    ActivityObservationGoal.observe,
+                ).filter(ActivityObservationGoal.observation_goal_id.in_(all_og_ids)).all():
+                    existing = og_observe_status.get(og_id)
+                    og_observe_status[og_id] = existing if existing is not None else observe
+
+            excluded_og_ids = {
+                og_id for og_id, has_observable in og_observe_status.items()
+                if not has_observable and og_id in all_og_ids
+            }
+
             observed_og_ids: set[int] = set()
             if class_id and all_og_ids:
                 student_ids = {
@@ -442,6 +492,8 @@ class ObservationGoalRepository:
 
             for goal in goals:
                 og_ids = goal_to_og_ids.get(goal.id, set())
+                if og_ids and og_ids.issubset(excluded_og_ids):
+                    continue
                 is_observed = bool(og_ids & observed_og_ids)
                 is_in_activity = bool(og_ids & activity_og_ids)
                 results.append(
@@ -505,6 +557,20 @@ class ObservationGoalRepository:
                 .all()
             }
 
+            school_og_observe_status: dict[int, bool] = {}
+            if school_og_ids:
+                for og_id, observe in self.db.query(
+                    ActivityObservationGoal.observation_goal_id,
+                    ActivityObservationGoal.observe,
+                ).filter(ActivityObservationGoal.observation_goal_id.in_(school_og_ids)).all():
+                    existing = school_og_observe_status.get(og_id)
+                    school_og_observe_status[og_id] = existing if existing is not None else observe
+
+            school_excluded_og_ids = {
+                og_id for og_id, has_observable in school_og_observe_status.items()
+                if not has_observable and og_id in school_og_ids
+            }
+
             school_observed_og_ids: set[int] = set()
             if class_id and school_og_ids:
                 student_ids = {
@@ -527,6 +593,8 @@ class ObservationGoalRepository:
                     }
 
             for og in school_goals:
+                if og.id in school_excluded_og_ids:
+                    continue
                 results.append(
                     ClassGoalStatusResponse(
                         id=og.id,
