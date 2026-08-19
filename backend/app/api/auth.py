@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 
 from app.core.config import settings
 from app.core.database import get_db
@@ -16,6 +16,7 @@ from app.models.observation_goal import ObservationGoal
 from app.models.school import School
 from app.models.school_year import Class, SchoolYear, Student
 from app.models.student_observation import StudentObservation
+from app.models.user import User
 from app.schemas.auth import KoepelResponse, LoginRequest, SetPasswordRequest, TokenResponse
 from app.schemas.school import SchoolResponse
 from app.schemas.user import UserResponse
@@ -368,16 +369,179 @@ async def select_koepel(
             detail="Koepel is al ingesteld",
         )
     
-    # Set the koepel
-    school.koepel = payload.koepel
+    # If user is requesting access to a different school, create pending request
+    if user.school_id and user.school_id != school_id:
+        if user.membership_pending:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Er is al een verzoek in behandeling",
+            )
+        user.membership_pending = True
+        user.pending_koepel = payload.koepel
+        user.pending_school_id = school_id
+        db.commit()
+        db.refresh(user)
+        return service.user_repo.to_response(user)
     
-    # If user didn't have a school yet, link them now
+    # If user has no school yet, create pending request instead of direct link
     if not user.school_id:
-        user.school_id = school.id
+        user.membership_pending = True
+        user.pending_koepel = payload.koepel
+        user.pending_school_id = school_id
+        db.commit()
+        db.refresh(user)
+        return service.user_repo.to_response(user)
+    
+    # User is an existing member of this school - set koepel directly
+    school.koepel = payload.koepel
     
     db.commit()
     
     return service.user_repo.to_response(user)
+
+
+class PendingMemberResponse(BaseModel):
+    id: int
+    email: str
+    name: str
+    pending_koepel: str | None = None
+
+
+@router.get("/schools/{school_id}/pending-members", response_model=list[PendingMemberResponse])
+async def get_pending_members(
+    school_id: int,
+    current_user: UserResponse = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """List pending membership requests for a school. Accessible by superusers and school members."""
+    school = db.get(School, school_id)
+    if not school:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="School niet gevonden",
+        )
+    
+    approver_school_id = current_user.demo_school_id if current_user.is_demo else current_user.school_id
+    is_authorized = current_user.is_superuser or approver_school_id == school_id
+    if not is_authorized:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Niet bevoegd",
+        )
+    
+    pending_users = (
+        db.query(User)
+        .filter(User.membership_pending, User.pending_school_id == school_id, User.pending_koepel.isnot(None))
+        .all()
+    )
+    
+    return [
+        PendingMemberResponse(
+            id=user.id,
+            email=user.email,
+            name=user.name,
+            pending_koepel=user.pending_koepel,
+        )
+        for user in pending_users
+    ]
+
+
+@router.post("/schools/{school_id}/pending-members/{user_id}/approve", response_model=UserResponse)
+async def approve_pending_member(
+    school_id: int,
+    user_id: int,
+    current_user: UserResponse = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Approve a pending membership request. Accessible by superusers and school members."""
+    school = db.get(School, school_id)
+    if not school:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="School niet gevonden",
+        )
+    
+    approver_school_id = current_user.demo_school_id if current_user.is_demo else current_user.school_id
+    is_authorized = current_user.is_superuser or approver_school_id == school_id
+    if not is_authorized:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Niet bevoegd",
+        )
+    
+    pending_user = db.get(User, user_id)
+    if not pending_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Gebruiker niet gevonden",
+        )
+    
+    if not pending_user.membership_pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Gebruiker heeft geen openstaand verzoek",
+        )
+    
+    # Set koepel on school if not already set
+    if not school.koepel and pending_user.pending_koepel:
+        school.koepel = pending_user.pending_koepel
+    
+    # Link user to school
+    pending_user.school_id = school_id
+    pending_user.membership_pending = False
+    pending_user.pending_koepel = None
+    
+    db.commit()
+    db.refresh(pending_user)
+    
+    service = AuthService(db)
+    return service.user_repo.to_response(pending_user)
+
+
+@router.post("/schools/{school_id}/pending-members/{user_id}/reject", response_model=UserResponse)
+async def reject_pending_member(
+    school_id: int,
+    user_id: int,
+    current_user: UserResponse = Depends(get_current_user),
+    db=Depends(get_db),
+):
+    """Reject a pending membership request. Accessible by superusers and school members."""
+    school = db.get(School, school_id)
+    if not school:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="School niet gevonden",
+        )
+    
+    approver_school_id = current_user.demo_school_id if current_user.is_demo else current_user.school_id
+    is_authorized = current_user.is_superuser or approver_school_id == school_id
+    if not is_authorized:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Niet bevoegd",
+        )
+    
+    pending_user = db.get(User, user_id)
+    if not pending_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Gebruiker niet gevonden",
+        )
+    
+    if not pending_user.membership_pending:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Gebruiker heeft geen openstaand verzoek",
+        )
+    
+    pending_user.membership_pending = False
+    pending_user.pending_koepel = None
+    
+    db.commit()
+    db.refresh(pending_user)
+    
+    service = AuthService(db)
+    return service.user_repo.to_response(pending_user)
 
 
 @router.get("/my-school", response_model=SchoolResponse | None)

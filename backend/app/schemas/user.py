@@ -30,6 +30,9 @@ class UserResponse(BaseModel):
     color_theme: str = "teal"
     needs_koepel_selection: bool = False
     status_colors: dict[str, str] | None = None
+    membership_pending: bool = False
+    pending_koepel: str | None = None
+    pending_school_id: int | None = None
 
 
 class UserSettingsResponse(BaseModel):

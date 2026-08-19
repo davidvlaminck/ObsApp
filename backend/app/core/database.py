@@ -27,6 +27,7 @@ def run_alembic_migrations() -> None:
 
 def seed_default_data():
     from app.core.security import get_password_hash
+    from app.models.koepel import Koepel
     from app.models.school import School
     from app.models.user import User
 
@@ -34,7 +35,14 @@ def seed_default_data():
     try:
         school = db.query(School).filter(School.slug == "demo-school").first()
         if not school:
-            school = School(name="Demo School", slug="demo-school", is_active=True)
+            kov = db.query(Koepel).filter(Koepel.slug == "katholiek-onderwijs-vlaanderen").first()
+            school = School(
+                name="Demo School",
+                slug="demo-school",
+                is_active=True,
+                koepel_id=kov.id if kov else None,
+                koepel=kov.slug if kov else None,
+            )
             db.add(school)
             db.commit()
             db.refresh(school)

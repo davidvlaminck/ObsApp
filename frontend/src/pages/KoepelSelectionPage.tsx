@@ -97,6 +97,7 @@ export default function KoepelSelectionPage() {
   const isDemo = currentUser?.is_demo
   const hasExistingSchool = currentUser?.school_id && !isDemo
   const needsSchoolSelection = !isDemo && !hasExistingSchool
+  const isPending = currentUser?.membership_pending && !isDemo
 
   return (
     <div className="center-container">
@@ -105,6 +106,14 @@ export default function KoepelSelectionPage() {
         <p style={{ marginBottom: '1.5rem', color: '#6b7280' }}>
           Selecteer eerst je school, daarna de koepel en klas die bij je school horen.
         </p>
+
+        {isPending && (
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '0.5rem' }}>
+            <p style={{ margin: 0, color: '#92400e' }}>
+              Je verzoek om toegang tot de school is in behandeling. Wacht op goedkeuring van een beheerder of bestaand lid.
+            </p>
+          </div>
+        )}
         <form onSubmit={handleSubmit}>
           {needsSchoolSelection && (
             <div style={{ marginBottom: '1.5rem' }}>
@@ -209,8 +218,8 @@ export default function KoepelSelectionPage() {
                 </div>
               )}
               {error && <p className="error">{error}</p>}
-              <button type="submit" className="btn btn-primary" disabled={submitting || (needsSchoolSelection && !selectedSchoolId)}>
-                {submitting ? 'Bezig...' : 'Opslaan'}
+              <button type="submit" className="btn btn-primary" disabled={submitting || (needsSchoolSelection && !selectedSchoolId) || isPending}>
+                {submitting ? 'Bezig...' : isPending ? 'Wacht op goedkeuring' : 'Opslaan'}
               </button>
             </>
           )}

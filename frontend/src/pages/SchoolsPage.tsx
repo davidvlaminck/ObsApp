@@ -7,9 +7,13 @@ import {
   getMe,
   getSchoolYears,
   getSchools,
+  getPendingMembers,
+  approvePendingMember,
+  rejectPendingMember,
   SchoolResponse,
   SchoolYearResponse,
   UserResponse,
+  PendingMemberResponse,
 } from '../services/auth'
 
 const formatDate = (value: string) => {
@@ -56,6 +60,10 @@ export default function SchoolsPage() {
   const [yearOpen, setYearOpen] = useState(false)
   const [canManageYears, setCanManageYears] = useState(false)
 
+  const [pendingMembers, setPendingMembers] = useState<PendingMemberResponse[]>([])
+  const [pendingLoading, setPendingLoading] = useState(false)
+  const [pendingActionId, setPendingActionId] = useState<number | null>(null)
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -93,6 +101,25 @@ export default function SchoolsPage() {
       }
     }
     loadYears()
+  }, [selectedSchoolId])
+
+  useEffect(() => {
+    if (!selectedSchoolId) {
+      setPendingMembers([])
+      return
+    }
+    const loadPending = async () => {
+      setPendingLoading(true)
+      try {
+        const pending = await getPendingMembers(selectedSchoolId)
+        setPendingMembers(pending)
+      } catch {
+        setPendingMembers([])
+      } finally {
+        setPendingLoading(false)
+      }
+    }
+    loadPending()
   }, [selectedSchoolId])
 
   const handleCreateSchool = async (event: FormEvent<HTMLFormElement>) => {
@@ -156,6 +183,38 @@ export default function SchoolsPage() {
       }
     } catch (err) {
       setError(getErrorMessage(err, 'Kan schooljaar niet activeren.'))
+    }
+  }
+
+  const handleApprove = async (userId: number) => {
+    if (!selectedSchoolId) return
+    setPendingActionId(userId)
+    setError('')
+    setSuccess('')
+    try {
+      await approvePendingMember(selectedSchoolId, userId)
+      setSuccess('Lidmaatschap goedgekeurd.')
+      setPendingMembers((prev) => prev.filter((m) => m.id !== userId))
+    } catch (err) {
+      setError(getErrorMessage(err, 'Kan verzoek niet goedkeuren.'))
+    } finally {
+      setPendingActionId(null)
+    }
+  }
+
+  const handleReject = async (userId: number) => {
+    if (!selectedSchoolId) return
+    setPendingActionId(userId)
+    setError('')
+    setSuccess('')
+    try {
+      await rejectPendingMember(selectedSchoolId, userId)
+      setSuccess('Verzoek afgewezen.')
+      setPendingMembers((prev) => prev.filter((m) => m.id !== userId))
+    } catch (err) {
+      setError(getErrorMessage(err, 'Kan verzoek niet afwijzen.'))
+    } finally {
+      setPendingActionId(null)
     }
   }
 
@@ -411,6 +470,69 @@ export default function SchoolsPage() {
           )}
         </div>
       </section>
+
+      {selectedSchoolId && (
+        <section className="table-card" style={{ marginTop: '1.5rem' }}>
+          <div className="table-header">
+            <div>
+              <h2>Toegangsverzoeken</h2>
+              <p className="text-muted">
+                {pendingLoading ? 'Laden...' : `${pendingMembers.length} verzoek${pendingMembers.length !== 1 ? 'en' : ''} in behandeling`}
+              </p>
+            </div>
+          </div>
+
+          {pendingMembers.length === 0 ? (
+            <div className="empty-state">
+              <h2>Geen openstaande verzoeken</h2>
+              <p className="text-muted">Er zijn geen leerkrachten die wachten op toegang tot deze school.</p>
+            </div>
+          ) : (
+            <div className="table-wrapper">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Naam</th>
+                    <th>E-mail</th>
+                    <th>Koepel</th>
+                    <th>Acties</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingMembers.map((member) => (
+                    <tr key={member.id}>
+                      <td>
+                        <strong>{member.name}</strong>
+                      </td>
+                      <td>{member.email}</td>
+                      <td>{member.pending_koepel || '-'}</td>
+                      <td>
+                        <button
+                          className="btn btn-sm"
+                          type="button"
+                          onClick={() => handleApprove(member.id)}
+                          disabled={pendingActionId === member.id}
+                        >
+                          {pendingActionId === member.id ? 'Bezig...' : 'Toelaten'}
+                        </button>
+                        <button
+                          className="btn btn-sm"
+                          type="button"
+                          onClick={() => handleReject(member.id)}
+                          disabled={pendingActionId === member.id}
+                          style={{ marginLeft: '0.5rem' }}
+                        >
+                          Afwijzen
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   )
 }

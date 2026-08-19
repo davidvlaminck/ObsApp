@@ -22,6 +22,7 @@
   overflow-y: auto;
   margin: 0;
   border-radius: var(--md-radius-lg);
+  background: var(--md-surface);
 }
 
 .preview-actions {

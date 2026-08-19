@@ -69,6 +69,7 @@ def seed_school_and_admin():
             slug="demo-school",
             is_active=True,
             koepel_id=kov.id if kov else None,
+            koepel=kov.slug if kov else None,
         )
         db.add(school)
         db.commit()

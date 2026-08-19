@@ -33,3 +33,6 @@ class UserResponse(BaseModel):
     name: str
     school_id: int | None = None
     needs_koepel_selection: bool = False
+    membership_pending: bool = False
+    pending_koepel: str | None = None
+    pending_school_id: int | None = None

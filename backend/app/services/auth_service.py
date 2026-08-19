@@ -24,6 +24,9 @@ class AuthService:
         if user.is_demo and not user.demo_school_id:
             return True
 
+        if user.membership_pending:
+            return True
+
         school_id = user.demo_school_id if user.is_demo else user.school_id
         if not school_id:
             return True

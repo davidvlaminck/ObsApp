@@ -62,6 +62,13 @@ class UserRepository:
     def get_all(self) -> list[User]:
         return self.db.query(User).all()
 
+    def get_pending_members(self, school_id: int) -> list[User]:
+        return (
+            self.db.query(User)
+            .filter(User.membership_pending, User.pending_school_id == school_id, User.pending_koepel.isnot(None))
+            .all()
+        )
+
     def _parse_status_colors(self, user: User) -> dict[str, str] | None:
         if not user.status_colors:
             return None
@@ -87,6 +94,9 @@ class UserRepository:
             color_theme=user.color_theme or "teal",
             needs_koepel_selection=needs_koepel_selection,
             status_colors=self._parse_status_colors(user),
+            membership_pending=user.membership_pending,
+            pending_koepel=user.pending_koepel,
+            pending_school_id=user.pending_school_id,
         )
 
     def update_color_theme(self, user_id: int, color_theme: str) -> User:

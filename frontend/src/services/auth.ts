@@ -68,6 +68,9 @@ export interface UserResponse {
   color_theme: string
   needs_koepel_selection: boolean
   status_colors: Record<string, string> | null
+  membership_pending: boolean
+  pending_koepel: string | null
+  pending_school_id: number | null
 }
 
 export async function login(data: LoginRequest): Promise<TokenResponse> {
@@ -312,6 +315,28 @@ export async function resetDemo(): Promise<UserResponse> {
 
 export async function getMySchool(): Promise<SchoolResponse | null> {
   const response = await api.get<SchoolResponse | null>('/auth/my-school')
+  return response.data
+}
+
+export interface PendingMemberResponse {
+  id: number
+  email: string
+  name: string
+  pending_koepel: string | null
+}
+
+export async function getPendingMembers(schoolId: number): Promise<PendingMemberResponse[]> {
+  const response = await api.get<PendingMemberResponse[]>(`/auth/schools/${schoolId}/pending-members`)
+  return response.data
+}
+
+export async function approvePendingMember(schoolId: number, userId: number): Promise<UserResponse> {
+  const response = await api.post<UserResponse>(`/auth/schools/${schoolId}/pending-members/${userId}/approve`)
+  return response.data
+}
+
+export async function rejectPendingMember(schoolId: number, userId: number): Promise<UserResponse> {
+  const response = await api.post<UserResponse>(`/auth/schools/${schoolId}/pending-members/${userId}/reject`)
   return response.data
 }
 

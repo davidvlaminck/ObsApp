@@ -228,7 +228,7 @@ def test_reset_demo_success(client: TestClient):
 
 
 def test_select_koepel_with_school_for_regular_user(client: TestClient):
-    """Test that regular user can select koepel with an existing school."""
+    """Test that regular user selecting koepel with a school creates a pending request."""
     import uuid
 
     from app.core.database import SessionLocal
@@ -284,12 +284,16 @@ def test_select_koepel_with_school_for_regular_user(client: TestClient):
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["school_id"] == school_id
-    assert data["needs_koepel_selection"] is False
+    assert data["membership_pending"] is True
+    assert data["pending_koepel"] == "test-koepel"
+    assert data["school_id"] is None
 
     db = SessionLocal()
     try:
         updated_school = db.query(School).filter(School.id == school_id).first()
-        assert updated_school.koepel == "test-koepel"
+        assert updated_school.koepel is None
+        updated_user = db.query(User).filter(User.email == unique_email).first()
+        assert updated_user.membership_pending is True
+        assert updated_user.school_id is None
     finally:
         db.close()
