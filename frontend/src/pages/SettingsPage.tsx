@@ -154,6 +154,14 @@ export default function SettingsPage() {
           >
             Herstellen naar opgeslagen
           </button>
+          <button
+            className="btn btn-outline"
+            type="button"
+            onClick={handleResetToDefaults}
+            disabled={saving}
+          >
+            Standaardwaarden
+          </button>
         </div>
       </section>
     </div>
