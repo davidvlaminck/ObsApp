@@ -28,6 +28,13 @@ import {
   type StudentObservationResponse,
   type StudentObservationStatusResponse,
 } from '../services/observations'
+import {
+  useColorTheme,
+  lightenColor,
+  darkenColor,
+  getContrastColor,
+  DEFAULT_STATUS_COLORS,
+} from '../hooks/useTheme'
 
 type ObservationForm = {
   status: ObservationStatus | 'geen_observatie' | ''
@@ -54,38 +61,44 @@ type GoalModalState = {
 
 const today = new Date().toLocaleDateString('en-CA')
 
-const statusOptions: Array<{ value: ObservationStatus | 'geen_observatie'; label: string; description: string; color: string }> = [
-  {
-    value: 'onvoldoende',
-    label: 'Onvoldoende',
-    description: 'De kleuter bereikt het doel nog niet.',
-    color: 'red',
-  },
-  {
-    value: 'in_ontwikkeling',
-    label: 'In ontwikkeling',
-    description: 'De kleuter is bezig het doel onder de knie te krijgen.',
-    color: 'orange',
-  },
-  {
-    value: 'voldoende',
-    label: 'Voldoende',
-    description: 'De kleuter kan het doel voldoende toepassen.',
-    color: 'green',
-  },
-  {
-    value: 'voorsprong',
-    label: 'Voorsprong in ontwikkeling',
-    description: 'De kleuter gaat verder dan het verwachte niveau.',
-    color: 'blue',
-  },
-  {
-    value: 'geen_observatie',
-    label: 'Geen observatie',
-    description: 'Verwijder de observatie van vandaag.',
-    color: 'white',
-  },
+const STATUS_OPTIONS: Array<{ value: ObservationStatus | 'geen_observatie'; label: string; description: string }> = [
+  { value: 'onvoldoende', label: 'Onvoldoende', description: 'De kleuter bereikt het doel nog niet.' },
+  { value: 'in_ontwikkeling', label: 'In ontwikkeling', description: 'De kleuter is bezig het doel onder de knie te krijgen.' },
+  { value: 'voldoende', label: 'Voldoende', description: 'De kleuter kan het doel voldoende toepassen.' },
+  { value: 'voorsprong', label: 'Voorsprong in ontwikkeling', description: 'De kleuter gaat verder dan het verwachte niveau.' },
+  { value: 'geen_observatie', label: 'Geen observatie', description: 'Verwijder de observatie van vandaag.' },
 ]
+
+const getStatusColor = (statusColors: Record<string, string>, status?: ObservationStatus) => {
+  if (!status) return '#f5f5f5'
+  return statusColors[status] ?? '#f5f5f5'
+}
+
+const getStatusCellStyle = (statusColors: Record<string, string>, status?: ObservationStatus) => {
+  const color = getStatusColor(statusColors, status)
+  const textColor = getContrastColor(color)
+  return {
+    backgroundColor: color,
+    borderColor: darkenColor(color, 0.2),
+    color: textColor,
+  }
+}
+
+const getBulkStatusStyle = (statusColors: Record<string, string>, statusKey: string, isActive: boolean) => {
+  const color = statusColors[statusKey] ?? DEFAULT_STATUS_COLORS[statusKey] ?? '#888888'
+  if (isActive) {
+    return {
+      background: color,
+      color: '#ffffff',
+      borderColor: 'transparent',
+    }
+  }
+  return {
+    backgroundColor: lightenColor(color, 0.85),
+    borderColor: darkenColor(color, 0.3),
+    color: darkenColor(color, 0.4),
+  }
+}
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   const axiosError = error as AxiosError<{ detail?: string }>
@@ -120,19 +133,6 @@ const getStudentObservationLabel = (status?: ObservationStatus) => {
   }
 }
 
-const statusColors: Record<ObservationStatus, string> = {
-  onvoldoende: '#ef5350',
-  in_ontwikkeling: '#ff9800',
-  voldoende: '#66bb6a',
-  voorsprong: '#42a5f5',
-  geen_observatie: '#9ca3af',
-}
-
-const getStatusColor = (status?: ObservationStatus) => {
-  if (!status) return '#f5f5f5'
-  return statusColors[status] ?? '#f5f5f5'
-}
-
 const isObservationNewer = (a: StudentObservationResponse, b: StudentObservationStatusResponse) => {
   const dateComparison = a.observation_date.localeCompare(b.observation_date)
   if (dateComparison !== 0) return dateComparison > 0
@@ -141,6 +141,7 @@ const isObservationNewer = (a: StudentObservationResponse, b: StudentObservation
 }
 
 export default function ObservingPage() {
+  const { statusColors } = useColorTheme()
   const [user, setUser] = useState<UserResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [classes, setClasses] = useState<ClassResponse[]>([])
@@ -805,13 +806,14 @@ export default function ObservingPage() {
                 </button>
                 {bulkMode && (
                   <div className="bulk-status-selector">
-                    {statusOptions.map((status) => (
+                    {STATUS_OPTIONS.map((status) => (
                       <button
                         key={status.value}
                         type="button"
-                        className={`bulk-status-btn ${status.color === 'white' ? 'bulk-status-white' : `bulk-status-${status.color}`} ${bulkStatus === status.value ? 'active' : ''}`}
+                        className={`bulk-status-btn ${bulkStatus === status.value ? 'active' : ''}`}
                         onClick={() => setBulkStatus(status.value)}
                         disabled={bulkSaving}
+                        style={getBulkStatusStyle(statusColors, status.value, bulkStatus === status.value)}
                       >
                         {status.label}
                       </button>
@@ -877,6 +879,7 @@ export default function ObservingPage() {
                                 <button
                                   type="button"
                                   className={`observation-cell ${isToday && observation ? `status-${observation.status}` : 'no-observation'} ${bulkMode && bulkStatus ? 'bulk-clickable' : ''}`}
+                                  style={isToday && observation ? getStatusCellStyle(statusColors, observation.status) : undefined}
                                   onClick={() =>
                                     bulkMode && bulkStatus
                                       ? handleBulkStudentClick(student, goal)
@@ -892,7 +895,7 @@ export default function ObservingPage() {
                                   {pastObservation && (
                                     <span
                                       className="observation-date-indicator"
-                                      style={{ backgroundColor: getStatusColor(pastObservation.status) }}
+                                      style={{ backgroundColor: getStatusColor(statusColors, pastObservation.status) }}
                                     />
                                   )}
                                 </button>
@@ -1098,21 +1101,34 @@ export default function ObservingPage() {
             <div className="form-group">
               <label>Status</label>
               <div className="status-options">
-                {statusOptions.map((status) => (
-                  <label key={status.value} className={`status-option ${status.color} ${form.status === status.value ? 'selected' : ''}`}>
-                    <input
-                      type="radio"
-                      name="observation-status"
-                      value={status.value}
-                      checked={form.status === status.value}
-                      onChange={() => setForm((current) => ({ ...current, status: status.value }))}
-                    />
-                    <span>
-                      <strong>{status.label}</strong>
-                      <small>{status.description}</small>
-                    </span>
-                  </label>
-                ))}
+                {STATUS_OPTIONS.map((status) => {
+                  const statusColor = status.value === 'geen_observatie'
+                    ? '#9ca3af'
+                    : statusColors[status.value] ?? DEFAULT_STATUS_COLORS[status.value] ?? '#888888'
+                  const textColor = getContrastColor(statusColor)
+                  return (
+                    <label
+                      key={status.value}
+                      className={`status-option ${form.status === status.value ? 'selected' : ''}`}
+                      style={{
+                        borderLeftColor: statusColor,
+                        ...(form.status === status.value ? { backgroundColor: lightenColor(statusColor, 0.9) } : {}),
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="observation-status"
+                        value={status.value}
+                        checked={form.status === status.value}
+                        onChange={() => setForm((current) => ({ ...current, status: status.value }))}
+                      />
+                      <span style={{ color: form.status === status.value ? textColor : undefined }}>
+                        <strong>{status.label}</strong>
+                        <small>{status.description}</small>
+                      </span>
+                    </label>
+                  )
+                })}
               </div>
             </div>
 

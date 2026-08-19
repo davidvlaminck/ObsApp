@@ -1,9 +1,19 @@
+import json
+
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.schemas.user import UserResponse
+
+
+DEFAULT_STATUS_COLORS: dict[str, str] = {
+    "onvoldoende": "#ef5350",
+    "in_ontwikkeling": "#ff9800",
+    "voldoende": "#66bb6a",
+    "voorsprong": "#42a5f5",
+}
 
 
 class UserRepository:
@@ -52,8 +62,15 @@ class UserRepository:
     def get_all(self) -> list[User]:
         return self.db.query(User).all()
 
+    def _parse_status_colors(self, user: User) -> dict[str, str] | None:
+        if not user.status_colors:
+            return None
+        try:
+            return json.loads(user.status_colors)
+        except (json.JSONDecodeError, TypeError):
+            return None
+
     def to_response(self, user: User, needs_koepel_selection: bool = False) -> UserResponse:
-        # For demo users, return demo_school_id as school_id for API compatibility
         effective_school_id = user.demo_school_id if user.is_demo else user.school_id
         return UserResponse(
             id=user.id,
@@ -69,6 +86,7 @@ class UserRepository:
             default_class_id=user.default_class_id,
             color_theme=user.color_theme or "teal",
             needs_koepel_selection=needs_koepel_selection,
+            status_colors=self._parse_status_colors(user),
         )
 
     def update_color_theme(self, user_id: int, color_theme: str) -> User:
@@ -76,6 +94,16 @@ class UserRepository:
         if not user:
             raise ValueError("Gebruiker niet gevonden")
         user.color_theme = color_theme
+        self.db.add(user)
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def update_status_colors(self, user_id: int, status_colors: dict[str, str] | None) -> User:
+        user = self.get_by_id(user_id)
+        if not user:
+            raise ValueError("Gebruiker niet gevonden")
+        user.status_colors = json.dumps(status_colors) if status_colors else None
         self.db.add(user)
         self.db.commit()
         self.db.refresh(user)

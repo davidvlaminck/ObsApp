@@ -3,8 +3,10 @@ import { render, screen, fireEvent, act } from '@testing-library/react'
 
 import { ColorThemeProvider, useColorTheme } from '../hooks/useTheme'
 
+const mockGetUserSettings = vi.fn()
 const mockUpdateUserSettings = vi.fn()
 vi.mock('../services/auth', () => ({
+  getUserSettings: (data: unknown) => mockGetUserSettings(data),
   updateUserSettings: (data: unknown) => mockUpdateUserSettings(data),
 }))
 
@@ -23,8 +25,10 @@ const TestConsumer = () => {
 
 beforeEach(() => {
   localStorage.clear()
+  mockGetUserSettings.mockClear()
+  mockGetUserSettings.mockResolvedValue({ color_theme: 'teal', status_colors: null })
   mockUpdateUserSettings.mockClear()
-  mockUpdateUserSettings.mockResolvedValue({ color_theme: 'teal' })
+  mockUpdateUserSettings.mockResolvedValue({ color_theme: 'teal', status_colors: null })
 })
 
 describe('useColorTheme', () => {

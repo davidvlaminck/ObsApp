@@ -12,14 +12,10 @@ import {
   type OverviewResponse,
   type StudentObservationResponse,
 } from '../services/observations'
-
-const statusColors: Record<ObservationStatus, string> = {
-  onvoldoende: '#ef5350',
-  in_ontwikkeling: '#ff9800',
-  voldoende: '#66bb6a',
-  voorsprong: '#42a5f5',
-  geen_observatie: '#9ca3af',
-}
+import {
+  useColorTheme,
+  darkenColor,
+} from '../hooks/useTheme'
 
 const statusLabels: Record<ObservationStatus, string> = {
   onvoldoende: 'Onvoldoende',
@@ -29,9 +25,17 @@ const statusLabels: Record<ObservationStatus, string> = {
   geen_observatie: 'Geen observatie',
 }
 
-const getStatusColor = (status?: ObservationStatus) => {
+const getStatusColor = (statusColors: Record<string, string>, status?: ObservationStatus) => {
   if (!status) return '#f5f5f5'
   return statusColors[status] ?? '#f5f5f5'
+}
+
+const getStudentChipStyle = (statusColors: Record<string, string>, status?: ObservationStatus) => {
+  const color = getStatusColor(statusColors, status)
+  return {
+    backgroundColor: color,
+    borderColor: darkenColor(color, 0.2),
+  }
 }
 
 const formatDate = (value: string) => {
@@ -56,6 +60,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 }
 
 export default function StudentOverviewPage() {
+  const { statusColors } = useColorTheme()
   const [user, setUser] = useState<UserResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [classes, setClasses] = useState<ClassResponse[]>([])
@@ -438,7 +443,7 @@ export default function StudentOverviewPage() {
                     <td className="observation-status-cell">
                       <span
                         className="overview-status-chip observation-status-square"
-                        style={{ backgroundColor: getStatusColor(latest.status) }}
+                        style={getStudentChipStyle(statusColors, latest.status)}
                         title={statusLabels[latest.status]}
                         onClick={() => setPopoverTarget(latest)}
                       />
@@ -451,7 +456,7 @@ export default function StudentOverviewPage() {
                           <span
                             key={obs.id}
                             className="observation-evolution-chip"
-                            style={{ backgroundColor: getStatusColor(obs.status) }}
+                            style={getStudentChipStyle(statusColors, obs.status)}
                             title={statusLabels[obs.status]}
                             onClick={() => setPopoverTarget(obs)}
                           />

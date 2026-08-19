@@ -131,3 +131,90 @@ def test_update_settings_default_when_none():
         db.close()
         Base.metadata.drop_all(bind=db.bind)
         db.bind.dispose()
+
+
+def test_get_settings_returns_status_colors():
+    db = _make_db()
+    try:
+        _seed_user(db, color_theme="teal")
+        with _setup(db) as client:
+            response = client.get("/api/user-settings")
+            assert response.status_code == 200
+            assert response.json()["status_colors"] is None
+    finally:
+        db.close()
+        Base.metadata.drop_all(bind=db.bind)
+        db.bind.dispose()
+
+
+def test_update_status_colors_success():
+    db = _make_db()
+    try:
+        _seed_user(db, color_theme="teal")
+        with _setup(db) as client:
+            response = client.put(
+                "/api/user-settings",
+                json={"status_colors": {"onvoldoende": "#ff0000", "voldoende": "#00ff00"}},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["status_colors"]["onvoldoende"] == "#ff0000"
+            assert data["status_colors"]["voldoende"] == "#00ff00"
+            assert data["status_colors"]["in_ontwikkeling"] == "#ff9800"
+    finally:
+        db.close()
+        Base.metadata.drop_all(bind=db.bind)
+        db.bind.dispose()
+
+
+def test_update_status_colors_invalid_hex():
+    db = _make_db()
+    try:
+        _seed_user(db, color_theme="teal")
+        with _setup(db) as client:
+            response = client.put(
+                "/api/user-settings",
+                json={"status_colors": {"onvoldoende": "not-a-hex"}},
+            )
+            assert response.status_code == 400
+            assert "not-a-hex" in response.json()["detail"]
+    finally:
+        db.close()
+        Base.metadata.drop_all(bind=db.bind)
+        db.bind.dispose()
+
+
+def test_update_status_colors_invalid_key():
+    db = _make_db()
+    try:
+        _seed_user(db, color_theme="teal")
+        with _setup(db) as client:
+            response = client.put(
+                "/api/user-settings",
+                json={"status_colors": {"invalid_status": "#ff0000"}},
+            )
+            assert response.status_code == 400
+            assert "invalid_status" in response.json()["detail"]
+    finally:
+        db.close()
+        Base.metadata.drop_all(bind=db.bind)
+        db.bind.dispose()
+
+
+def test_update_status_colors_and_theme_together():
+    db = _make_db()
+    try:
+        _seed_user(db, color_theme="teal")
+        with _setup(db) as client:
+            response = client.put(
+                "/api/user-settings",
+                json={"color_theme": "ocean", "status_colors": {"voorsprong": "#0000ff"}},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["color_theme"] == "ocean"
+            assert data["status_colors"]["voorsprong"] == "#0000ff"
+    finally:
+        db.close()
+        Base.metadata.drop_all(bind=db.bind)
+        db.bind.dispose()

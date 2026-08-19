@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -28,10 +29,12 @@ class UserResponse(BaseModel):
     default_class_id: int | None = None
     color_theme: str = "teal"
     needs_koepel_selection: bool = False
+    status_colors: dict[str, str] | None = None
 
 
 class UserSettingsResponse(BaseModel):
     color_theme: str = "teal"
+    status_colors: dict[str, str] | None = None
 
     class Config:
         from_attributes = True
@@ -39,3 +42,4 @@ class UserSettingsResponse(BaseModel):
 
 class UserSettingsUpdate(BaseModel):
     color_theme: str | None = Field(default=None, min_length=1, max_length=50)
+    status_colors: dict[str, str] | None = Field(default=None)

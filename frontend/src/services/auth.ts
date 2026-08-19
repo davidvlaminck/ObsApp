@@ -67,6 +67,7 @@ export interface UserResponse {
   default_class_id: number | null
   color_theme: string
   needs_koepel_selection: boolean
+  status_colors: Record<string, string> | null
 }
 
 export async function login(data: LoginRequest): Promise<TokenResponse> {
@@ -457,10 +458,12 @@ export function clearToken() {
 
 export interface UserSettingsResponse {
   color_theme: string
+  status_colors: Record<string, string> | null
 }
 
 export interface UserSettingsUpdate {
-  color_theme: string | null
+  color_theme?: string | null
+  status_colors?: Record<string, string> | null
 }
 
 export async function getUserSettings(): Promise<UserSettingsResponse> {

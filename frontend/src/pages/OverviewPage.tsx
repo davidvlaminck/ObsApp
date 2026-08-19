@@ -18,18 +18,22 @@ import {
   type ObservationStatus,
   type StudentObservationResponse,
 } from '../services/observations'
+import {
+  useColorTheme,
+  darkenColor,
+} from '../hooks/useTheme'
 
-const statusColors: Record<ObservationStatus, string> = {
-  onvoldoende: '#ef5350',
-  in_ontwikkeling: '#ff9800',
-  voldoende: '#66bb6a',
-  voorsprong: '#42a5f5',
-  geen_observatie: '#9ca3af',
-}
-
-const getStatusColor = (status?: ObservationStatus) => {
+const getStatusColor = (statusColors: Record<string, string>, status?: ObservationStatus) => {
   if (!status) return '#f5f5f5'
   return statusColors[status] ?? '#f5f5f5'
+}
+
+const getOverviewChipStyle = (statusColors: Record<string, string>, status?: ObservationStatus) => {
+  const color = getStatusColor(statusColors, status)
+  return {
+    backgroundColor: color,
+    borderColor: darkenColor(color, 0.2),
+  }
 }
 
 const isObservationNewer = (a: StudentObservationResponse, b: StudentObservationResponse) => {
@@ -57,6 +61,7 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 }
 
 export default function OverviewPage() {
+  const { statusColors } = useColorTheme()
   const [user, setUser] = useState<UserResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [classes, setClasses] = useState<ClassResponse[]>([])
@@ -345,7 +350,7 @@ export default function OverviewPage() {
                         <td key={student.id} className="overview-cell-status">
                           <span
                             className={`overview-status-chip ${hasComment ? 'has-comment' : ''}`}
-                            style={{ backgroundColor: getStatusColor(status?.status) }}
+                            style={getOverviewChipStyle(statusColors, status?.status)}
                             onClick={() => {
                               if (hasComment) {
                                 setCommentTarget(

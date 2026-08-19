@@ -515,30 +515,6 @@
   transform: translateY(-2px);
 }
 
-.observation-cell.status-onvoldoende {
-  background-color: var(--md-error-light);
-  border-color: #fca5a5;
-  color: #c92a2a;
-}
-
-.observation-cell.status-in_ontwikkeling {
-  background-color: var(--md-warning-light);
-  border-color: #fcd34d;
-  color: #b45309;
-}
-
-.observation-cell.status-voldoende {
-  background-color: var(--md-success-light);
-  border-color: #86efac;
-  color: #15803d;
-}
-
-.observation-cell.status-voorsprong {
-  background-color: #e3f2fd;
-  border-color: #90caf9;
-  color: #1565c0;
-}
-
 .observation-cell.no-observation {
   background-color: #ffffff;
   border-color: #d1d5db;

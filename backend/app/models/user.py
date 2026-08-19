@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -22,6 +24,7 @@ class User(Base):
     demo_school_id = Column(Integer, ForeignKey("schools.id"), nullable=True)
     default_class_id = Column(Integer, ForeignKey("classes.id"), nullable=True)
     color_theme = Column(String, nullable=False, default="teal")
+    status_colors = Column(String, nullable=True)
 
     school = relationship("School", back_populates="users", foreign_keys=[school_id])
     demo_school = relationship("School", foreign_keys=[demo_school_id])
