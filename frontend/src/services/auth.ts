@@ -21,6 +21,9 @@ export interface SchoolResponse {
   slug: string
   is_active: boolean
   created_at: string | null
+  address: string | null
+  postal_code: string | null
+  city: string | null
 }
 
 export interface SchoolYearResponse {
@@ -78,6 +81,11 @@ export async function getMe(): Promise<UserResponse> {
 
 export async function getSchools(): Promise<SchoolResponse[]> {
   const response = await api.get<SchoolResponse[]>('/schools')
+  return response.data
+}
+
+export async function searchSchools(query: string): Promise<SchoolResponse[]> {
+  const response = await api.get<SchoolResponse[]>('/register/search-schools', { params: { q: query } })
   return response.data
 }
 
@@ -291,8 +299,8 @@ export async function getKoepels(): Promise<KoepelResponse[]> {
   return response.data
 }
 
-export async function selectKoepel(koepel: string, class_type?: string): Promise<UserResponse> {
-  const response = await api.post<UserResponse>('/auth/select-koepel', { koepel, class_type })
+export async function selectKoepel(koepel: string, school_id?: number, class_type?: string): Promise<UserResponse> {
+  const response = await api.post<UserResponse>('/auth/select-koepel', { koepel, school_id, class_type })
   return response.data
 }
 

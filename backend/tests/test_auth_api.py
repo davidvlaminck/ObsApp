@@ -156,7 +156,6 @@ def test_reset_demo_success(client: TestClient):
     
     db = SessionLocal()
     try:
-        # Create a demo user
         user = User(
             email=unique_email,
             hashed_password=get_password_hash("password"),
@@ -168,7 +167,6 @@ def test_reset_demo_success(client: TestClient):
         db.commit()
         db.refresh(user)
 
-        # Create a demo school
         demo_school = School(
             name="Demo School",
             slug=f"demo-school-{uuid.uuid4().hex[:8]}",
@@ -179,11 +177,9 @@ def test_reset_demo_success(client: TestClient):
         db.commit()
         db.refresh(demo_school)
 
-        # Link user to demo school
         user.demo_school_id = demo_school.id
         db.commit()
 
-        # Create school year, class, and student
         school_year = SchoolYear(
             school_id=demo_school.id,
             name="2026-2027",
@@ -211,24 +207,89 @@ def test_reset_demo_success(client: TestClient):
     finally:
         db.close()
 
-    # Login to get token
     login_response = client.post(
         "/api/auth/login",
         json={"email": unique_email, "password": "password"},
     )
     token = login_response.json()["access_token"]
 
-    # Reset demo
     response = client.post(
         "/api/auth/reset-demo",
         headers={"Authorization": f"Bearer {token}"},
     )
     assert response.status_code == 200
 
-    # Verify user's demo_school_id is cleared
     db = SessionLocal()
     try:
         updated_user = db.query(User).filter(User.email == unique_email).first()
         assert updated_user.demo_school_id is None
+    finally:
+        db.close()
+
+
+def test_select_koepel_with_school_for_regular_user(client: TestClient):
+    """Test that regular user can select koepel with an existing school."""
+    import uuid
+
+    from app.core.database import SessionLocal
+    from app.models.school import School
+    from app.models.koepel import Koepel
+
+    unique_email = f"teacher_{uuid.uuid4().hex[:8]}@example.com"
+    
+    db = SessionLocal()
+    try:
+        user = User(
+            email=unique_email,
+            hashed_password=get_password_hash("password"),
+            name="Teacher",
+            is_active=True,
+            is_demo=False,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+
+        school = School(
+            name="Selectie School",
+            slug=f"selectie-school-{uuid.uuid4().hex[:8]}",
+            is_active=True,
+        )
+        db.add(school)
+        db.commit()
+        db.refresh(school)
+        school_id = school.id
+
+        koepel = Koepel(
+            name="Test Koepel",
+            slug="test-koepel",
+            is_active=True,
+        )
+        db.add(koepel)
+        db.commit()
+        db.refresh(koepel)
+    finally:
+        db.close()
+
+    login_response = client.post(
+        "/api/auth/login",
+        json={"email": unique_email, "password": "password"},
+    )
+    token = login_response.json()["access_token"]
+
+    response = client.post(
+        "/api/auth/select-koepel",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"koepel": "test-koepel", "school_id": school_id},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["school_id"] == school_id
+    assert data["needs_koepel_selection"] is False
+
+    db = SessionLocal()
+    try:
+        updated_school = db.query(School).filter(School.id == school_id).first()
+        assert updated_school.koepel == "test-koepel"
     finally:
         db.close()

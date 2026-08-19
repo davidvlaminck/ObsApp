@@ -25,30 +25,30 @@ def client():
 
 def test_register_demo_success(client: TestClient):
     """Test successful demo registration."""
+    import uuid
+
+    unique_email = f"demo_{uuid.uuid4().hex[:8]}@example.com"
     response = client.post(
         "/api/register/demo",
-        json={"email": "demo@example.com", "name": "Demo User", "koepel": "KOOPPEL1"},
+        json={"email": unique_email, "name": "Demo User"},
     )
     assert response.status_code == 201
     data = response.json()
-    assert data["email"] == "demo@example.com"
+    assert data["email"] == unique_email
     assert data["name"] == "Demo User"
     assert data["is_demo"] is True
     assert data["is_pending"] is True
-    # Demo school is not created yet - it will be created after koepel selection
     assert data["demo_school_id"] is None
     assert data["demo_expires_at"] is not None
 
 
 def test_register_demo_duplicate_email(client: TestClient):
     """Test demo registration with duplicate email fails."""
-    # First registration
     client.post(
         "/api/register/demo",
         json={"email": "duplicate@example.com", "name": "User 1"},
     )
 
-    # Second registration with same email
     response = client.post(
         "/api/register/demo",
         json={"email": "duplicate@example.com", "name": "User 2"},
@@ -57,8 +57,20 @@ def test_register_demo_duplicate_email(client: TestClient):
     assert "bestaat al" in response.json()["detail"]
 
 
+def test_register_regular_without_school(client: TestClient):
+    """Test regular registration without school succeeds (school selected during onboarding)."""
+    response = client.post(
+        "/api/register/regular",
+        json={"email": "noschool@example.com", "name": "No School User"},
+    )
+    assert response.status_code == 201
+    data = response.json()
+    assert data["email"] == "noschool@example.com"
+    assert data["school_id"] is None
+
+
 def test_register_regular_with_school_name(client: TestClient):
-    """Test regular registration with custom school name."""
+    """Test regular registration with custom school name still works."""
     response = client.post(
         "/api/register/regular",
         json={"email": "customschool@example.com", "name": "Custom School User", "school_name": "Mijn School"},
@@ -69,19 +81,59 @@ def test_register_regular_with_school_name(client: TestClient):
     assert data["school_id"] is not None
 
 
-def test_register_regular_no_school(client: TestClient):
-    """Test regular registration without school fails."""
-    response = client.post(
-        "/api/register/regular",
-        json={"email": "noschool@example.com", "name": "No School User"},
-    )
-    assert response.status_code == 400
-    assert "school" in response.json()["detail"].lower()
-
-
 def test_get_scholen(client: TestClient):
     """Test getting school list from Vlaanderen API."""
     response = client.get("/api/register/schools")
-    # This may return empty list if API is unavailable, but should not error
     assert response.status_code == 200
     assert isinstance(response.json(), list)
+
+
+def test_search_schools_requires_min_chars(client: TestClient):
+    """Test that search requires at least 2 characters."""
+    response = client.get("/api/register/search-schools?q=a")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_search_schools_empty_query(client: TestClient):
+    """Test that empty query returns empty results."""
+    response = client.get("/api/register/search-schools")
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_search_schools_matches(client: TestClient):
+    """Test that school search returns matching schools."""
+    import uuid
+    from app.core.database import SessionLocal
+    from app.models.school import School
+
+    db = SessionLocal()
+    try:
+        school = School(
+            name="Test School Alpha",
+            slug=f"test-school-{uuid.uuid4().hex[:8]}",
+            is_active=True,
+            address="Teststraat 1",
+            postal_code="1000",
+            city="Brussel",
+        )
+        db.add(school)
+        db.commit()
+        db.refresh(school)
+        school_id = school.id
+    finally:
+        db.close()
+
+    response = client.get("/api/register/search-schools?q=Alpha")
+    assert response.status_code == 200
+    results = response.json()
+    assert len(results) == 1
+    assert results[0]["id"] == school_id
+    assert results[0]["name"] == "Test School Alpha"
+
+    response = client.get("/api/register/search-schools?q=Teststraat")
+    assert response.status_code == 200
+    results = response.json()
+    assert len(results) == 1
+    assert results[0]["id"] == school_id

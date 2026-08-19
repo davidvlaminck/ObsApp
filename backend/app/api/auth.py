@@ -117,6 +117,7 @@ DEMO_CLASS_OBSERVATIONS = [
 
 class KoepelSelectRequest(BaseModel):
     koepel: str
+    school_id: int | None = None
     class_type: str | None = None  # "JK", "K2", or "K3" - defaults to "K3" for demo data
 
 
@@ -343,8 +344,8 @@ async def select_koepel(
         
         return service.user_repo.to_response(user)
     
-    # For regular users, use existing school
-    school_id = user.school_id
+    # For regular users, use existing school or selected school
+    school_id = payload.school_id or user.school_id
     
     if not school_id:
         raise HTTPException(
@@ -369,6 +370,11 @@ async def select_koepel(
     
     # Set the koepel
     school.koepel = payload.koepel
+    
+    # If user didn't have a school yet, link them now
+    if not user.school_id:
+        user.school_id = school.id
+    
     db.commit()
     
     return service.user_repo.to_response(user)

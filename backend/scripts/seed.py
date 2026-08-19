@@ -154,6 +154,18 @@ def seed_school_and_admin():
         print(f"Class created: {class_model.name}")
         print("Teacher user created: lieve@example.com / lieve")
         print("Admin user created: admin@example.com / admin")
+
+        no_school_user = User(
+            email="zonderschool@example.com",
+            hashed_password=get_password_hash("zonder"),
+            name="Zonder School",
+            is_superuser=False,
+            is_active=True,
+            school_id=None,
+        )
+        db.add(no_school_user)
+        db.commit()
+        print("User created: zonderschool@example.com / zonder (no school)")
     finally:
         db.close()
 

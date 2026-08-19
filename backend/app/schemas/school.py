@@ -15,6 +15,9 @@ class SchoolResponse(BaseModel):
     slug: str
     is_active: bool
     created_at: datetime | None = None
+    address: str | None = None
+    postal_code: str | None = None
+    city: str | None = None
 
 
 class SchoolYearCreate(BaseModel):

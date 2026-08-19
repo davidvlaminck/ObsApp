@@ -18,24 +18,20 @@ class AuthService:
         self.db = db
 
     def _needs_koepel_selection(self, user: User) -> bool:
-        """Check if user needs to select a koepel for their school."""
         if user.is_superuser:
             return False
-        
-        # For demo users without a demo_school_id, they need to select a koepel first
+
         if user.is_demo and not user.demo_school_id:
             return True
-        
-        # Determine which school to check
+
         school_id = user.demo_school_id if user.is_demo else user.school_id
         if not school_id:
-            return False
-        
-        # Check if the school exists and has no koepel set
+            return True
+
         school = self.db.query(School).filter(School.id == school_id).first()
         if not school:
-            return False
-        
+            return True
+
         return not school.koepel
 
     def authenticate_user(self, email: str, password: str) -> UserResponseSchema | None:

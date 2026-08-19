@@ -3,13 +3,15 @@ import uuid
 from datetime import date
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr, Field
+from sqlalchemy import or_
 
 from app.core.config import settings
 from app.core.database import get_db
 from app.models.school import School
 from app.models.school_year import Class, SchoolYear, Student
+from app.schemas.school import SchoolResponse
 from app.schemas.user import UserResponse
 from app.services.auth_service import AuthService
 from app.services.email_service import send_activation_email
@@ -61,6 +63,43 @@ def get_scholen():
     Documentatie: https://data-onderwijs.vlaanderen.be/onderwijsaanbod/lijst?n=1&hz=true&hs=111
     """
     return fetch_scholen_from_vlaanderen()
+
+
+@router.get("/search-schools", response_model=list[SchoolResponse])
+def search_schools(q: str = Query(default="", min_length=0), db=Depends(get_db)):
+    """
+    Search schools by name and/or address. Requires at least 2 characters.
+    """
+    if not q or len(q.strip()) < 2:
+        return []
+
+    pattern = f"%{q.strip()}%"
+    schools = (
+        db.query(School)
+        .filter(School.is_active == True)
+        .filter(
+            or_(
+                School.name.ilike(pattern),
+                School.address.ilike(pattern),
+            )
+        )
+        .order_by(School.name)
+        .limit(20)
+        .all()
+    )
+    return [
+        SchoolResponse(
+            id=s.id,
+            name=s.name,
+            slug=s.slug,
+            is_active=s.is_active,
+            created_at=s.created_at,
+            address=s.address,
+            postal_code=s.postal_code,
+            city=s.city,
+        )
+        for s in schools
+    ]
 
 
 class DemoRegisterRequest(BaseModel):
@@ -129,26 +168,23 @@ def register_regular(
             detail="Dit e-mailadres bestaat al",
         )
 
-    # Validate that either school_id or school_name is provided
+    # Validate that either school_id or school_name is provided (optional during registration, can be done during onboarding)
     if not payload.school_id and not payload.school_name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Selecteer een school of geef een andere school op",
-        )
+        school_id = None
+    else:
+        school_id = payload.school_id
 
-    school_id = payload.school_id
-
-    # If school_name is provided, create a new school
-    if payload.school_name:
-        school = School(
-            name=payload.school_name,
-            slug=f"school-{uuid.uuid4().hex[:8]}",
-            is_active=True,
-        )
-        db.add(school)
-        db.commit()
-        db.refresh(school)
-        school_id = school.id
+        # If school_name is provided, create a new school
+        if payload.school_name:
+            school = School(
+                name=payload.school_name,
+                slug=f"school-{uuid.uuid4().hex[:8]}",
+                is_active=True,
+            )
+            db.add(school)
+            db.commit()
+            db.refresh(school)
+            school_id = school.id
 
     # Create user
     user = user_repo.create(
