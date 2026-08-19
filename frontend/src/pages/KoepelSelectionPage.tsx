@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getKoepels, getMe, selectKoepel, searchSchools } from '../services/auth'
+import { clearToken, getKoepels, getMe, selectKoepel, searchSchools } from '../services/auth'
 import type { UserResponse, SchoolResponse } from '../services/auth'
 
 export default function KoepelSelectionPage() {
@@ -14,9 +14,15 @@ export default function KoepelSelectionPage() {
   const [schoolQuery, setSchoolQuery] = useState('')
   const [schoolResults, setSchoolResults] = useState<SchoolResponse[]>([])
   const [selectedSchoolId, setSelectedSchoolId] = useState<number | null>(null)
+  const [selectedSchool, setSelectedSchool] = useState<SchoolResponse | null>(null)
   const [searchingSchools, setSearchingSchools] = useState(false)
   const navigate = useNavigate()
   const searchTimerRef = useRef<number | null>(null)
+
+  const handleLogout = () => {
+    clearToken()
+    navigate('/login')
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -58,17 +64,23 @@ export default function KoepelSelectionPage() {
     }, 300)
   }
 
+  const handleSelectSchool = (school: SchoolResponse) => {
+    setSelectedSchoolId(school.id)
+    setSelectedSchool(school)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    if (!selectedKoepel) {
+    const schoolHasKoepel = Boolean(selectedSchool?.koepel)
+    if (!schoolHasKoepel && !selectedKoepel) {
       setError('Selecteer een koepel')
       return
     }
     setSubmitting(true)
     try {
       const user: UserResponse = await selectKoepel(
-        selectedKoepel,
+        selectedKoepel || selectedSchool?.koepel || '',
         selectedSchoolId || undefined,
         selectedClass,
       )
@@ -101,7 +113,25 @@ export default function KoepelSelectionPage() {
 
   return (
     <div className="center-container">
-      <div className="card">
+      <div className="card" style={{ position: 'relative' }}>
+        <button
+          type="button"
+          onClick={handleLogout}
+          style={{
+            position: 'absolute',
+            top: '1rem',
+            right: '1rem',
+            background: 'none',
+            border: '1px solid #d1d5db',
+            borderRadius: '0.375rem',
+            padding: '0.4rem 0.8rem',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            color: '#374151',
+          }}
+        >
+          Uitloggen
+        </button>
         <h1>Kies je school en koepel</h1>
         <p style={{ marginBottom: '1.5rem', color: '#6b7280' }}>
           Selecteer eerst je school, daarna de koepel en klas die bij je school horen.
@@ -159,7 +189,7 @@ export default function KoepelSelectionPage() {
                                 padding: '0.25rem 0.75rem',
                                 fontSize: '0.8rem',
                               }}
-                              onClick={() => setSelectedSchoolId(school.id)}
+                               onClick={() => handleSelectSchool(school)}
                             >
                               {selectedSchoolId === school.id ? 'Geselecteerd' : 'Kies'}
                             </button>
@@ -191,7 +221,8 @@ export default function KoepelSelectionPage() {
                   id="koepel"
                   value={selectedKoepel}
                   onChange={(e) => setSelectedKoepel(e.target.value)}
-                  required
+                  required={!selectedSchool?.koepel}
+                  disabled={Boolean(selectedSchool?.koepel)}
                   autoFocus={!needsSchoolSelection}
                 >
                   <option value="">-- Kies een koepel --</option>
@@ -201,6 +232,11 @@ export default function KoepelSelectionPage() {
                     </option>
                   ))}
                 </select>
+                {selectedSchool?.koepel && (
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#6b7280' }}>
+                    Deze school heeft al een koepel ingesteld.
+                  </p>
+                )}
               </div>
               {!isDemo && (
                 <div className="form-group">

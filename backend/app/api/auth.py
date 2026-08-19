@@ -117,7 +117,7 @@ DEMO_CLASS_OBSERVATIONS = [
 
 
 class KoepelSelectRequest(BaseModel):
-    koepel: str
+    koepel: str | None = None
     school_id: int | None = None
     class_type: str | None = None  # "JK", "K2", or "K3" - defaults to "K3" for demo data
 
@@ -315,7 +315,7 @@ async def select_koepel(
             .all()
         }
         
-        for goal_name, student_index, status, observation_date, comment in DEMO_CLASS_OBSERVATIONS:
+        for goal_name, student_index, observation_status, observation_date, comment in DEMO_CLASS_OBSERVATIONS:
             if student_index < len(students) and goal_name in observation_goals:
                 observation_goal = observation_goals[goal_name]
                 student = students[student_index]
@@ -325,7 +325,7 @@ async def select_koepel(
                         observation_goal_id=observation_goal.id,
                         student_id=student.id,
                         observed_by=user.id,
-                        status=status,
+                        status=observation_status,
                         observation_date=observation_date,
                         comment=comment,
                     )
@@ -362,41 +362,25 @@ async def select_koepel(
             detail="School niet gevonden",
         )
     
-    # Check if koepel is already set
-    if school.koepel:
+    # If user is already a member of this school, give direct access
+    if user.school_id == school_id:
+        if not school.koepel:
+            school.koepel = payload.koepel
+        db.commit()
+        db.refresh(user)
+        return service.user_repo.to_response(user)
+    
+    # User is not yet a member of this school - create pending request
+    if user.membership_pending:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Koepel is al ingesteld",
+            detail="Er is al een verzoek in behandeling",
         )
-    
-    # If user is requesting access to a different school, create pending request
-    if user.school_id and user.school_id != school_id:
-        if user.membership_pending:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Er is al een verzoek in behandeling",
-            )
-        user.membership_pending = True
-        user.pending_koepel = payload.koepel
-        user.pending_school_id = school_id
-        db.commit()
-        db.refresh(user)
-        return service.user_repo.to_response(user)
-    
-    # If user has no school yet, create pending request instead of direct link
-    if not user.school_id:
-        user.membership_pending = True
-        user.pending_koepel = payload.koepel
-        user.pending_school_id = school_id
-        db.commit()
-        db.refresh(user)
-        return service.user_repo.to_response(user)
-    
-    # User is an existing member of this school - set koepel directly
-    school.koepel = payload.koepel
-    
+    user.membership_pending = True
+    user.pending_koepel = payload.koepel
+    user.pending_school_id = school_id
     db.commit()
-    
+    db.refresh(user)
     return service.user_repo.to_response(user)
 
 

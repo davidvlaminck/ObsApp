@@ -50,6 +50,7 @@ export default function SchoolsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [schoolSearch, setSchoolSearch] = useState('')
 
   const [schoolForm, setSchoolForm] = useState({ name: '', slug: '', is_active: true })
   const [schoolSaving, setSchoolSaving] = useState(false)
@@ -64,6 +65,14 @@ export default function SchoolsPage() {
   const [pendingLoading, setPendingLoading] = useState(false)
   const [pendingActionId, setPendingActionId] = useState<number | null>(null)
 
+  const [showSearch, setShowSearch] = useState(false)
+
+  const filteredSchools = schools.filter((school) => {
+    if (!schoolSearch.trim()) return true
+    const query = schoolSearch.toLowerCase()
+    return school.name.toLowerCase().includes(query) || school.slug.toLowerCase().includes(query)
+  })
+
   useEffect(() => {
     const load = async () => {
       try {
@@ -72,6 +81,7 @@ export default function SchoolsPage() {
         setUser(me)
         const schoolsData = await getSchools()
         setSchools(schoolsData)
+        setShowSearch(me.is_superuser || schoolsData.length >= 5)
         if (me.school_id) {
           setSelectedSchoolId(me.school_id)
         }
@@ -247,7 +257,9 @@ export default function SchoolsPage() {
           <div className="table-header">
             <div>
               <h2>Scholen</h2>
-              <p className="text-muted">Alleen zichtbaar voor superusers.</p>
+              <p className="text-muted">
+                {isSuperuser ? 'Beheer alle scholen.' : 'Je eigen school.'}
+              </p>
             </div>
             {isSuperuser && (
               <div className="table-actions">
@@ -257,6 +269,21 @@ export default function SchoolsPage() {
               </div>
             )}
           </div>
+
+          {showSearch && (
+            <div style={{ marginBottom: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label htmlFor="school-search">Zoeken</label>
+                <input
+                  id="school-search"
+                  type="text"
+                  value={schoolSearch}
+                  onChange={(event) => setSchoolSearch(event.target.value)}
+                  placeholder="Zoek op naam of slug..."
+                />
+              </div>
+            </div>
+          )}
 
           {schoolOpen && isSuperuser && (
             <div className="card form-card">
@@ -301,10 +328,12 @@ export default function SchoolsPage() {
             </div>
           )}
 
-          {schools.length === 0 ? (
+          {filteredSchools.length === 0 ? (
             <div className="empty-state">
               <h2>Geen scholen gevonden</h2>
-              <p className="text-muted">Maak hierboven een nieuwe school aan.</p>
+              <p className="text-muted">
+                {schoolSearch ? 'Probeer een andere zoekterm.' : 'Je hebt nog geen school gekozen.'}
+              </p>
             </div>
           ) : (
             <div className="table-wrapper">
@@ -318,7 +347,7 @@ export default function SchoolsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {schools.map((school) => (
+                  {filteredSchools.map((school) => (
                     <tr key={school.id} className={selectedSchoolId === school.id ? 'row-selected' : ''}>
                       <td>
                         <strong>{school.name}</strong>

@@ -297,3 +297,182 @@ def test_select_koepel_with_school_for_regular_user(client: TestClient):
         assert updated_user.school_id is None
     finally:
         db.close()
+
+
+def test_pending_membership_approval_flow(client: TestClient):
+    """Test the full pending membership approval flow."""
+    import uuid
+
+    from app.core.database import SessionLocal
+    from app.models.school import School
+    from app.models.koepel import Koepel
+
+    # Create superuser and school
+    db = SessionLocal()
+    try:
+        admin = User(
+            email="admin-flow@example.com",
+            hashed_password=get_password_hash("admin"),
+            name="Admin Flow",
+            is_superuser=True,
+            is_active=True,
+        )
+        db.add(admin)
+
+        school = School(
+            name="Flow School",
+            slug=f"flow-school-{uuid.uuid4().hex[:8]}",
+            is_active=True,
+        )
+        db.add(school)
+        db.commit()
+        db.refresh(school)
+        school_id = school.id
+
+        koepel = Koepel(
+            name="Flow Koepel",
+            slug="flow-koepel",
+            is_active=True,
+        )
+        db.add(koepel)
+        db.commit()
+        db.refresh(koepel)
+    finally:
+        db.close()
+
+    # Helper to create a regular user
+    def create_user(email, password):
+        db = SessionLocal()
+        try:
+            user = User(
+                email=email,
+                hashed_password=get_password_hash(password),
+                name=email.split("@")[0].capitalize(),
+                is_active=True,
+                is_demo=False,
+            )
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            return user.id
+        finally:
+            db.close()
+
+    # Helper to login and return token
+    def login(email, password):
+        resp = client.post(
+            "/api/auth/login",
+            json={"email": email, "password": password},
+        )
+        assert resp.status_code == 200
+        return resp.json()["access_token"]
+
+    # Helper to request access to school
+    def request_access(token, school_id):
+        resp = client.post(
+            "/api/auth/select-koepel",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"koepel": "flow-koepel", "school_id": school_id},
+        )
+        return resp
+
+    # Helper to get pending members
+    def get_pending(token, school_id):
+        resp = client.get(
+            f"/api/auth/schools/{school_id}/pending-members",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        return resp
+
+    # Helper to approve member
+    def approve_member(token, school_id, user_id):
+        resp = client.post(
+            f"/api/auth/schools/{school_id}/pending-members/{user_id}/approve",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        return resp
+
+    # Helper to reject member
+    def reject_member(token, school_id, user_id):
+        resp = client.post(
+            f"/api/auth/schools/{school_id}/pending-members/{user_id}/reject",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        return resp
+
+    # Step 1: Create user1, login, request access
+    user1_id = create_user("user1@example.com", "user1")
+    token1 = login("user1@example.com", "user1")
+    resp = request_access(token1, school_id)
+    assert resp.status_code == 200
+    assert resp.json()["membership_pending"] is True
+    assert resp.json()["pending_school_id"] == school_id
+
+    # Step 2: Login as superuser, approve user1
+    admin_token = login("admin-flow@example.com", "admin")
+    resp = get_pending(admin_token, school_id)
+    assert resp.status_code == 200
+    pending = resp.json()
+    assert len(pending) == 1
+    assert pending[0]["email"] == "user1@example.com"
+
+    resp = approve_member(admin_token, school_id, user1_id)
+    assert resp.status_code == 200
+    assert resp.json()["membership_pending"] is False
+    assert resp.json()["school_id"] == school_id
+
+    # Step 3: Create user2, login, request access
+    user2_id = create_user("user2@example.com", "user2")
+    token2 = login("user2@example.com", "user2")
+    resp = request_access(token2, school_id)
+    assert resp.status_code == 200
+    assert resp.json()["membership_pending"] is True
+
+    # Step 4: Create user3, login, request access
+    user3_id = create_user("user3@example.com", "user3")
+    token3 = login("user3@example.com", "user3")
+    resp = request_access(token3, school_id)
+    assert resp.status_code == 200
+    assert resp.json()["membership_pending"] is True
+
+    # Step 5: Login as user1, approve user2, reject user3
+    token1 = login("user1@example.com", "user1")
+    resp = get_pending(token1, school_id)
+    assert resp.status_code == 200
+    pending = resp.json()
+    assert len(pending) == 2
+
+    resp = approve_member(token1, school_id, user2_id)
+    assert resp.status_code == 200
+    assert resp.json()["membership_pending"] is False
+    assert resp.json()["school_id"] == school_id
+
+    resp = reject_member(token1, school_id, user3_id)
+    assert resp.status_code == 200
+    assert resp.json()["membership_pending"] is False
+    assert resp.json()["school_id"] is None
+
+    # Step 6: Login as user2, verify access
+    token2 = login("user2@example.com", "user2")
+    resp = client.get(
+        "/api/auth/me",
+        headers={"Authorization": f"Bearer {token2}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["school_id"] == school_id
+    assert resp.json()["membership_pending"] is False
+
+    # Step 7: Login as user3, verify NO access
+    token3 = login("user3@example.com", "user3")
+    resp = client.get(
+        "/api/auth/me",
+        headers={"Authorization": f"Bearer {token3}"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["school_id"] is None
+    assert resp.json()["membership_pending"] is False
+
+    # Verify pending list is empty after actions
+    resp = get_pending(admin_token, school_id)
+    assert resp.status_code == 200
+    assert resp.json() == []

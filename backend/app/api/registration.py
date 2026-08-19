@@ -97,6 +97,8 @@ def search_schools(q: str = Query(default="", min_length=0), db=Depends(get_db))
             address=s.address,
             postal_code=s.postal_code,
             city=s.city,
+            koepel=s.koepel,
+            koepel_id=s.koepel_id,
         )
         for s in schools
     ]

@@ -24,6 +24,8 @@ export interface SchoolResponse {
   address: string | null
   postal_code: string | null
   city: string | null
+  koepel: string | null
+  koepel_id: number | null
 }
 
 export interface SchoolYearResponse {

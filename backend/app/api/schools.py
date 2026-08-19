@@ -3,7 +3,7 @@ from io import BytesIO
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import StreamingResponse
 
-from app.api.auth import get_current_school_user, get_current_superuser
+from app.api.auth import get_current_school_user, get_current_superuser, get_current_user
 from app.core.database import get_db
 from app.repositories.school_repository import SchoolRepository
 from app.repositories.school_year_repository import (
@@ -47,10 +47,21 @@ def create_school(
 @router.get("/", response_model=list[SchoolResponse])
 def list_schools(
     db=Depends(get_db),
-    current_superuser: UserResponse = Depends(get_current_superuser),
+    current_user: UserResponse = Depends(get_current_user),
 ):
     school_repo = SchoolRepository(db)
-    return [school_repo.to_response(school) for school in school_repo.get_all()]
+    if current_user.is_superuser:
+        return [school_repo.to_response(school) for school in school_repo.get_all()]
+    
+    user_school_id = current_user.demo_school_id if current_user.is_demo else current_user.school_id
+    if not user_school_id:
+        return []
+    
+    school = school_repo.get_by_id(user_school_id)
+    if not school:
+        return []
+    
+    return [school_repo.to_response(school)]
 
 
 @router.get("/{school_id}/school-years", response_model=list[SchoolYearResponse])

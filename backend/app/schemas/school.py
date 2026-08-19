@@ -18,6 +18,8 @@ class SchoolResponse(BaseModel):
     address: str | None = None
     postal_code: str | None = None
     city: str | None = None
+    koepel: str | None = None
+    koepel_id: int | None = None
 
 
 class SchoolYearCreate(BaseModel):

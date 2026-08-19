@@ -39,6 +39,7 @@ interface MenuItem {
   to: string
   icon: React.ElementType
   adminOnly?: boolean
+  schoolMemberOnly?: boolean
   demoOnly?: boolean
   children?: MenuItem[]
 }
@@ -62,7 +63,7 @@ const menuItems: MenuItem[] = [
             { label: 'Thema\'s', to: '/management/themes', icon: PaletteIcon },
             { label: 'Instellingen', to: '/management/settings', icon: SettingsIcon },
             { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
-           { label: 'Scholen', to: '/schools', icon: HomeIcon, adminOnly: true },
+           { label: 'Scholen', to: '/schools', icon: HomeIcon, schoolMemberOnly: true },
            { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
          ],
       },
@@ -78,14 +79,19 @@ const filterMenuItems = (items: MenuItem[], user: UserResponse | null): MenuItem
       }
     })
     .filter((item) => {
-      // If item has children, only show if at least one child is visible
       if (item.children && item.children.length > 0) {
         return true
       }
       if (item.demoOnly) {
         return user?.is_demo
       }
-      return !item.adminOnly || user?.is_superuser
+      if (item.adminOnly) {
+        return user?.is_superuser
+      }
+      if (item.schoolMemberOnly) {
+        return Boolean(user?.school_id || user?.demo_school_id)
+      }
+      return true
     })
     .map((item) => {
       // Remove empty children arrays

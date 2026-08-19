@@ -6,6 +6,8 @@ from pathlib import Path
 
 from sqlalchemy import text
 
+import app.core.config
+
 from app.core.database import Base, SessionLocal, engine
 from app.core.security import get_password_hash
 from app.models.activity import Activity, ActivityObservationGoal

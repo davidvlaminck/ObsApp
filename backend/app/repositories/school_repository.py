@@ -48,4 +48,6 @@ class SchoolRepository:
             slug=school.slug,
             is_active=school.is_active,
             created_at=school.created_at,
+            koepel=school.koepel,
+            koepel_id=school.koepel_id,
         )
