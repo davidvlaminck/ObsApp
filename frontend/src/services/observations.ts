@@ -169,6 +169,7 @@ export type ClassGoalStatusResponse = {
   subdomain: string | null
   is_observed_in_class: boolean
   is_in_activity: boolean
+  target_type: string | null
 }
 
 export interface ClassGoalsOverviewResponse {
@@ -183,6 +184,7 @@ export interface ClassGoalsFilters {
   domain?: string
   subdomain?: string
   q?: string
+  target_type?: string
 }
 
 export async function getClassGoalsOverview(filters?: ClassGoalsFilters): Promise<ClassGoalsOverviewResponse> {

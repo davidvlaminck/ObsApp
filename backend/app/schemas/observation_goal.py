@@ -68,6 +68,7 @@ class ClassGoalStatusResponse(BaseModel):
     subdomain: Optional[str] = None
     is_observed_in_class: bool
     is_in_activity: bool
+    target_type: Optional[str] = None
 
     class Config:
         from_attributes = True

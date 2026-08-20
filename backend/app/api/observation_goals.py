@@ -347,6 +347,7 @@ def get_koepel_goals_class_status(
     domain: str | None = None,
     subdomain: str | None = None,
     q: str | None = None,
+    target_type: str | None = None,
     db=Depends(get_db),
     current_user: UserResponse = Depends(get_current_user),
 ):
@@ -373,6 +374,7 @@ def get_koepel_goals_class_status(
         domain=domain,
         subdomain=subdomain,
         q=q,
+        target_type=target_type,
     )
 
     return ClassGoalsOverviewResponse(

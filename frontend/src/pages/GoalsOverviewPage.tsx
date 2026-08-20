@@ -73,6 +73,7 @@ export default function GoalsOverviewPage() {
   const [filterDomain, setFilterDomain] = useState('')
   const [filterSubdomain, setFilterSubdomain] = useState('')
   const [filterQ, setFilterQ] = useState('')
+  const [filterTargetType, setFilterTargetType] = useState('')
 
   const [pageToAchieve, setPageToAchieve] = useState(1)
   const [pageAchieved, setPageAchieved] = useState(1)
@@ -122,7 +123,10 @@ export default function GoalsOverviewPage() {
       try {
         setError('')
         setLoadingGoals(true)
-        const data = await getClassGoalsOverview({ class_id: selectedClassId })
+        const data = await getClassGoalsOverview({
+          class_id: selectedClassId,
+          target_type: filterTargetType || undefined,
+        })
         setAllGoals(sortGoals(data.goals))
       } catch (err) {
         setError(getErrorMessage(err, 'Kan doelen niet laden.'))
@@ -133,12 +137,12 @@ export default function GoalsOverviewPage() {
     }
 
     loadGoals()
-  }, [selectedClassId])
+  }, [selectedClassId, filterTargetType])
 
   useEffect(() => {
     setPageToAchieve(1)
     setPageAchieved(1)
-  }, [filterSubject, filterDomain, filterSubdomain, filterQ, selectedClassId])
+  }, [filterSubject, filterDomain, filterSubdomain, filterQ, selectedClassId, filterTargetType])
 
   const { subjects, domains, subdomains } = useMemo(() => {
     const subjects = sortSubjects([...new Set(allGoals.map((g) => getGoalSubject(g)))])
@@ -267,6 +271,7 @@ export default function GoalsOverviewPage() {
     setFilterDomain('')
     setFilterSubdomain('')
     setFilterQ('')
+    setFilterTargetType('')
   }
 
   if (loading) {
@@ -321,6 +326,26 @@ export default function GoalsOverviewPage() {
                   </button>
                 ))
               )}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Doeltype</label>
+            <div className="class-chips">
+              {[
+                { value: '', label: 'Alle' },
+                { value: 'TE_BEREIKEN', label: 'Te bereiken op populatieniveau' },
+                { value: 'NA_TE_STREVEN', label: 'Na te streven' },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`class-chip ${filterTargetType === option.value ? 'active' : ''}`}
+                  onClick={() => setFilterTargetType(option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -401,7 +426,7 @@ export default function GoalsOverviewPage() {
                 />
               </div>
 
-              {(filterSubject || filterDomain || filterSubdomain || filterQ) && (
+              {(filterSubject || filterDomain || filterSubdomain || filterQ || filterTargetType) && (
                 <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end' }}>
                   <button
                     type="button"

@@ -7,7 +7,7 @@
 
 .overview-filters {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 20px;
   padding: 20px;
@@ -15,6 +15,10 @@
   border-radius: var(--md-radius-lg);
   box-shadow: var(--md-shadow-sm);
   border: 1px solid var(--md-border-light);
+}
+
+.overview-filters .form-group {
+  flex: 1 1 200px;
 }
 
 .overview-comment-popup {
@@ -327,7 +331,7 @@
 /* Responsive */
 @media (max-width: 900px) {
   .overview-filters {
-    gap: 12px;
+    flex-direction: column;
   }
 
   .subject-chip {

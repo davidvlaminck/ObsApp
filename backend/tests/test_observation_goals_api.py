@@ -1063,3 +1063,65 @@ def test_class_status_filters_by_level(
     data = response.json()
     assert len(data["goals"]) == 1
     assert data["goals"][0]["code"] == "2.1.GK3.1"
+
+
+def test_class_status_filters_by_target_type(
+    observation_goal_client: TestClient,
+    observation_goal_db: Session,
+):
+    seed_school_and_user(observation_goal_db, 1, 1, "teacher@example.com")
+    school = observation_goal_db.query(School).filter(School.id == 1).first()
+    school.koepel_id = 1
+    observation_goal_db.commit()
+
+    koepel = Koepel(id=1, slug="katholiek-onderwijs-vlaanderen", name="KOV")
+    observation_goal_db.add(koepel)
+    observation_goal_db.commit()
+
+    school_year = SchoolYear(school_id=1, name="2026-2027", start_date=date(2026, 9, 1), end_date=date(2027, 6, 30), is_active=True)
+    observation_goal_db.add(school_year)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(school_year)
+
+    cls = ClassModel(school_year_id=school_year.id, name="3K", class_type="K3")
+    observation_goal_db.add(cls)
+    observation_goal_db.commit()
+    observation_goal_db.refresh(cls)
+
+    observation_goal_db.add_all([
+        Goal(id=10, code="VO-1", title="VO te bereiken", subject="Wiskunde", goal_type="VO", target_type="TE_BEREIKEN", koepel_id=1),
+        Goal(id=11, code="VO-2", title="VO na te streven", subject="Wiskunde", goal_type="VO", target_type="NA_TE_STREVEN", koepel_id=1),
+        Goal(id=20, code="2.1.GK3.1", title="Op Stap te bereiken", subject="Wiskunde", level="K3", goal_type="OP_STAP", vo_code="VO-1", koepel_id=1),
+        Goal(id=21, code="2.1.GK3.2", title="Op Stap na te streven", subject="Wiskunde", level="K3", goal_type="OP_STAP", vo_code="VO-2", koepel_id=1),
+    ])
+    observation_goal_db.commit()
+
+    response = observation_goal_client.get(
+        "/api/observation-goals/goals/class-status",
+        params={"class_id": cls.id, "target_type": "TE_BEREIKEN"},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data["goals"]) == 1
+    assert data["goals"][0]["code"] == "2.1.GK3.1"
+    assert data["goals"][0]["target_type"] == "TE_BEREIKEN"
+
+    response_na = observation_goal_client.get(
+        "/api/observation-goals/goals/class-status",
+        params={"class_id": cls.id, "target_type": "NA_TE_STREVEN"},
+    )
+    assert response_na.status_code == 200
+    data_na = response_na.json()
+    assert len(data_na["goals"]) == 1
+    assert data_na["goals"][0]["code"] == "2.1.GK3.2"
+    assert data_na["goals"][0]["target_type"] == "NA_TE_STREVEN"
+
+    response_all = observation_goal_client.get(
+        "/api/observation-goals/goals/class-status",
+        params={"class_id": cls.id},
+    )
+    assert response_all.status_code == 200
+    data_all = response_all.json()
+    assert len(data_all["goals"]) == 2
+    codes = {g["code"] for g in data_all["goals"]}
+    assert codes == {"2.1.GK3.1", "2.1.GK3.2"}

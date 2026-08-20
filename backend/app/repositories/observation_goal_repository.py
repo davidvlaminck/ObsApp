@@ -1,5 +1,5 @@
 from sqlalchemy import and_, desc, func, or_
-from sqlalchemy.orm import Session, joinedload, selectinload
+from sqlalchemy.orm import Session, aliased, joinedload, selectinload
 
 from app.models.activity import Activity, ActivityObservationGoal
 from app.models.goal import Goal
@@ -386,6 +386,7 @@ class ObservationGoalRepository:
         domain: str | None = None,
         subdomain: str | None = None,
         q: str | None = None,
+        target_type: str | None = None,
     ) -> list[ClassGoalStatusResponse]:
         class_type: str | None = None
         if class_id:
@@ -395,11 +396,8 @@ class ObservationGoalRepository:
 
         results: list[ClassGoalStatusResponse] = []
 
-        # --- Op Stap goals (from the koepel) ---
-        # Only include "GK" type goals (Kennis/kentismaking groeileerdoelen),
-        # not "GL" (Leerjaar) or "PF" (Praktijkgerichte finaliteit) goals.
-        # The level filter (Goal.level == class_type) narrows to the class group,
-        # and the code pattern filter ensures we get only GK-type goals.
+        vo_goal = aliased(Goal)
+
         query = self.db.query(Goal).filter(Goal.goal_type == "OP_STAP")
 
         if koepel_id:
@@ -426,8 +424,21 @@ class ObservationGoalRepository:
                     Goal.vo_code.ilike(search_term),
                 )
             )
+        if target_type:
+            query = query.join(vo_goal, Goal.vo_code == vo_goal.code).filter(vo_goal.target_type == target_type)
 
         goals = query.order_by(Goal.subject, Goal.level, Goal.code).all()
+
+        vo_target_types: dict[str, str] = {}
+        if goals:
+            vo_codes = {g.vo_code for g in goals if g.vo_code}
+            if vo_codes:
+                for row in self.db.query(Goal.code, Goal.target_type).filter(
+                    Goal.goal_type == "VO",
+                    Goal.code.in_(vo_codes),
+                    Goal.target_type.is_not(None),
+                ).all():
+                    vo_target_types[row[0]] = row[1]
 
         if goals:
             goal_ids = [g.id for g in goals]
@@ -506,6 +517,7 @@ class ObservationGoalRepository:
                         subdomain=goal.subdomain,
                         is_observed_in_class=is_observed,
                         is_in_activity=is_in_activity,
+                        target_type=vo_target_types.get(goal.vo_code) if goal.vo_code else None,
                     )
                 )
 
@@ -605,6 +617,7 @@ class ObservationGoalRepository:
                         subdomain=og.subdomain,
                         is_observed_in_class=og.id in school_observed_og_ids,
                         is_in_activity=og.id in school_activity_og_ids,
+                        target_type=None,
                     )
                 )
 
