@@ -74,6 +74,7 @@ export default function StudentOverviewPage() {
   const [error, setError] = useState('')
   const [studentObservations, setStudentObservations] = useState<StudentObservationResponse[]>([])
   const [studentObservationsLoading, setStudentObservationsLoading] = useState(false)
+  const [overviewLoading, setOverviewLoading] = useState(false)
   const [popoverTarget, setPopoverTarget] = useState<StudentObservationResponse | null>(null)
 
   useEffect(() => {
@@ -119,12 +120,15 @@ export default function StudentOverviewPage() {
     }
 
     try {
+      setOverviewLoading(true)
       setError('')
       const data = await getOverview(selectedClassId, selectedSubject || undefined, selectedDomain || undefined)
       setOverview(data)
     } catch (err) {
       setError(getErrorMessage(err, 'Kan overzicht niet laden.'))
       setOverview(null)
+    } finally {
+      setOverviewLoading(false)
     }
   }, [selectedClassId, selectedSubject, selectedDomain, user])
 
@@ -367,13 +371,15 @@ export default function StudentOverviewPage() {
               <select
                 id="student-overview-student"
                 value={selectedStudentId ?? ''}
-                disabled={!selectedClassId || !overview?.students.length}
+                disabled={!selectedClassId || overviewLoading || !overview?.students.length}
                 onChange={(event) => {
                   const value = event.target.value ? Number(event.target.value) : null
                   setSelectedStudentId(value)
                 }}
               >
-                <option value="">Kies kleuter</option>
+                <option value="">
+                  {overviewLoading ? 'Kleuters laden...' : 'Kies kleuter'}
+                </option>
                 {overview?.students.map((student: StudentResponse) => (
                   <option key={student.id} value={student.id}>
                     {student.name}

@@ -77,6 +77,7 @@ export default function OverviewPage() {
     null
   )
   const [studentObservations, setStudentObservations] = useState<StudentObservationResponse[]>([])
+  const [overviewLoading, setOverviewLoading] = useState(false)
 
   useEffect(() => {
     const loadUserAndClasses = async () => {
@@ -123,12 +124,15 @@ export default function OverviewPage() {
     }
 
     try {
+      setOverviewLoading(true)
       setError('')
       const data = await getOverview(selectedClassId, selectedSubject || undefined, selectedDomain || undefined)
       setOverview(data)
     } catch (err) {
       setError(getErrorMessage(err, 'Kan overzicht niet laden.'))
       setOverview(null)
+    } finally {
+      setOverviewLoading(false)
     }
   }, [selectedClassId, selectedSubject, selectedDomain, user])
 
@@ -336,6 +340,11 @@ export default function OverviewPage() {
 
         {!selectedClassId ? (
           <div className="empty-state">Kies een klas om het overzicht te bekijken.</div>
+        ) : overviewLoading ? (
+          <div className="loading-state">
+            <div className="spinner spinner-lg" />
+            <span>Overzicht laden...</span>
+          </div>
         ) : !overview || overview.goals.length === 0 ? (
           <div className="empty-state">Geen observatiedoelen gevonden voor deze selectie.</div>
         ) : (
