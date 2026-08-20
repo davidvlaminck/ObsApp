@@ -106,3 +106,59 @@ speeltijd
 activiteit label + omschrijving + doelen selecteren en koppelen
 - 
 
+
+in de verf zetten dat je doelen op voorhand kan aanmaken/klaarzetten om efficiënter te werken bij observeren
+
+
+kiko.be
+kindkompas
+
+wat met dubbel aangemaakt doelen, komen deze in overzicht samen?
+
+schooleigen doelen vooraan zetten
+
+menu,
+observatiedoelen aanmaken
+observeren
+overzichten
+thema's
+
+
+overzicht doelen
+helptekst aanpassen
+
+todo:observatiedoelen aanmaken
+knop op stap doel doel naar boven
+automatisch vak/domein koppelen
+knop aanmaken uitgrijzen tot er een op stap doelen is geselecteerd
+in op stap zoekscherm omschrijving naar boven
+zoeken knop weghalen
+bug: doelen van andere klassen
+zoekwoord in omschrijving markeren in de doeltekst
+minder witruimte
+standaard filter op eigen klas
+
+bij observeren
+zoekfilter omschrijving en activiteit
+minder witruimte tuseen
+opslaan knop naar boven bij individueel observeren
+kleuren duidelijker maken bij selectie bij individueel observeren
+zwart randje rond bestaande observatie
+wit glow bij aanklikken in bulk weghalen
+doeldcode bij selectie van doel toevogen weghalen
+
+overzicht per kleuter
+alle commentaren weergeven van alle obsercaties
+sorteren per vak / domein
+vak maken voor een vak
+inklapbaar maken
+
+inlogtijd vergroten
+
+thema's
+hulpzin activiteiten beheren weglaten
+bug filtreren
+bij omschrijving intypen moet de kader stabiel blijven
+toon omschrijving alleen na klikken op pijltje
+
+
