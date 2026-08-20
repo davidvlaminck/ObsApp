@@ -530,6 +530,7 @@
   border-radius: 3px;
   margin-right: 6px;
   flex-shrink: 0;
+  border: 1px solid #000;
 }
 
 /* Goal select modal */

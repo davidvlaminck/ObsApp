@@ -119,13 +119,13 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 const getStudentObservationLabel = (status?: ObservationStatus) => {
   switch (status) {
     case 'onvoldoende':
-      return 'Laatste status: onvoldoende'
+      return 'Onvoldoende'
     case 'in_ontwikkeling':
-      return 'Laatste status: in ontwikkeling'
+      return 'In ontwikkeling'
     case 'voldoende':
-      return 'Laatste status: voldoende'
+      return 'Voldoende'
     case 'voorsprong':
-      return 'Laatste status: voorsprong in ontwikkeling'
+      return 'Voorsprong in ontwikkeling'
     case 'geen_observatie':
       return 'Geen observatie'
     default:
