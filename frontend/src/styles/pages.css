@@ -7,7 +7,7 @@
 
 .overview-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 16px;
   margin-bottom: 20px;
   padding: 20px;
@@ -17,7 +17,13 @@
   border: 1px solid var(--md-border-light);
 }
 
-.overview-filters .form-group {
+.overview-filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.overview-filters-row .form-group {
   flex: 1 1 200px;
 }
 
@@ -330,7 +336,7 @@
 
 /* Responsive */
 @media (max-width: 900px) {
-  .overview-filters {
+  .overview-filters-row {
     flex-direction: column;
   }
 

@@ -307,45 +307,47 @@ export default function GoalsOverviewPage() {
 
       <div className="overview-page-scroll">
         <div className="overview-filters">
-          <div className="form-group">
-            <label>Klas</label>
-            <div className="class-chips">
-              {classes.length === 0 ? (
-                <span className="text-muted">Geen klassen beschikbaar</span>
-              ) : (
-                classes.map((classItem, index) => (
-                  <button
-                    key={classItem.id}
-                    type="button"
-                    className={`class-chip class-chip-${index % 4} ${
-                      selectedClassId === classItem.id ? 'active' : ''
-                    }`}
-                    onClick={() => setSelectedClassId(classItem.id)}
-                  >
-                    {classItem.name}
-                  </button>
-                ))
-              )}
+          <div className="overview-filters-row">
+            <div className="form-group">
+              <label>Klas</label>
+              <div className="class-chips">
+                {classes.length === 0 ? (
+                  <span className="text-muted">Geen klassen beschikbaar</span>
+                ) : (
+                  classes.map((classItem, index) => (
+                    <button
+                      key={classItem.id}
+                      type="button"
+                      className={`class-chip class-chip-${index % 4} ${
+                        selectedClassId === classItem.id ? 'active' : ''
+                      }`}
+                      onClick={() => setSelectedClassId(classItem.id)}
+                    >
+                      {classItem.name}
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
-          </div>
 
-          <div className="form-group">
-            <label>Doeltype</label>
-            <div className="class-chips">
-              {[
-                { value: '', label: 'Alle' },
-                { value: 'TE_BEREIKEN', label: 'Te bereiken op populatieniveau' },
-                { value: 'NA_TE_STREVEN', label: 'Na te streven' },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={`class-chip ${filterTargetType === option.value ? 'active' : ''}`}
-                  onClick={() => setFilterTargetType(option.value)}
-                >
-                  {option.label}
-                </button>
-              ))}
+            <div className="form-group">
+              <label>Doeltype</label>
+              <div className="class-chips">
+                {[
+                  { value: '', label: 'Alle' },
+                  { value: 'TE_BEREIKEN', label: 'Te bereiken op populatieniveau' },
+                  { value: 'NA_TE_STREVEN', label: 'Na te streven' },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`class-chip ${filterTargetType === option.value ? 'active' : ''}`}
+                    onClick={() => setFilterTargetType(option.value)}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
