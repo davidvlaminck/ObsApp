@@ -37,7 +37,7 @@ export default function HomePage() {
               Aan activiteiten koppel je doelen waarvan je kan kiezen of je ze wil observeren.
             </p>
             <p style={{ marginTop: '0.5rem' }}>
-              <strong>Tip:</strong> Door doelen aan activiteiten en thema's te kopplen kan je gemakkelijker filteren.
+              <strong>Tip:</strong> Door doelen aan activiteiten en thema's te koppelen kun je gemakkelijker filteren.
             </p>
           </article>
 
@@ -68,7 +68,8 @@ export default function HomePage() {
             <h3>Overzicht per kleuter</h3>
             <p className="text-muted">
               Bekijk alle observaties van één specifieke kleuter. 
-              Handig om snel een volledig overzicht te krijgen van de vooruitgang van een kleuter.
+              Handig om snel een volledig overzicht te krijgen van de gehele ontwikkeling van een kleuter.
+              Bereid zo je oudercontacten en zorggesprekken efficiënter voor.
             </p>
             <p style={{ marginTop: '0.5rem' }}>
               <strong>Tip:</strong> Selecteer eerst een kleuter om de observaties te zien.
