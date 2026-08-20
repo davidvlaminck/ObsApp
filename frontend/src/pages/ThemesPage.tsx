@@ -818,7 +818,6 @@ export default function ThemesPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
                 <div>
                   <h3>Activiteiten beheren</h3>
-                  <p className="text-muted">Beheer de activiteiten voor dit thema.</p>
                 </div>
                 {!showNewActivityForm && (
                   <button
@@ -1057,7 +1056,7 @@ export default function ThemesPage() {
             <div className="modal-header">
               <div>
                 <h2 id="goal-select-title">Koppel doelen</h2>
-                <p className="text-muted">Filter op vak, domein en subdomein. Selecteer een of meer doelen.</p>
+                <p className="text-muted">Filter op vak, domein en subdomein. Selecteer één of meer doelen.</p>
               </div>
               <button className="icon-button" type="button" onClick={closeGoalModal} aria-label="Sluiten">
                 ✕
