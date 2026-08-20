@@ -2,7 +2,6 @@
 import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 
-import * as authService from '../services/auth'
 import SchoolsPage from '../pages/SchoolsPage'
 
 const mockGetMe = vi.fn()
@@ -27,9 +26,6 @@ const mockUser: Parameters<typeof mockGetMe>[0] = {
   is_superuser: true,
   is_pending: false,
   school_id: 1,
-  is_demo: false,
-  demo_school_id: null,
-  demo_expires_at: null,
   default_class_id: null,
   color_theme: 'teal',
   needs_koepel_selection: false,

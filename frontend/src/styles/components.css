@@ -9,7 +9,7 @@ i/* Modern Card component */
   border: 1px solid var(--md-border-light);
 }
 
-/* Cards centered on a full-screen container (login, demo schoolbeheer, ...)
+/* Cards centered on a full-screen container (login, ...)
    should have no border or shadow and stay static on hover. */
 .center-container .card {
   border: none;

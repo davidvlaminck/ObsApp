@@ -266,11 +266,6 @@ export interface VlaanderenSchool {
   is_active: boolean
 }
 
-export interface DemoRegisterRequest {
-  email: string
-  name: string
-}
-
 export interface RegularRegisterRequest {
   email: string
   name: string
@@ -280,11 +275,6 @@ export interface RegularRegisterRequest {
 
 export async function getVlaanderenSchools(): Promise<VlaanderenSchool[]> {
   const response = await api.get<VlaanderenSchool[]>('/register/schools')
-  return response.data
-}
-
-export async function registerDemo(data: DemoRegisterRequest): Promise<UserResponse> {
-  const response = await api.post<UserResponse>('/register/demo', data)
   return response.data
 }
 
@@ -307,11 +297,6 @@ export async function getKoepels(): Promise<KoepelResponse[]> {
 
 export async function selectKoepel(koepel: string, school_id?: number, class_type?: string): Promise<UserResponse> {
   const response = await api.post<UserResponse>('/auth/select-koepel', { koepel, school_id, class_type })
-  return response.data
-}
-
-export async function resetDemo(): Promise<UserResponse> {
-  const response = await api.post<UserResponse>('/auth/reset-demo')
   return response.data
 }
 

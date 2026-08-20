@@ -40,7 +40,6 @@ interface MenuItem {
   icon: React.ElementType
   adminOnly?: boolean
   schoolMemberOnly?: boolean
-  demoOnly?: boolean
   children?: MenuItem[]
 }
 
@@ -56,16 +55,15 @@ const menuItems: MenuItem[] = [
         label: 'Beheer',
         to: '/management',
         icon: AssignmentIcon,
-           children: [
+            children: [
             { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
             { label: 'Schooleigen doelen', to: '/management/school-goals', icon: FlagIcon },
             { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
             { label: 'Thema\'s', to: '/management/themes', icon: PaletteIcon },
             { label: 'Instellingen', to: '/management/settings', icon: SettingsIcon },
-            { label: 'Demo schoolbeheer', to: '/management/demo-school', icon: SchoolIcon, demoOnly: true },
-           { label: 'Scholen', to: '/schools', icon: HomeIcon, schoolMemberOnly: true },
-           { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
-         ],
+            { label: 'Scholen', to: '/schools', icon: HomeIcon, schoolMemberOnly: true },
+            { label: 'Gebruikers', to: '/users', icon: PeopleIcon, adminOnly: true },
+          ],
       },
 ]
 
@@ -82,14 +80,11 @@ const filterMenuItems = (items: MenuItem[], user: UserResponse | null): MenuItem
       if (item.children && item.children.length > 0) {
         return true
       }
-      if (item.demoOnly) {
-        return user?.is_demo
-      }
       if (item.adminOnly) {
         return user?.is_superuser
       }
       if (item.schoolMemberOnly) {
-        return Boolean(user?.school_id || user?.demo_school_id)
+        return Boolean(user?.school_id)
       }
       return true
     })

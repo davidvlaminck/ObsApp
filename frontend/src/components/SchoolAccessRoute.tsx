@@ -18,8 +18,7 @@ export default function SchoolAccessRoute({ children }: SchoolAccessRouteProps) 
       try {
         const user = await getMe()
         setIsAuthenticated(true)
-        // Check for school access: either school_id (regular) or demo_school_id (demo)
-        const hasSchoolAccess = user.is_superuser || Boolean(user.school_id) || Boolean(user.demo_school_id)
+        const hasSchoolAccess = user.is_superuser || Boolean(user.school_id)
         setHasAccess(hasSchoolAccess)
       } catch (error) {
         const axiosError = error as AxiosError

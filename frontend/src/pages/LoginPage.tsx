@@ -66,7 +66,7 @@ export default function LoginPage() {
           </button>
         </form>
         <p style={{ marginTop: '1rem', textAlign: 'center' }}>
-          <a href="/register">Nog geen account? Registreer een (demo) account</a>
+          <a href="/register">Nog geen account? Registreer een account</a>
         </p>
       </div>
     </div>

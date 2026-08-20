@@ -75,7 +75,6 @@ export default function ObservationsPage() {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [currentUser, setCurrentUser] = useState<{ is_demo: boolean } | null>(null)
 
   const [form, setForm] = useState<ObservationGoalForm>({
     name: '',
@@ -131,7 +130,6 @@ export default function ObservationsPage() {
         setSubjects(subjectsData)
         setObservationGoals(goalsData)
         setUserClasses(userClassesData)
-        setCurrentUser({ is_demo: currentUser.is_demo })
 
         // Set default class filter from user's default_class_id
         if (currentUser.default_class_id) {
@@ -486,13 +484,6 @@ export default function ObservationsPage() {
               </select>
             </div>
 
-            {currentUser?.is_demo && (
-              <p className="text-muted" style={{ marginTop: '0.5rem', fontSize: '0.85rem' }}>
-                Als demo gebruiker kan je tot 10 doelen zelf aanmaken en gebruiken.
-                Huidig gebruik: {Math.max(0, observationGoals.length - 10)}/10
-              </p>
-            )}
-
             <button className="btn btn-outline btn-full" type="button" onClick={handleOpenGoalModal}>
               Zoek Op Stap doel
             </button>
@@ -524,7 +515,7 @@ export default function ObservationsPage() {
             <button
               className="btn btn-primary btn-full"
               type="submit"
-              disabled={saving || (currentUser?.is_demo && observationGoals.length >= 20)}
+              disabled={saving}
             >
               {saving ? 'Aanmaken...' : 'Observatiedoel aanmaken'}
             </button>

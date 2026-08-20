@@ -79,16 +79,12 @@ export default function KoepelSelectionPage() {
     }
     setSubmitting(true)
     try {
-      const user: UserResponse = await selectKoepel(
+      await selectKoepel(
         selectedKoepel || selectedSchool?.koepel || '',
         selectedSchoolId || undefined,
         selectedClass,
       )
-      if (user.is_demo) {
-        navigate('/demo')
-      } else {
-        navigate('/home')
-      }
+      navigate('/home')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Koepel selectie mislukt. Probeer opnieuw.')
     } finally {
@@ -106,10 +102,9 @@ export default function KoepelSelectionPage() {
     )
   }
 
-  const isDemo = currentUser?.is_demo
-  const hasExistingSchool = currentUser?.school_id && !isDemo
-  const needsSchoolSelection = !isDemo && !hasExistingSchool
-  const isPending = currentUser?.membership_pending && !isDemo
+  const hasExistingSchool = currentUser?.school_id
+  const needsSchoolSelection = !hasExistingSchool
+  const isPending = currentUser?.membership_pending
 
   return (
     <div className="center-container">
@@ -238,8 +233,7 @@ export default function KoepelSelectionPage() {
                   </p>
                 )}
               </div>
-              {!isDemo && (
-                <div className="form-group">
+              <div className="form-group">
                   <label htmlFor="class">Klas</label>
                   <select
                     id="class"
@@ -252,7 +246,6 @@ export default function KoepelSelectionPage() {
                     <option value="K3">3K (Derde kleuterklas)</option>
                   </select>
                 </div>
-              )}
               {error && <p className="error">{error}</p>}
               <button type="submit" className="btn btn-primary" disabled={submitting || (needsSchoolSelection && !selectedSchoolId) || isPending}>
                 {submitting ? 'Bezig...' : isPending ? 'Wacht op goedkeuring' : 'Opslaan'}

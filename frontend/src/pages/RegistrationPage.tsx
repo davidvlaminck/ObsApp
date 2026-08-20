@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { registerDemo, registerRegular } from '../services/auth'
+import { registerRegular } from '../services/auth'
 
 export default function RegistrationPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [isDemo, setIsDemo] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -16,11 +15,7 @@ export default function RegistrationPage() {
     setLoading(true)
 
     try {
-      if (isDemo) {
-        await registerDemo({ email, name })
-      } else {
-        await registerRegular({ email, name })
-      }
+      await registerRegular({ email, name })
       navigate('/login?registered=true')
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Registratie mislukt. Probeer opnieuw.')
@@ -63,25 +58,6 @@ export default function RegistrationPage() {
               required
             />
           </div>
-
-          <div className="checkbox-row">
-            <label
-              style={{
-                justifyContent: "center",
-                gap: "6px",
-                width: "100%",
-              }}>
-              {' '}Demo account aanmaken
-              <input
-                type="checkbox"
-                checked={isDemo}
-                onChange={(e) => setIsDemo(e.target.checked)}
-              />
-            </label>
-          </div>
-          <p style={{ fontSize: '0.85rem', color: '#6b7280', marginTop: '-0.5rem', marginBottom: '1rem' }}>
-            Een demo account krijgt direct toegang tot testdata zonder schoolkeuze.
-          </p>
 
           {error && <p className="error">{error}</p>}
           <button type="submit" className="btn btn-primary" disabled={loading}>

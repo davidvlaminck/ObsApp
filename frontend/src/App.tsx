@@ -2,7 +2,6 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from './components/AppLayout'
 import SuperuserRoute from './components/SuperuserRoute'
 import SchoolAccessRoute from './components/SchoolAccessRoute'
-import DemoRoute from './components/DemoRoute'
 import LoginPage from './pages/LoginPage'
 import LandingPage from './pages/LandingPage'
 import SchoolsPage from './pages/SchoolsPage'
@@ -17,8 +16,6 @@ import StudentOverviewPage from './pages/StudentOverviewPage'
 import GoalsOverviewPage from './pages/GoalsOverviewPage'
 import RegistrationPage from './pages/RegistrationPage'
 import KoepelSelectionPage from './pages/KoepelSelectionPage'
-import DemoPage from './pages/DemoPage'
-import DemoSchoolPage from './pages/DemoSchoolPage'
 import ThemesPage from './pages/ThemesPage'
 import SchoolGoalsPage from './pages/SchoolGoalsPage'
 import SettingsPage from './pages/SettingsPage'
@@ -31,27 +28,6 @@ function App() {
       <Route path="/landing" element={<LandingPage />} />
       <Route path="/set-password" element={<SetPasswordPage />} />
       <Route path="/select-koepel" element={<KoepelSelectionPage />} />
-      <Route
-        path="/demo"
-        element={
-          <AppLayout>
-            <DemoRoute>
-              <DemoPage />
-            </DemoRoute>
-          </AppLayout>
-        }
-      />
-      <Route
-        path="/management/demo-school"
-        element={
-          <AppLayout>
-            <DemoRoute>
-              <DemoSchoolPage />
-            </DemoRoute>
-          </AppLayout>
-        }
-      />
-
       <Route
         path="/home"
         element={
