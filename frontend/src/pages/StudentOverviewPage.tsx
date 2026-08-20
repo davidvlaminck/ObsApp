@@ -229,7 +229,7 @@ export default function StudentOverviewPage() {
     const groups = new Map<number, StudentObservationResponse[]>()
 
     for (const observation of selectedStudentObservations) {
-      const goalId = observation.observation_goal_id
+      const goalId = observation.observation_goal?.goal_id ?? observation.observation_goal_id
       const existing = groups.get(goalId)
       if (existing) {
         existing.push(observation)
@@ -241,7 +241,7 @@ export default function StudentOverviewPage() {
     return Array.from(groups.entries())
       .map(([goalId, observations]) => ({
         goalId,
-        goalName: observations[0].observation_goal?.name ?? 'Onbekend doel',
+        goalName: observations[0].observation_goal?.goal?.title ?? observations[0].observation_goal?.name ?? 'Onbekend doel',
         goalSubject: observations[0].observation_goal?.subject ?? '',
         goalDomain: observations[0].observation_goal?.domain ?? '',
         latest: observations[0],

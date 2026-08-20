@@ -148,10 +148,11 @@ wit glow bij aanklikken in bulk weghalen
 doeldcode bij selectie van doel toevogen weghalen
 
 overzicht per kleuter
-alle commentaren weergeven van alle obsercaties
+alle commentaren weergeven van alle observaties
 sorteren per vak / domein
 vak maken voor een vak
 inklapbaar maken
+notitieveld maken bij kleuter
 
 inlogtijd vergroten
 

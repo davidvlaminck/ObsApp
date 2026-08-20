@@ -17,6 +17,7 @@ import {
   type OverviewResponse,
   type ObservationStatus,
   type StudentObservationResponse,
+  type ObservationGoalResponse,
 } from '../services/observations'
 import {
   useColorTheme,
@@ -173,10 +174,27 @@ export default function OverviewPage() {
     loadDomains()
   }, [selectedSubject])
 
-  const sortedGoals = useMemo(() => {
-    if (!overview) return []
+  const goalGroups = useMemo(() => {
+    if (!overview) return new Map<number, ObservationGoalResponse[]>()
 
-    return [...overview.goals].sort((a, b) => {
+    const groups = new Map<number, ObservationGoalResponse[]>()
+    for (const goal of overview.goals) {
+      const key = goal.goal_id ?? goal.id
+      const existing = groups.get(key)
+      if (existing) {
+        existing.push(goal)
+      } else {
+        groups.set(key, [goal])
+      }
+    }
+    return groups
+  }, [overview])
+
+  const sortedGoals = useMemo(() => {
+    const goals = Array.from(goalGroups.values()).map((group) => group[0])
+    if (!overview) return goals
+
+    return [...goals].sort((a, b) => {
       const priorityA = getSubjectPriority(a.subject)
       const priorityB = getSubjectPriority(b.subject)
 
@@ -198,13 +216,14 @@ export default function OverviewPage() {
       const subdomainB = b.subdomain ?? ''
       return subdomainA.localeCompare(subdomainB)
     })
-  }, [overview])
+  }, [overview, goalGroups])
 
-  const statusByGoalAndStudent = useMemo(() => {
+  const combinedStatusByGoalAndStudent = useMemo(() => {
     const map = new Map<string, StudentObservationResponse>()
 
     for (const observation of studentObservations) {
-      const key = `${observation.observation_goal_id}-${observation.student_id}`
+      const goalKey = observation.observation_goal?.goal_id ?? observation.observation_goal_id
+      const key = `${goalKey}-${observation.student_id}`
       const current = map.get(key)
 
       if (!current || isObservationNewer(observation, current)) {
@@ -341,7 +360,7 @@ export default function OverviewPage() {
                     </td>
 
                     {overview.students.map((student) => {
-                      const status = statusByGoalAndStudent.get(`${goal.id}-${student.id}`)
+                      const status = combinedStatusByGoalAndStudent.get(`${goal.goal_id ?? goal.id}-${student.id}`)
                       const hasComment = Boolean(status?.comment)
                       const isCommentOpen =
                         commentTarget?.goalId === goal.id && commentTarget?.studentId === student.id
