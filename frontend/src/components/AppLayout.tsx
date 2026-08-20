@@ -47,16 +47,16 @@ const DRAWER_WIDTH = 220
 
 const menuItems: MenuItem[] = [
   { label: 'Home', to: '/home', icon: HomeIcon },
+  { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
+  { label: 'Observeren', to: '/observeren', icon: VisibilityIcon },
   { label: 'Overzicht per klas', to: '/overzicht', icon: AssignmentIcon },
   { label: 'Overzicht per kleuter', to: '/overzicht/kleuter', icon: AssignmentIcon },
-  { label: 'Overzicht voor doelen', to: '/overzicht/doelen', icon: AssignmentIcon },
-  { label: 'Observeren', to: '/observeren', icon: VisibilityIcon },
+  { label: 'Overzicht doelen', to: '/overzicht/doelen', icon: AssignmentIcon },
       {
         label: 'Beheer',
         to: '/management',
         icon: AssignmentIcon,
             children: [
-            { label: 'Observatiedoelen', to: '/management/observations', icon: AssignmentIcon },
             { label: 'Schooleigen doelen', to: '/management/school-goals', icon: FlagIcon },
             { label: 'Klasbeheer', to: '/management/classes', icon: SchoolIcon },
             { label: 'Thema\'s', to: '/management/themes', icon: PaletteIcon },
